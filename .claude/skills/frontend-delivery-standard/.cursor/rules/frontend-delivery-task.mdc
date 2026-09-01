@@ -1,0 +1,6 @@
+---
+description: Task artifact rules
+alwaysApply: false
+---
+
+`implementation-plan.md` must decide files, hooks, stores, state placement, flows, UI/Figma mapping, and tests. `build-checklist.md` must verify those decisions. `questions.md` is for handoff questions only.

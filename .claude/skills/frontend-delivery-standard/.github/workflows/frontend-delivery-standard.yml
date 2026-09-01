@@ -1,0 +1,52 @@
+name: Frontend Delivery Standard
+
+on:
+  pull_request:
+    paths:
+      - 'docs/frontend-tasks/**'
+      - 'docs/frontend-context/**'
+      - '.frontend-delivery/**'
+      - '.claude/**'
+      - '.github/**'
+      - 'src/**'
+      - 'apps/**'
+      - 'packages/**'
+
+jobs:
+  validate-frontend-delivery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check kit files
+        run: |
+          if [ -f bin/fe-kit.mjs ]; then
+            node bin/fe-kit.mjs doctor --strict
+          else
+            echo "bin/fe-kit.mjs not installed in this repo; skipping kit doctor"
+          fi
+      - name: Validate changed frontend tasks
+        run: |
+          if [ ! -f bin/fe-kit.mjs ]; then
+            echo "bin/fe-kit.mjs not installed; skipping task validation"
+            exit 0
+          fi
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.sha }}"
+          TASKS=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | awk -F/ '/^docs\/frontend-tasks\/[^/]+\// {print $1"/"$2"/"$3}' | sort -u)
+          if [ -z "$TASKS" ]; then
+            echo "No changed frontend task folders."
+            exit 0
+          fi
+          for task in $TASKS; do
+            echo "Validating $task"
+            node bin/fe-kit.mjs validate-task "$task"
+            node bin/fe-kit.mjs validate-workflow "$task"
+            if [ -f "$task/output/pr-summary.md" ]; then
+              node bin/fe-kit.mjs validate-pr "$task"
+            fi
+          done

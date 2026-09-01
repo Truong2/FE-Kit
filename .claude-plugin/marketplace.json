@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "frontend-delivery",
+  "description": "Bộ chuẩn frontend delivery tiếng Việt: plan/cook/review/pr gates, SRS-API contract, Figma UI contract, input ledger và blocking question input-sync gate.",
+  "owner": {
+    "name": "Frontend Platform Team",
+    "email": "frontend-platform@example.com"
+  },
+  "plugins": [
+    {
+      "name": "frontend-delivery",
+      "source": "./plugins/frontend-delivery",
+      "description": "Skill + 10 slash command (FE plan/quick/input-sync/figma/cook/review/bugfix/test/figma-review/pr) + 6 subagent cho quy trình frontend delivery chuẩn, output tiếng Việt có dấu.",
+      "version": "1.1.0",
+      "author": {
+        "name": "Frontend Platform Team"
+      },
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "frontend",
+        "workflow",
+        "srs",
+        "figma",
+        "code-review",
+        "vietnamese"
+      ]
+    }
+  ]
+}

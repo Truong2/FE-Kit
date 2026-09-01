@@ -1,0 +1,12 @@
+{
+  "name": "frontend-delivery-standard-skill",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend delivery standard skill (Claude/ChatGPT) — rules folder, mode outputs, input ledger, blocking question input-sync gate, evidence/scope gates. Script validate-*.mjs đã bundle sẵn (esbuild), chạy trực tiếp bằng node, không cần cài thêm dependency nào.",
+  "type": "module",
+  "scripts": {
+    "validate:task": "node scripts/validate-task.mjs",
+    "validate:workflow": "node scripts/validate-workflow.mjs",
+    "validate:pr": "node scripts/validate-pr.mjs"
+  }
+}

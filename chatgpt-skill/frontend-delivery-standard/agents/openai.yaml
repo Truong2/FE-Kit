@@ -1,0 +1,6 @@
+# Metadata-only file for ChatGPT Skill UI. Runtime tools/capabilities are provided by the host environment and are intentionally not declared here.
+interface:
+  display_name: Frontend Delivery Standard
+  short_description: Standard FE delivery workflow with SRS mapping, Figma evidence, input sync, and compact validators.
+  icon: code
+  color: blue

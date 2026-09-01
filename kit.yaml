@@ -1,0 +1,40 @@
+name: frontend-delivery-agent-kit
+version: 1.1.0
+status: stable
+description: >
+  Frontend delivery kit for SRS-grounded planning, low-risk quick tasks, Figma UI contract/extraction,
+  input sync, implementation, review with mandatory report/bug tracking, testing, and PR readiness.
+
+standard:
+  config: standard.yaml
+  one_task_structure: true
+
+commands:
+  plan: planning-mode
+  quick: quick-mode
+  input-sync: input-sync-mode
+  figma: figma-extraction-mode
+  figma-review: figma-review-mode
+  cook: implementation-mode
+  bugfix: bugfix-mode
+  review: review-mode
+  test: testing-mode
+  pr: pr-ready-mode
+
+required_task_files:
+  - task.md
+  - planning/implementation-plan.md
+  - planning/build-checklist.md
+  - planning/questions.md
+  - tracking/workflow-status.md
+  - output/figma-reference-screenshots/.gitkeep
+
+conditional_task_files:
+  - tracking/input-sync-report.md
+  - tracking/cr-impact-report.md
+  - tracking/review-bugs.md
+  - output/figma-extraction-summary.md
+  - output/review-report.md
+  - output/test-summary.md
+  - output/pr-summary.md
+  - output/ui-figma-review-report.md

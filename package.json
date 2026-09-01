@@ -1,0 +1,37 @@
+{
+  "name": "frontend-delivery-agent-kit",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Bộ chuẩn frontend delivery tiếng Việt, token-lean, rules folder chung, output bắt buộc theo mode, input ledger, blocking question input-sync gate, evidence/scope gates cho SRS/Figma/code/test.",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "bin": {
+    "fe-kit": "./bin/fe-kit.mjs"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {
+    "@frontend-delivery-kit/validators": "*"
+  },
+  "scripts": {
+    "build": "node build/generate-adapters.mjs",
+    "build:check": "node build/generate-adapters.mjs --check",
+    "pack:chatgpt": "npm run build && node build/pack-chatgpt-skill.mjs",
+    "init": "node bin/fe-kit.mjs init",
+    "doctor": "node bin/fe-kit.mjs doctor",
+    "new:task": "node bin/fe-kit.mjs new-task",
+    "status": "node bin/fe-kit.mjs status",
+    "next": "node bin/fe-kit.mjs next",
+    "validate:task": "node bin/fe-kit.mjs validate-task",
+    "validate:workflow": "node bin/fe-kit.mjs validate-workflow",
+    "validate:pr": "node bin/fe-kit.mjs validate-pr",
+    "test": "npm run test --workspace=@frontend-delivery-kit/validators"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "license": "MIT"
+}

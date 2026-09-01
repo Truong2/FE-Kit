@@ -1,0 +1,9 @@
+# Mặc định: toàn repo cần review của maintainer kit
+*                                   @your-org/frontend-platform
+
+# Vùng nhạy cảm — đổi là breaking cho mọi task folder đang chạy
+/packages/validators/src/schema.mjs @your-org/frontend-platform
+/packages/validators/src/gates.mjs  @your-org/frontend-platform
+/core/                              @your-org/frontend-platform
+/standard.yaml                      @your-org/frontend-platform
+/kit.yaml                           @your-org/frontend-platform

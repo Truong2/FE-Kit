@@ -1,0 +1,95 @@
+name: frontend-delivery-standard
+version: 0.1.16
+status: draft-start
+owner: frontend-platform-team
+description: >
+  Bộ chuẩn frontend delivery ưu tiên tiếng Việt cho người Việt: planning dựa trên SRS,
+  quick task rủi ro thấp, Figma evidence/UI contract, input sync cho CR/câu trả lời clarification,
+  implementation, review bắt buộc có report/bug tracking, testing, PR readiness,
+  token budget, scope diff và command evidence.
+
+language_policy:
+  artifact_language: vi
+  vietnamese_first: true
+  cache_marker: vi-diacritics-rules-folder-v1.0.0
+  keep_exact:
+    - code identifiers
+    - file paths
+    - commands
+    - api fields
+    - dto names
+    - error codes
+    - route names
+    - package names
+    - srs section ids
+
+standard_task_structure:
+  required:
+    - task.md
+    - planning/implementation-plan.md
+    - planning/build-checklist.md
+    - planning/questions.md
+    - tracking/workflow-status.md
+    - output/figma-reference-screenshots/.gitkeep
+  conditional:
+    - tracking/input-sync-report.md
+    - tracking/cr-impact-report.md
+    - tracking/review-bugs.md
+    - output/figma-extraction-summary.md
+    - output/review-report.md
+    - output/test-summary.md
+    - output/pr-summary.md
+    - output/ui-figma-review-report.md
+
+core_modes:
+  plan: planning-mode
+  quick: quick-mode
+  input-sync: input-sync-mode
+  figma: figma-extraction-mode
+  figma-review: figma-review-mode
+  cook: implementation-mode
+  bugfix: bugfix-mode
+  review: review-mode
+  test: testing-mode
+  pr: pr-ready-mode
+
+rules:
+  srs_as_api_source_of_truth: true
+  questions_file_required: true
+  implementation_plan_architecture_required: true
+  build_checklist_sync_required: true
+  input_sync_report_on_cr_only: true
+  figma_gate_required_for_ui: true
+  ui_implementation_contract_required_for_figma: true
+  figma_visual_truth_when_gate_passed: true
+  ui_match_review_required_before_pr_for_figma: true
+  asset_gate_required_for_new_assets: true
+  workflow_status_owns_next_prompt: true
+  one_task_structure_only: true
+  vietnamese_artifacts_default: true
+  api_error_mapping_required: true
+  fe_error_display_decision_required: true
+  prefer_core_error_components: true
+  skill_rules_folder_required: true
+  implementation_rule_contract_required_for_clean_code: true
+  clean_code_gate_required: true
+  srs_trace_matrix_required: true
+  srs_logic_coverage_required: true
+  figma_node_matrix_required: true
+  figma_component_binding_required: true
+  implementation_screenshot_required_before_pr_for_figma: true
+  block_pr_on_critical_high_ui_mismatch: true
+  review_report_required: true
+  review_bugs_file_required_when_issue_found: true
+  workflow_status_must_update_after_review: true
+  plan_input_ledger_required: true
+  workflow_status_must_list_plan_inputs: true
+  token_budget_required: true
+  read_required_files_only: true
+  scope_diff_check_required: true
+  command_evidence_required: true
+  playwright_screenshot_diff_optional: true
+  block_pr_on_scope_diff_fail: true
+
+rules_folder: .frontend-delivery/rules
+feature_source_context_file: docs/frontend-context/feature-source-context.md

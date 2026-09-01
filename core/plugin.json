@@ -1,0 +1,19 @@
+{
+  "name": "frontend-delivery",
+  "description": "Quy trình frontend delivery chuẩn: FE plan/quick/input-sync/figma/cook/review/bugfix/test/figma-review/pr với SRS-API contract, Figma UI contract, input ledger, blocking question gate và evidence/scope gates. Mọi artifact viết bằng tiếng Việt có dấu.",
+  "version": "1.1.0",
+  "author": {
+    "name": "Frontend Platform Team"
+  },
+  "homepage": "https://github.com/your-org/frontend-delivery-agent-kit",
+  "repository": "https://github.com/your-org/frontend-delivery-agent-kit",
+  "license": "MIT",
+  "keywords": [
+    "frontend",
+    "workflow",
+    "srs",
+    "figma",
+    "code-review",
+    "vietnamese"
+  ]
+}
