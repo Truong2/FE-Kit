@@ -1,8 +1,10 @@
-# FE bugfix
+---
+description: Chuẩn bị PR summary và readiness evidence.
+---
 
-Dùng skill `frontend-delivery-standard` trong `bugfix-mode`.
+Dùng skill `frontend-delivery-standard` trong `pr-ready-mode`.
 
-Nếu bug làm thay đổi requirement, API, state/store/hook, flow hoặc Figma assumption, chạy `FE input-sync` trước.
+Output chính: `output/pr-summary.md` và cập nhật `tracking/workflow-status.md`.
 
 ## Ngôn ngữ output
 

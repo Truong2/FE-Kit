@@ -1,4 +1,6 @@
-# FE bugfix
+---
+description: Sửa bug trong phạm vi plan hiện tại.
+---
 
 Dùng skill `frontend-delivery-standard` trong `bugfix-mode`.
 

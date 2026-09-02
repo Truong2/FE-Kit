@@ -1,4 +1,6 @@
-# FE build
+---
+description: Implement FE task theo implementation-plan và build-checklist.
+---
 
 Dùng skill `frontend-delivery-standard` trong `implementation-mode`.
 

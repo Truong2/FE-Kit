@@ -1,6 +1,8 @@
 # FE test
 
-Use `frontend-delivery-standard` in `testing-mode`. Run or record test evidence and update checklist/status.
+Dùng skill `frontend-delivery-standard` trong `testing-mode`.
+
+Có thể tạo `output/test-summary.md` nếu cần tóm tắt test riêng.
 
 ## Ngôn ngữ output
 
