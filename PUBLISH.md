@@ -4,7 +4,7 @@
 
 | Placeholder | Có trong | Thay bằng |
 |---|---|---|
-| `your-org/frontend-delivery-agent-kit` | `INSTALL.md`, `core/plugin.json`, `.claude-plugin/marketplace.json` | `<org>/<repo>` thật |
+| `your-org/frontend-delivery-agent-kit` | `INSTALL.md`, `README.md`, `QUICKSTART.md`, `core/plugin.json`, `.claude-plugin/marketplace.json` | `<org>/<repo>` thật |
 | `frontend-platform@example.com` | `.claude-plugin/marketplace.json` | email team thật |
 | `@your-org/frontend-platform` | `CODEOWNERS` | team GitHub thật |
 | `Frontend Platform Team` | `LICENSE` | pháp nhân công ty |
@@ -31,19 +31,28 @@ git push -u origin main
 git tag v1.0.0 && git push --tags
 ```
 
-**Phải commit các thư mục generate** (`plugins/`, `.claude/`, `.codex/`, `.cursor/`, `.github/`, `rules/`, `templates/`, `standards/`, `docs/`): marketplace trỏ tới `./plugins/frontend-delivery` bằng relative path, và người cài plugin không chạy `npm run build`. `.gitignore` hiện đã đúng — chỉ bỏ `node_modules`.
+**Phải commit các thư mục generate** (`plugins/`, `.claude/`, `.codex/`, `.cursor/`, `.github/`, `rules/`, `templates/`, `standards/`, `docs/`): marketplace trỏ tới `./plugins/fe` bằng relative path, và người cài plugin không chạy `npm run build`. `.gitignore` hiện đã đúng — chỉ bỏ `node_modules`.
 
 ## Bước 3 — Team cài
 
+Cài cho **tất cả dự án** trên máy mỗi người (scope `user`, mặc định):
+
 ```
 /plugin marketplace add CONG-TY/frontend-delivery-agent-kit
-/plugin install frontend-delivery@frontend-delivery
+/plugin install fe@frontend-delivery
 /reload-plugins
+```
+
+Chỉ cài cho **một repo dự án** thì chạy tại gốc repo đó với `--scope project` (ghi vào `.claude/settings.json` của repo, commit được — xem bước 4) hoặc `--scope local` (ghi vào `.claude/settings.local.json`, không commit):
+
+```bash
+claude plugin marketplace add CONG-TY/frontend-delivery-agent-kit --scope project
+claude plugin install fe@frontend-delivery --scope project
 ```
 
 Cài xong mỗi người có ngay, không cần thêm bước nào:
 
-- **11 slash command** — `/frontend-delivery:fe-new-task`, `fe-plan`, `fe-quick`, `fe-input-sync`, `fe-figma`, `fe-figma-review`, `fe-cook`, `fe-review`, `fe-bugfix`, `fe-test`, `fe-pr`
+- **11 slash command** — `/fe:new-task`, `/fe:plan`, `/fe:quick`, `/fe:input-sync`, `/fe:figma`, `/fe:figma-review`, `/fe:cook`, `/fe:review`, `/fe:bugfix`, `/fe:test`, `/fe:pr`
 - **1 skill** — `frontend-delivery-standard` (rules, templates, standards)
 - **6 subagent** — planner, developer, reviewer, tester, figma-specialist, release-manager
 - **5 MCP tool** — `fe_validate_task`, `fe_validate_workflow`, `fe_next_step`, `fe_task_status`, `fe_list_tasks`
@@ -52,7 +61,7 @@ MCP server nằm sẵn trong plugin dưới dạng file bundle standalone, khai 
 
 ## Bước 4 — Bật tự động cho cả team (khuyến nghị)
 
-Commit file này vào **repo dự án** (không phải repo kit). Ai clone dự án và trust folder là tự có plugin, không phải gõ lệnh cài:
+Commit file này vào **repo dự án** (không phải repo kit). Ai clone dự án và trust folder là tự có plugin, không phải gõ lệnh cài. Đây chính là file mà `--scope project` ở bước 3 sinh ra — bạn có thể chạy 2 lệnh đó rồi commit, hoặc viết tay:
 
 ```json
 // .claude/settings.json
@@ -62,7 +71,7 @@ Commit file này vào **repo dự án** (không phải repo kit). Ai clone dự 
       "source": { "source": "github", "repo": "CONG-TY/frontend-delivery-agent-kit" }
     }
   },
-  "enabledPlugins": { "frontend-delivery@frontend-delivery": true }
+  "enabledPlugins": { "fe@frontend-delivery": true }
 }
 ```
 
@@ -85,8 +94,15 @@ Người dùng cập nhật:
 
 ```
 /plugin marketplace update frontend-delivery
-/plugin update frontend-delivery@frontend-delivery
+/plugin update fe@frontend-delivery
 /reload-plugins
+```
+
+Người đã cài bản trước khi plugin đổi tên (`frontend-delivery@frontend-delivery`, command `/frontend-delivery:fe-*`) phải gỡ rồi cài lại — `update` không chuyển sang tên plugin mới:
+
+```bash
+/plugin uninstall frontend-delivery@frontend-delivery
+/plugin install fe@frontend-delivery
 ```
 
 ## Repo private

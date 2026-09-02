@@ -1,6 +1,6 @@
 {
   "name": "frontend-delivery-agent-kit",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Bộ chuẩn frontend delivery tiếng Việt, token-lean, rules folder chung, output bắt buộc theo mode, input ledger, blocking question input-sync gate, evidence/scope gates cho SRS/Figma/code/test.",
   "type": "module",

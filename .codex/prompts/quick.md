@@ -1,7 +1,5 @@
 # FE quick
 
-# FE quick
-
 Dùng khi task frontend nhỏ, rõ scope, rủi ro thấp.
 
 Điều kiện bắt buộc trước khi sửa code:

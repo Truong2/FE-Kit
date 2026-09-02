@@ -1,4 +1,6 @@
-# FE quick
+---
+description: Chạy nhanh task FE nhỏ, rõ scope, rủi ro thấp — gộp plan/cook/review vào một lượt.
+---
 
 Dùng khi task frontend nhỏ, rõ scope, rủi ro thấp.
 

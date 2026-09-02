@@ -8,10 +8,10 @@
   },
   "plugins": [
     {
-      "name": "frontend-delivery",
-      "source": "./plugins/frontend-delivery",
-      "description": "Skill + 10 slash command (FE plan/quick/input-sync/figma/cook/review/bugfix/test/figma-review/pr) + 6 subagent cho quy trình frontend delivery chuẩn, output tiếng Việt có dấu.",
-      "version": "1.0.0",
+      "name": "fe",
+      "source": "./plugins/fe",
+      "description": "Skill + 11 slash command /fe:* (new-task/plan/quick/input-sync/figma/cook/review/bugfix/test/figma-review/pr) + 6 subagent cho quy trình frontend delivery chuẩn, output tiếng Việt có dấu.",
+      "version": "1.1.0",
       "author": {
         "name": "Frontend Platform Team"
       },

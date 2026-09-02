@@ -1,8 +1,41 @@
 # Quickstart
 
-Version: 1.0.0
+Version: 1.1.0
 
-## Cài dùng ngay (team dùng kit)
+## Cài Claude Code plugin (nhanh nhất, chỉ cần slash command + skill)
+
+Dùng cho **tất cả dự án** trên máy (mặc định):
+
+```bash
+# trong phiên Claude Code
+/plugin marketplace add your-org/frontend-delivery-agent-kit
+/plugin install fe@frontend-delivery
+```
+
+Terminal: `claude plugin marketplace add …` rồi `claude plugin install fe@frontend-delivery`.
+
+Chỉ áp cho **1 dự án** thì chạy tại thư mục gốc repo với `--scope project` (ghi vào `<repo>/.claude/settings.json`, commit là cả team có) hoặc `--scope local` (ghi vào `.claude/settings.local.json`, không commit):
+
+```bash
+claude plugin marketplace add your-org/frontend-delivery-agent-kit --scope project
+claude plugin install fe@frontend-delivery --scope project
+```
+
+Cài xong là có luôn 11 command namespace `fe`:
+
+```text
+/fe:new-task FE-123-task-name
+/fe:plan docs/frontend-tasks/FE-123-task-name
+/fe:cook docs/frontend-tasks/FE-123-task-name
+/fe:review docs/frontend-tasks/FE-123-task-name
+/fe:pr docs/frontend-tasks/FE-123-task-name
+```
+
+Cập nhật: `/plugin marketplace update frontend-delivery` rồi `/plugin update fe@frontend-delivery`.
+
+Plugin **không** kèm CLI `fe-kit` — muốn `new-task`/`validate-*` chạy được ngoài phiên chat (ví dụ trong CI) thì cài thêm phần dưới.
+
+## Cài dùng ngay qua CLI (team dùng kit)
 
 ```bash
 git clone <kit-repo-url> && cd frontend-delivery-agent-kit
@@ -12,7 +45,9 @@ node bin/fe-kit.mjs doctor --target /path/to/your-project --strict
 node bin/fe-kit.mjs new-task FE-123-task-name --target /path/to/your-project
 ```
 
-Sau init, rule mặc định nằm trong `.frontend-delivery/rules/`. Context riêng của project nằm trong `docs/frontend-context/`.
+Sau init, rule mặc định nằm trong `.frontend-delivery/rules/`. Context riêng của project nằm trong `docs/frontend-context/`. Bản cài qua CLI cũng dùng `/fe:plan`, `/fe:cook`… — nếu đã cài plugin thì bỏ `claude` khỏi `--agents` để tránh sinh bộ command trùng tên.
+
+Đầy đủ 4 đường cài (plugin, CLI, adapter Codex/Cursor/Copilot/ChatGPT, CI) xem [INSTALL.md](INSTALL.md).
 
 `feature-source-context.md` chỉ mô tả feature mẫu/cách code feature mẫu nếu có. Không đặt rule chung trong file này.
 

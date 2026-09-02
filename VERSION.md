@@ -1,7 +1,7 @@
 # Version
 
-Current version: 1.0.0
+Current version: 1.1.0
 
-Status: stable — bản phát hành đầu tiên cho team.
+Status: stable — plugin đổi namespace slash command sang `/fe:*`.
 
 Xem chi tiết trong `CHANGELOG.md`.

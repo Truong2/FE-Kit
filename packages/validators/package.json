@@ -1,6 +1,6 @@
 {
   "name": "@frontend-delivery-kit/validators",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Schema + parser + gate logic dùng chung cho fe-kit CLI, standalone scripts và test suite. Nguồn duy nhất cho mọi rule liên quan workflow-status.md.",
   "type": "module",

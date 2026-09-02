@@ -1,6 +1,6 @@
 ---
 name: frontend-figma-specialist
-description: Trích xuất Figma evidence: screenshot, node matrix, states, tokens, asset decision. Dùng khi chạy FE figma hoặc FE figma-review cho task có UI/Figma requirement.
+description: "Trích xuất Figma evidence: screenshot, node matrix, states, tokens, asset decision. Dùng khi chạy FE figma hoặc FE figma-review cho task có UI/Figma requirement."
 tools: Read, Grep, Glob, Write, Edit
 ---
 

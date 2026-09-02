@@ -206,6 +206,9 @@ function parseFrontMatter(text) {
 
 function exists(p) { return fs.existsSync(p); }
 
+/** Đưa path về dạng POSIX để ghi vào artifact `.md` (YAML frontmatter, prompt). */
+function toPosix(p) { return String(p).split(path.sep).join('/'); }
+
 function walk(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -559,7 +562,12 @@ function newTask() {
   fs.mkdirSync(path.join(taskDir, 'tracking'), { recursive: true });
   fs.mkdirSync(path.join(taskDir, 'output', 'figma-reference-screenshots'), { recursive: true });
 
-  const replacements = (txt) => txt.replaceAll('<task-folder>', path.relative(target, taskDir) || taskDir).replaceAll('<task-id>', slug).replaceAll('<TASK_ID>', slug);
+  // Path ghi vào artifact luôn dùng dấu `/`: trên Windows `path.relative` trả
+  // về `docs\frontend-tasks\...`, và khi chèn vào scalar YAML nháy kép
+  // (`next_prompt: "FE plan <task-folder>"`) thì `\f` là escape sequence không
+  // hợp lệ => validate-workflow không parse được frontmatter.
+  const taskRel = toPosix(path.relative(target, taskDir) || taskDir);
+  const replacements = (txt) => txt.replaceAll('<task-folder>', taskRel).replaceAll('<task-id>', slug).replaceAll('<TASK_ID>', slug);
   const files = [
     ['task.md', 'task.md'],
     [path.join('planning', 'implementation-plan.md'), path.join('planning', 'implementation-plan.md')],
@@ -584,7 +592,6 @@ function newTask() {
   // tránh lệch nếu default template thay đổi sau này.
   const workflowText = read(path.join(taskDir, 'tracking', 'workflow-status.md'));
   const realNextPrompt = extractNextPrompt(workflowText);
-  const taskRel = path.relative(target, taskDir) || taskDir;
   console.log(`\nTiếp theo: ${realNextPrompt || `FE plan ${taskRel}`}`);
   console.log('Nếu SRS có req/res/DTO/error context thì SRS là source of truth cho API.');
   console.log(`Task nhỏ, rủi ro thấp, không cần re-plan/input-sync/Figma? Dùng thay: FE quick ${taskRel}`);
