@@ -1,4 +1,6 @@
-# FE plan
+---
+description: Lập kế hoạch FE từ SRS/source/Figma, không code.
+---
 
 Dùng skill `frontend-delivery-standard` trong `planning-mode`.
 

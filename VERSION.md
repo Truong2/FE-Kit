@@ -1,7 +1,7 @@
 # Version
 
-Current version: 1.1.0
+Current version: 1.0.0
 
-Status: stable
+Status: stable — bản phát hành đầu tiên cho team.
 
-Xem chi tiết thay đổi trong `CHANGELOG.md`.
+Xem chi tiết trong `CHANGELOG.md`.

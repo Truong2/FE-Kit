@@ -1,4 +1,6 @@
-# FE figma-review
+---
+description: Đối chiếu UI đã build với Figma/reference screenshot, báo visual mismatch.
+---
 
 Bạn đang chạy `figma-review-mode`.
 

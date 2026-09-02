@@ -1,6 +1,0 @@
----
-description: Code implementation rules
-alwaysApply: false
----
-
-Build only according to the plan/checklist. Do not create unplanned global state/store/context or duplicate server-state into global state. Run input sync if requirements change.

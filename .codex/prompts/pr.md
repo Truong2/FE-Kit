@@ -1,6 +1,8 @@
 # FE pr
 
-Use `frontend-delivery-standard` in `pr-ready-mode`. Produce `output/pr-summary.md` and update workflow status.
+Dùng skill `frontend-delivery-standard` trong `pr-ready-mode`.
+
+Output chính: `output/pr-summary.md` và cập nhật `tracking/workflow-status.md`.
 
 ## Ngôn ngữ output
 

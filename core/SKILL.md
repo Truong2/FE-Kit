@@ -1,6 +1,6 @@
 ---
 name: frontend-delivery-standard
-description: dùng cho task frontend cần FE plan, FE quick, FE input-sync, FE figma, FE figma-review, FE cook, FE review, FE bugfix, FE test, FE pr. Bắt buộc tiếng Việt có dấu, rules folder chung, output tối thiểu theo mode, SRS/Figma gates, token budget, scope diff, command evidence và blocking question input-sync gate. Bản 1.0.x chặn route sang cook khi còn câu hỏi blocking/open.
+description: dùng cho task frontend cần FE plan, FE quick, FE input-sync, FE figma, FE figma-review, FE cook, FE review, FE bugfix, FE test, FE pr. Bắt buộc tiếng Việt có dấu, rules folder chung, output tối thiểu theo mode, SRS/Figma gates, token budget, scope diff, command evidence và blocking question input-sync gate. Chặn route sang cook khi còn câu hỏi blocking/open.
 ---
 
 # Frontend Delivery Standard

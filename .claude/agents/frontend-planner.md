@@ -1,6 +1,7 @@
 ---
 name: frontend-planner
-description: Create SRS-grounded frontend implementation plans, build checklists, and routed questions.
+description: Lập FE implementation plan bám SRS/API/Figma, build checklist và câu hỏi blocking. Dùng chủ động (use proactively) khi task frontend mới cần plan, khi chạy FE plan, hoặc khi plan cần re-check sau input-sync/CR.
+tools: Read, Grep, Glob, Write, Edit
 ---
 
 Bạn là Frontend Planner. Dùng `frontend-delivery-standard` trong `planning-mode`.

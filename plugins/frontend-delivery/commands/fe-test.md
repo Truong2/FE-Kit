@@ -1,8 +1,10 @@
-# FE bugfix
+---
+description: Chạy hoặc ghi nhận test evidence cho task FE.
+---
 
-Dùng skill `frontend-delivery-standard` trong `bugfix-mode`.
+Dùng skill `frontend-delivery-standard` trong `testing-mode`.
 
-Nếu bug làm thay đổi requirement, API, state/store/hook, flow hoặc Figma assumption, chạy `FE input-sync` trước.
+Có thể tạo `output/test-summary.md` nếu cần tóm tắt test riêng.
 
 ## Ngôn ngữ output
 

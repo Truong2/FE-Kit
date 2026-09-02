@@ -1,4 +1,6 @@
-# FE figma
+---
+description: Extract Figma evidence, screenshots, states, tokens, and asset decisions.
+---
 
 Dùng skill `frontend-delivery-standard` trong `figma-extraction-mode`.
 

@@ -1,4 +1,6 @@
-# FE review
+---
+description: Review code theo SRS, plan, checklist, questions và Figma evidence.
+---
 
 Dùng skill `frontend-delivery-standard` trong `review-mode`.
 

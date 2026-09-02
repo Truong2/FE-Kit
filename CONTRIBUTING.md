@@ -30,9 +30,9 @@ Schema nằm ở `packages/validators/src/schema.mjs`. Thêm/xoá/đổi enum c�
 
 Logic gate chỉ nằm ở `packages/validators/src/gates.mjs` — nguồn duy nhất. Không copy logic sang `bin/fe-kit.mjs` hay `core/scripts/`. Mỗi thay đổi gate phải kèm ít nhất 1 test case pass + 1 test case fail trong `packages/validators/test/`.
 
-## Command files (chưa được generate tự động)
+## Command files
 
-`.claude/commands/fe/*.md`, `.codex/prompts/*.md`, `.cursor/rules/*.mdc`, `.github/instructions/*.md` hiện **phải sửa tay đồng thời ở mọi adapter**. Khi đổi nội dung một mode, kiểm tra lại cả 4 nơi cho khớp. (Xem CHANGELOG 1.0.2 mục Known gap.)
+`.claude/commands/fe/*.md` và `.codex/prompts/*.md` được **generate từ `core/commands/`** — sửa trong `core/commands/` rồi `npm run build`. Còn `.cursor/rules/*.mdc` và `.github/instructions/*.md` vẫn sửa tay (nội dung khác biệt theo tool, chưa unify).
 
 ## Commit convention
 

@@ -24,9 +24,12 @@ claude plugin install frontend-delivery@frontend-delivery
 Sau khi cài, command được namespace theo tên plugin:
 
 ```
-/frontend-delivery:fe:plan docs/frontend-tasks/FE-123-abc
-/frontend-delivery:fe:cook docs/frontend-tasks/FE-123-abc
+/frontend-delivery:fe-new-task FE-123-abc
+/frontend-delivery:fe-plan docs/frontend-tasks/FE-123-abc
+/frontend-delivery:fe-cook docs/frontend-tasks/FE-123-abc
 ```
+
+Lưu ý: command trong plugin là file phẳng prefix `fe-` (spec plugin không hỗ trợ thư mục con trong `commands/`). Bản cài project-level qua CLI (`fe-kit init --agents claude`) vẫn dùng dạng `/fe:plan`.
 
 ### Bắt cả team tự có marketplace (không cần ai gõ lệnh add)
 

@@ -1,6 +1,6 @@
 {
   "name": "frontend-delivery-agent-kit",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Bộ chuẩn frontend delivery tiếng Việt, token-lean, rules folder chung, output bắt buộc theo mode, input ledger, blocking question input-sync gate, evidence/scope gates cho SRS/Figma/code/test.",
   "type": "module",
@@ -31,6 +31,7 @@
     "test": "npm run test --workspace=@frontend-delivery-kit/validators"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "esbuild": "^0.28.2"
   },
   "license": "MIT"

@@ -1,4 +1,6 @@
-# FE input-sync
+---
+description: Đồng bộ CR, file trả lời câu hỏi, clarification, SRS/Figma/source update vào task.
+---
 
 Dùng skill `frontend-delivery-standard` trong `input-sync-mode`.
 
