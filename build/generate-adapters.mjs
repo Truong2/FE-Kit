@@ -127,6 +127,57 @@ function generateCommands() {
   if (!CHECK_ONLY) console.log(`[generate-adapters] core/commands -> .claude/commands/fe + .codex/prompts (${files.length} lệnh)`);
 }
 
+/**
+ * Command files sinh từ core/commands/ cho từng adapter.
+ * - Claude (.claude/commands/fe/): giữ nguyên (nguồn đã có frontmatter description).
+ * - Codex (.codex/prompts/): bỏ frontmatter, thay bằng heading `# FE <cmd>`.
+ * Tên file Codex khác tên Claude ở 2 chỗ (lịch sử): cook→build, figma→figma-extract.
+ */
+const COMMAND_CODEX_NAME = { 'cook.md': 'build.md', 'figma.md': 'figma-extract.md' };
+
+function generateCommands() {
+  const srcDir = path.join(CORE, 'commands');
+  if (!fs.existsSync(srcDir)) {
+    hadDrift = true;
+    console.error('[generate-adapters] Thiếu core/commands');
+    return;
+  }
+  const files = fs.readdirSync(srcDir).filter((f) => f.endsWith('.md'));
+
+  const outputs = [];
+  for (const f of files) {
+    const raw = fs.readFileSync(path.join(srcDir, f), 'utf8');
+    outputs.push({ to: path.join('.claude/commands/fe', f), content: raw });
+
+    const cmdName = f.replace(/\.md$/, '');
+    const fm = raw.match(/^---\n[\s\S]*?\n---\n\n?/);
+    const body = fm ? raw.slice(fm[0].length) : raw;
+    const codexFile = COMMAND_CODEX_NAME[f] || f;
+    const codexCmd = codexFile.replace(/\.md$/, '').replace('figma-extract', 'figma');
+    outputs.push({ to: path.join('.codex/prompts', codexFile), content: `# FE ${codexCmd}\n\n${body}` });
+
+    // Plugin: commands/ trong plugin CHỈ nhận file .md phẳng — thư mục con bị
+    // Claude Code hiểu là skill (phải có SKILL.md) và bị bỏ qua. Vì vậy plugin
+    // dùng file phẳng prefix fe- => slash command /frontend-delivery:fe-<cmd>.
+    outputs.push({ to: path.join(PLUGIN_ROOT, 'commands', `fe-${f}`), content: raw });
+  }
+
+  for (const o of outputs) {
+    const destFile = path.join(ROOT, o.to);
+    if (CHECK_ONLY) {
+      const cur = fs.existsSync(destFile) ? fs.readFileSync(destFile, 'utf8') : null;
+      if (cur !== o.content) {
+        hadDrift = true;
+        console.error(`[generate-adapters] Lệch tại ${o.to} (nguồn: core/commands)`);
+      }
+    } else {
+      fs.mkdirSync(path.dirname(destFile), { recursive: true });
+      fs.writeFileSync(destFile, o.content);
+    }
+  }
+  if (!CHECK_ONLY) console.log(`[generate-adapters] core/commands -> .claude/commands/fe + .codex/prompts (${files.length} lệnh)`);
+}
+
 function listFilesRecursive(dir) {
   const out = [];
   if (!fs.existsSync(dir)) return out;
