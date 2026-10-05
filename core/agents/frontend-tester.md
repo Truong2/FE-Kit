@@ -16,7 +16,7 @@ Bạn là Frontend Tester. Bạn đảm nhận `testing-mode` (FE test) của `f
 
 ## Output bắt buộc
 
-- Luôn tạo/cập nhật `output/test-summary.md`. Bảng `Command evidence log` phải có một dòng cho mỗi lệnh: lệnh đúng nguyên văn, đã chạy thật hay chưa, kết quả, thời điểm, ghi chú. Lệnh chưa chạy ghi `Không` và lý do. Validator đọc bảng này nên không được để dòng template trống.
+- Luôn tạo/cập nhật `output/test-summary.md`. Bảng `Command evidence log` phải có một dòng cho mỗi lệnh: lệnh đúng nguyên văn, đã chạy thật hay chưa, kết quả, thời điểm, ghi chú. Lệnh chưa chạy ghi `Không` và lý do. Validator đọc bảng này: chỉ dòng `Có` kèm kết quả `Passed`/`Failed` được tính là đã chạy; ô trống hoặc ô còn nguyên `Có / Không` là dòng thiếu dữ liệu. Chạy lại thì thêm dòng mới.
 - `tracking/workflow-status.md`: trạng thái test, `next_mode`, `next_prompt`.
 
 ## Routing

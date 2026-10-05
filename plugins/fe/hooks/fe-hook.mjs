@@ -3424,7 +3424,7 @@ var require_parse = __commonJS({
 var require_gray_matter = __commonJS({
   "node_modules/gray-matter/index.js"(exports2, module2) {
     "use strict";
-    var fs3 = __require("fs");
+    var fs4 = __require("fs");
     var sections = require_section_matter();
     var defaults = require_defaults();
     var stringify = require_stringify();
@@ -3508,7 +3508,7 @@ var require_gray_matter = __commonJS({
       return stringify(file2, data, options2);
     };
     matter2.read = function(filepath, options2) {
-      const str2 = fs3.readFileSync(filepath, "utf8");
+      const str2 = fs4.readFileSync(filepath, "utf8");
       const file2 = matter2(str2, options2);
       file2.path = filepath;
       return file2;
@@ -3537,13 +3537,13 @@ var require_gray_matter = __commonJS({
 });
 
 // core/hooks/fe-hook.mjs
-import fs2 from "node:fs";
+import fs3 from "node:fs";
 import os from "node:os";
-import path3 from "node:path";
+import path4 from "node:path";
 
 // packages/validators/src/index.mjs
-import fs from "node:fs";
-import path2 from "node:path";
+import fs2 from "node:fs";
+import path3 from "node:path";
 
 // packages/validators/src/parse.mjs
 var import_gray_matter = __toESM(require_gray_matter(), 1);
@@ -4292,10 +4292,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path4) {
-  if (!path4)
+function getElementAtPath(obj, path5) {
+  if (!path5)
     return obj;
-  return path4.reduce((acc, key) => acc?.[key], obj);
+  return path5.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -4707,11 +4707,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path4, issues) {
+function prefixIssues(path5, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path4);
+    iss.path.unshift(path5);
     return iss;
   });
 }
@@ -5144,16 +5144,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path4 = []) => {
+  const processError = (error62, path5 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else {
-        const fullpath = [...path4, ...issue2.path];
+        const fullpath = [...path5, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -5192,17 +5192,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path4 = []) => {
+  const processError = (error62, path5 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path4, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path5, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path4, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path5, ...issue2.path]);
       } else {
-        const fullpath = [...path4, ...issue2.path];
+        const fullpath = [...path5, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -5241,8 +5241,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path4 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path4) {
+  const path5 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path5) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -21752,13 +21752,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path4 = ref.slice(1).split("/").filter(Boolean);
-  if (path4.length === 0) {
+  const path5 = ref.slice(1).split("/").filter(Boolean);
+  if (path5.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path4[0] === defsKey) {
-    const key = path4[1] === void 0 ? void 0 : decodeJSONPointerSegment(path4[1]);
+  if (path5[0] === defsKey) {
+    const key = path5[1] === void 0 ? void 0 : decodeJSONPointerSegment(path5[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -22712,22 +22712,70 @@ function countOpenBlockingQuestions(questionsMarkdown) {
   }
   return count;
 }
-function hasCommandEvidence(testSummaryMarkdown) {
+var RAN_YES = /^(có|co|yes|y|true|đã chạy|da chay|ran)(?=$|[\s(,.:;-])/i;
+var RAN_NO = /^(không|khong|no|n|false|chưa chạy|chua chay|not run)(?=$|[\s(,.:;-])/i;
+var RESULT_NOT_RUN = /^(not run|chưa chạy|chua chay|skipped|bỏ qua|bo qua)(?=$|[\s(,.:;-])/i;
+var RESULT_FAIL = /(fail|lỗi|không đạt|khong dat|error)/i;
+var RESULT_PASS = /(pass|đạt|\bdat\b|\bok\b|success|thành công|thanh cong)/i;
+function templateChoiceCell(v) {
+  return /\S\s*\/\s*(không|khong|no|failed|not run)\b/i.test(v);
+}
+function commandEvidenceRows(testSummaryMarkdown) {
   const text = String(testSummaryMarkdown || "");
   const section = text.match(
     /^##\s+(?:\d+\.\s*)?Command evidence log[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
   );
-  if (!section) return false;
+  if (!section) return [];
+  const rows = [];
   for (const line of section[1].split(/\r?\n/)) {
     if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
     const cells = line.split("|").slice(1, -1).map((c) => c.trim().replace(/^`|`$/g, ""));
     if (/^command$/i.test(cells[0] || "")) continue;
     if (!realQuestionCell(cells[0])) continue;
-    const ran = cells[1] || "";
-    const notRun = /^(không|khong|no|chưa chạy|chua chay|not run)$/i.test(ran) || /\/\s*không/i.test(ran);
-    if (!notRun) return true;
+    rows.push({ command: cells[0], ran: cells[1] || "", result: cells[2] || "", time: cells[3] || "" });
   }
-  return false;
+  return rows;
+}
+function summarizeCommandEvidence(testSummaryMarkdown) {
+  const out = { ran: [], notRun: [], incomplete: [], missingTime: [], latestFailed: [] };
+  const latest = /* @__PURE__ */ new Map();
+  for (const row of commandEvidenceRows(testSummaryMarkdown)) {
+    const ranCell = templateChoiceCell(row.ran) ? "" : row.ran;
+    const resultCell = templateChoiceCell(row.result) ? "" : row.result;
+    if (RAN_NO.test(ranCell) || !ranCell && RESULT_NOT_RUN.test(resultCell)) {
+      out.notRun.push(row.command);
+      continue;
+    }
+    const outcome = RESULT_NOT_RUN.test(resultCell) ? "" : RESULT_FAIL.test(resultCell) ? "failed" : RESULT_PASS.test(resultCell) ? "passed" : "";
+    if (!RAN_YES.test(ranCell) || !outcome) {
+      out.incomplete.push(row.command);
+      continue;
+    }
+    out.ran.push(row.command);
+    if (!realQuestionCell(row.time)) out.missingTime.push(row.command);
+    latest.set(row.command, outcome);
+  }
+  for (const [command, outcome] of latest) if (outcome === "failed") out.latestFailed.push(command);
+  return out;
+}
+function hasCommandEvidence(testSummaryMarkdown) {
+  return summarizeCommandEvidence(testSummaryMarkdown).ran.length > 0;
+}
+function commandEvidenceWarnings(testSummaryMarkdown) {
+  const s = summarizeCommandEvidence(testSummaryMarkdown);
+  const warnings = [];
+  if (s.incomplete.length) {
+    warnings.push(
+      `Command evidence log c\xF3 d\xF2ng thi\u1EBFu d\u1EEF li\u1EC7u, kh\xF4ng \u0111\u01B0\u1EE3c t\xEDnh l\xE0 \u0111\xE3 ch\u1EA1y: ${s.incomplete.join(", ")}. Ghi r\xF5 "C\xF3" k\xE8m k\u1EBFt qu\u1EA3 Passed/Failed, ho\u1EB7c "Kh\xF4ng" k\xE8m l\xFD do.`
+    );
+  }
+  if (s.missingTime.length) {
+    warnings.push(`Command evidence log thi\u1EBFu th\u1EDDi \u0111i\u1EC3m ch\u1EA1y: ${s.missingTime.join(", ")}.`);
+  }
+  if (s.latestFailed.length) {
+    warnings.push(`L\u1EA7n ch\u1EA1y g\u1EA7n nh\u1EA5t \u0111ang Failed: ${s.latestFailed.join(", ")}. Route FE bugfix ho\u1EB7c ghi r\xF5 l\xFD do ch\u1EA5p nh\u1EADn.`);
+  }
+  return warnings;
 }
 var REQUIRED_TASK_FILES = [
   "task.md",
@@ -22870,6 +22918,7 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   if (["passed", "completed"].includes(commandEvidence) && exists("output/test-summary.md") && !hasCommandEvidence(read("output/test-summary.md"))) {
     errors.push("command_evidence_status=passed/completed nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.");
   }
+  if (exists("output/test-summary.md")) warnings.push(...commandEvidenceWarnings(read("output/test-summary.md")));
   const criticalOrHigh = Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0;
   if (criticalOrHigh && ["test", "pr"].includes(normalizeCommand(data.next_mode))) {
     errors.push("C\xF2n issue Critical/High th\xEC next_mode kh\xF4ng \u0111\u01B0\u1EE3c l\xE0 test/pr; route sang bugfix, input-sync ho\u1EB7c figma-review.");
@@ -22880,6 +22929,9 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
 
 // packages/validators/src/scope.mjs
 import { spawnSync } from "node:child_process";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path2 from "node:path";
 
 // packages/validators/src/resolve.mjs
 import path from "node:path";
@@ -23004,6 +23056,49 @@ function listChangedFiles({ cwd, base = "" }) {
   }
   return { ok: true, files: [...files].map(toPosix), base };
 }
+var SNAPSHOT_MAX_FILES = 2e3;
+var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
+function fingerprintFile(absPath) {
+  try {
+    const st = fs.statSync(absPath);
+    if (!st.isFile()) return "unknown";
+    if (st.size > SNAPSHOT_MAX_BYTES) return `size:${st.size}:${st.mtimeMs}`;
+    return crypto.createHash("sha1").update(fs.readFileSync(absPath)).digest("hex");
+  } catch (e) {
+    return e && e.code === "ENOENT" ? "deleted" : "unknown";
+  }
+}
+function snapshotFiles(cwd, files) {
+  const snapshot = {};
+  files.forEach((f, i) => {
+    snapshot[f] = i < SNAPSHOT_MAX_FILES ? fingerprintFile(path2.join(cwd, f)) : "skipped";
+  });
+  return snapshot;
+}
+function filesTouchedSince(cwd, snapshot, currentFiles) {
+  const touched = [];
+  const preDirtyTouched = [];
+  const current = new Set(currentFiles);
+  for (const f of current) {
+    if (!Object.prototype.hasOwnProperty.call(snapshot, f)) {
+      touched.push(f);
+      continue;
+    }
+    const before = snapshot[f];
+    if (before === "skipped") continue;
+    if (before === "unknown" || fingerprintFile(path2.join(cwd, f)) !== before) {
+      touched.push(f);
+      preDirtyTouched.push(f);
+    }
+  }
+  for (const f of Object.keys(snapshot)) {
+    if (!current.has(f) && snapshot[f] !== "skipped") {
+      touched.push(f);
+      preDirtyTouched.push(f);
+    }
+  }
+  return { touched, preDirtyTouched };
+}
 
 // packages/validators/src/modes.mjs
 var STATUS = "tracking/workflow-status.md";
@@ -23042,19 +23137,19 @@ var KIT_WRITABLE_PREFIXES = ["docs/frontend-tasks/", "docs/frontend-context/"];
 
 // packages/validators/src/index.mjs
 function taskIo(taskDir) {
-  const exists = (rel) => fs.existsSync(path2.join(taskDir, rel));
+  const exists = (rel) => fs2.existsSync(path3.join(taskDir, rel));
   const read = (rel) => {
-    const p = path2.join(taskDir, rel);
-    return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
+    const p = path3.join(taskDir, rel);
+    return fs2.existsSync(p) ? fs2.readFileSync(p, "utf8") : "";
   };
   return { exists, read };
 }
 function loadWorkflow(taskDir) {
-  const workflowPath = path2.join(taskDir, "tracking", "workflow-status.md");
-  if (!fs.existsSync(workflowPath)) {
+  const workflowPath = path3.join(taskDir, "tracking", "workflow-status.md");
+  if (!fs2.existsSync(workflowPath)) {
     return { ok: false, errors: ["Thi\u1EBFu tracking/workflow-status.md"] };
   }
-  return parseWorkflowStatus(fs.readFileSync(workflowPath, "utf8"));
+  return parseWorkflowStatus(fs2.readFileSync(workflowPath, "utf8"));
 }
 function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   let files = changedFiles;
@@ -23076,14 +23171,14 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   return { ...result, plannedFiles };
 }
 function plannedFilesOfSiblingTasks(taskDir) {
-  const parent = path2.dirname(taskDir);
-  if (!fs.existsSync(parent)) return [];
-  const self = path2.basename(taskDir);
+  const parent = path3.dirname(taskDir);
+  if (!fs2.existsSync(parent)) return [];
+  const self = path3.basename(taskDir);
   const planned = [];
-  for (const ent of fs.readdirSync(parent, { withFileTypes: true })) {
+  for (const ent of fs2.readdirSync(parent, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === self) continue;
-    const plan = path2.join(parent, ent.name, "planning", "implementation-plan.md");
-    if (fs.existsSync(plan)) planned.push(...parsePlannedFiles(fs.readFileSync(plan, "utf8")));
+    const plan = path3.join(parent, ent.name, "planning", "implementation-plan.md");
+    if (fs2.existsSync(plan)) planned.push(...parsePlannedFiles(fs2.readFileSync(plan, "utf8")));
   }
   return planned;
 }
@@ -23102,15 +23197,15 @@ function level() {
   return ["off", "warn", "enforce"].includes(v) ? v : DEFAULT_LEVEL;
 }
 function stateDir() {
-  const base = process.env.CLAUDE_PLUGIN_DATA || path3.join(os.tmpdir(), "fe-kit-hooks");
-  return path3.join(base, "sessions");
+  const base = process.env.CLAUDE_PLUGIN_DATA || path4.join(os.tmpdir(), "fe-kit-hooks");
+  return path4.join(base, "sessions");
 }
 function markerPath(sessionId) {
-  return path3.join(stateDir(), `${String(sessionId || "unknown").replace(/[^A-Za-z0-9_.-]/g, "_")}.json`);
+  return path4.join(stateDir(), `${String(sessionId || "unknown").replace(/[^A-Za-z0-9_.-]/g, "_")}.json`);
 }
 function readMarker(sessionId) {
   try {
-    const m = JSON.parse(fs2.readFileSync(markerPath(sessionId), "utf8"));
+    const m = JSON.parse(fs3.readFileSync(markerPath(sessionId), "utf8"));
     if (Date.now() - Number(m.startedAt || 0) > MARKER_TTL_MS) return null;
     return m;
   } catch {
@@ -23118,8 +23213,8 @@ function readMarker(sessionId) {
   }
 }
 function writeMarker(sessionId, marker) {
-  fs2.mkdirSync(stateDir(), { recursive: true });
-  fs2.writeFileSync(markerPath(sessionId), JSON.stringify(marker, null, 2));
+  fs3.mkdirSync(stateDir(), { recursive: true });
+  fs3.writeFileSync(markerPath(sessionId), JSON.stringify(marker, null, 2));
 }
 function kitAgentName(agentType) {
   const name = String(agentType || "").replace(/^fe:/, "");
@@ -23133,17 +23228,17 @@ function warn(message) {
 }
 function readFileSafe(p) {
   try {
-    return fs2.readFileSync(p, "utf8");
+    return fs3.readFileSync(p, "utf8");
   } catch {
     return "";
   }
 }
 function loadTask(taskDir) {
-  const workflowPath = path3.join(taskDir, "tracking", "workflow-status.md");
+  const workflowPath = path4.join(taskDir, "tracking", "workflow-status.md");
   const raw = readFileSafe(workflowPath);
   const loose = parseFrontMatterLoose(raw);
   const openBlockingQuestions = countOpenBlockingQuestions(
-    readFileSafe(path3.join(taskDir, "planning", "questions.md"))
+    readFileSafe(path4.join(taskDir, "planning", "questions.md"))
   );
   return { workflowPath, raw, loose, data: loose.data, openBlockingQuestions };
 }
@@ -23164,8 +23259,9 @@ function beginMode(payload, { command, taskArg, workspace }) {
   }
   const existing = readMarker(payload.session_id);
   if (existing && existing.status === "pending" && existing.task === taskDir && existing.command === command) {
-    return existing;
+    return { marker: existing, replaced: null };
   }
+  const replaced = existing && existing.status === "pending" ? existing : null;
   const marker = {
     task: taskDir,
     taskRef: relativePosix(workspace, taskDir),
@@ -23174,38 +23270,44 @@ function beginMode(payload, { command, taskArg, workspace }) {
     startedAt: Date.now(),
     status: "pending",
     delegated: false,
-    baselineChanged: []
+    // path → dấu vân tay nội dung của file đang dirty lúc mở mode
+    baseline: {}
   };
   if (SOURCE_EDIT_COMMANDS.includes(command)) {
     const changed = listChangedFiles({ cwd: workspace });
-    if (changed.ok) marker.baselineChanged = changed.files;
+    if (changed.ok) marker.baseline = snapshotFiles(workspace, changed.files);
   }
   writeMarker(payload.session_id, marker);
-  return marker;
+  return { marker, replaced };
+}
+function replacedMessage(replaced) {
+  return `[FE-Kit c\u1EA3nh b\xE1o] FE ${replaced.command} cho ${replaced.taskRef} ch\u01B0a qua gate k\u1EBFt th\xFAc mode th\xEC \u0111\xE3 b\u1EAFt \u0111\u1EA7u l\u1EC7nh FE kh\xE1c. Ki\u1EC3m tra l\u1EA1i tracking/workflow-status.md c\u1EE7a ${replaced.taskRef} tr\u01B0\u1EDBc khi ti\u1EBFp t\u1EE5c task \u0111\xF3.`;
 }
 function onPrompt(payload) {
   const parsed = parseFePrompt(payload.prompt);
   if (!parsed) return;
-  const workspace = path3.resolve(payload.cwd || process.cwd());
-  const marker = beginMode(payload, { ...parsed, workspace });
-  if (!marker) return;
+  const workspace = path4.resolve(payload.cwd || process.cwd());
+  const begun = beginMode(payload, { ...parsed, workspace });
+  if (!begun) return;
+  const { marker, replaced } = begun;
+  const out = replaced ? { systemMessage: replacedMessage(replaced) } : {};
   const { data, openBlockingQuestions, raw } = loadTask(marker.task);
-  if (!raw) return;
-  const entry = evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, taskRef: marker.taskRef });
-  if (entry.allowed) return;
-  emit({
-    hookSpecificOutput: {
+  const entry = raw ? evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, taskRef: marker.taskRef }) : { allowed: true };
+  if (!entry.allowed) {
+    out.hookSpecificOutput = {
       hookEventName: payload.hook_event_name,
       additionalContext: `[FE-Kit gate] FE ${marker.command} \u0111ang B\u1ECA CH\u1EB6N cho ${marker.taskRef}: ${entry.reasons.join(" ")} Kh\xF4ng s\u1EEDa source. C\u1EADp nh\u1EADt tracking/workflow-status.md v\xE0 route sang: ${entry.redirect}`
-    }
-  });
+    };
+  }
+  if (Object.keys(out).length) emit(out);
 }
 function onBeginModeTool(payload) {
   const input2 = payload.tool_input || {};
   const command = normalizeCommand(input2.mode);
   if (!command || !input2.task_folder) return;
-  const workspace = path3.resolve(input2.workspace_root || payload.cwd || process.cwd());
-  beginMode(payload, { command, taskArg: input2.task_folder, workspace });
+  const workspace = path4.resolve(input2.workspace_root || payload.cwd || process.cwd());
+  const begun = beginMode(payload, { command, taskArg: input2.task_folder, workspace });
+  if (begun?.replaced) emit({ systemMessage: replacedMessage(begun.replaced) });
 }
 function decide(payload, decision, reason) {
   emit({
@@ -23239,8 +23341,8 @@ function onPreEdit(payload) {
   const rawPath = toolInput.file_path || toolInput.notebook_path;
   if (!rawPath) return;
   const marker = readMarker(payload.session_id);
-  const workspace = marker?.workspace || path3.resolve(payload.cwd || process.cwd());
-  const filePath = path3.resolve(workspace, rawPath);
+  const workspace = marker?.workspace || path4.resolve(payload.cwd || process.cwd());
+  const filePath = path4.resolve(workspace, rawPath);
   if (!isPathInside(workspace, filePath)) return;
   if (turnsOnHumanOverride(filePath, toolInput)) {
     decide(
@@ -23271,6 +23373,10 @@ function onPreEdit(payload) {
     `FE ${marker.command} ch\u01B0a \u0111\u01B0\u1EE3c s\u1EEDa source cho ${marker.taskRef}: ${entry.reasons.join(" ")} Prompt \u0111\xFAng: ${entry.redirect}. (N\u1EBFu mode n\xE0y \u0111\xE3 b\u1ECB hu\u1EF7, ch\u1EA1y l\u1EC7nh FE kh\xE1c ho\u1EB7c \u0111\u1EB7t FE_KIT_HOOKS=off.)`
   );
 }
+function baselineOf(marker) {
+  if (marker.baseline && typeof marker.baseline === "object") return marker.baseline;
+  return Object.fromEntries((marker.baselineChanged || []).map((f) => [f, "skipped"]));
+}
 function completionProblems(marker) {
   const problems = [];
   const { workflowPath, raw, loose, data, openBlockingQuestions } = loadTask(marker.task);
@@ -23289,7 +23395,7 @@ function completionProblems(marker) {
   }
   let mtime = 0;
   try {
-    mtime = fs2.statSync(workflowPath).mtimeMs;
+    mtime = fs3.statSync(workflowPath).mtimeMs;
   } catch {
   }
   if (mtime + 1e3 < marker.startedAt) {
@@ -23300,16 +23406,23 @@ function completionProblems(marker) {
     problems.push(`current_mode trong workflow-status.md ph\u1EA3i l\xE0 ${expected} (\u0111ang l\xE0 "${data.current_mode || ""}").`);
   }
   for (const rel of MODE_REQUIRED_ARTIFACTS[marker.command] || []) {
-    if (!fs2.existsSync(path3.join(marker.task, rel))) problems.push(`Thi\u1EBFu artifact b\u1EAFt bu\u1ED9c c\u1EE7a FE ${marker.command}: ${rel}`);
+    if (!fs3.existsSync(path4.join(marker.task, rel))) problems.push(`Thi\u1EBFu artifact b\u1EAFt bu\u1ED9c c\u1EE7a FE ${marker.command}: ${rel}`);
   }
   let scope;
   if (SOURCE_EDIT_COMMANDS.includes(marker.command)) {
     const changed = listChangedFiles({ cwd: marker.workspace });
     if (changed.ok) {
-      const baseline = new Set(marker.baselineChanged || []);
-      const delta = changed.files.filter((f) => !baseline.has(f));
-      const diff = scopeDiffForTask(marker.task, { repoRoot: marker.workspace, changedFiles: delta });
-      if (diff && !diff.plannedEmpty) scope = diff;
+      const { touched, preDirtyTouched } = filesTouchedSince(marker.workspace, baselineOf(marker), changed.files);
+      const diff = scopeDiffForTask(marker.task, { repoRoot: marker.workspace, changedFiles: touched });
+      if (diff && !diff.plannedEmpty) {
+        scope = diff;
+        const userFiles = diff.outOfPlan.filter((f) => preDirtyTouched.includes(f));
+        if (userFiles.length) {
+          problems.push(
+            `C\xE1c file sau \u0111\xE3 c\xF3 thay \u0111\u1ED5i ch\u01B0a commit c\u1EE7a ng\u01B0\u1EDDi d\xF9ng t\u1EEB tr\u01B0\u1EDBc FE ${marker.command} v\xE0 b\u1ECB s\u1EEDa th\xEAm trong mode n\xE0y, ngo\xE0i plan: ${userFiles.join(", ")}. Kh\xF4ng ho\xE0n t\xE1c thay \u0111\u1ED5i g\u1ED1c c\u1EE7a ng\u01B0\u1EDDi d\xF9ng; ch\u1EC9 g\u1EE1 ph\u1EA7n mode n\xE0y \u0111\xE3 s\u1EEDa, ho\u1EB7c c\u1EADp nh\u1EADt plan qua input-sync.`
+          );
+        }
+      }
     }
   }
   const gates = validateWorkflow(marker.task, { scope });
@@ -23358,7 +23471,7 @@ var HANDLERS = {
 };
 function readStdin() {
   try {
-    return fs2.readFileSync(0, "utf8");
+    return fs3.readFileSync(0, "utf8");
   } catch {
     return "";
   }
@@ -23366,7 +23479,7 @@ function readStdin() {
 try {
   const raw = readStdin();
   if (process.env.FE_KIT_HOOKS_DEBUG) {
-    fs2.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, raw.trim() + "\n");
+    fs3.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, raw.trim() + "\n");
   }
   if (level() !== "off") {
     const payload = JSON.parse(raw || "{}");
@@ -23375,7 +23488,7 @@ try {
   }
 } catch (err) {
   if (process.env.FE_KIT_HOOKS_DEBUG) {
-    fs2.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, `ERROR ${err.stack || err}
+    fs3.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, `ERROR ${err.stack || err}
 `);
   }
 }

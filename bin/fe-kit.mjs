@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import readline from 'node:readline/promises';
 import {
   validateWorkflow,
+  validateWorkflowAtGate,
   validatePr,
   countOpenBlockingQuestions,
   parseFrontMatterLoose,
@@ -986,9 +987,16 @@ function validateWorkflowLean() {
   const target = path.resolve(argValue('--target', process.cwd()));
   const taskDir = resolveTask(taskArg(), target);
   if (!taskDir || !exists(taskDir)) { console.error('Task folder not found.'); process.exit(1); }
-  // Scope diff ở bước này là tuỳ chọn (--scope): working tree có thể đang có
-  // thay đổi không liên quan tới task. validate-pr mới luôn tính.
-  const result = validateWorkflow(taskDir, { scope: args.includes('--scope') ? scopeForTask(taskDir, target) : undefined });
+  // Mặc định giống MCP fe_validate_workflow: chỉ task ở review/test/pr-ready mới
+  // đối chiếu scope với git (working tree lúc plan có thể có thay đổi không liên
+  // quan). --scope: luôn tính ở mọi mode. --no-scope: không tính.
+  let result;
+  if (args.includes('--no-scope')) result = validateWorkflow(taskDir);
+  else if (args.includes('--scope')) result = validateWorkflow(taskDir, { scope: scopeForTask(taskDir, target) });
+  else {
+    result = validateWorkflowAtGate(taskDir, { repoRoot: target, base: argValueFlexible('--base', '') || undefined });
+    if (result.scopeSource === 'git') console.log(`Scope: tính từ git (base: ${result.base || 'chỉ thay đổi chưa commit'}).`);
+  }
   printWarnings(result);
   const errors = [...new Set(result.errors)];
   const md = walk(taskDir).filter(p => p.endsWith('.md'));
@@ -1033,7 +1041,7 @@ function validatePrLean() {
 }
 
 function help() {
-  console.log(`Frontend Delivery Agent Kit CLI v${readKitVersion()}\nRules folder + plan input ledger + blocking question input-sync gate + scope diff tính từ git + command evidence trước PR.\n\nCommands:\n  # Agent prompt mode: FE quick <task> is available for small, low-risk localized changes. FE figma-review <task> is available for UI/Figma visual review.\n  init [--target repo] [--agents all|codex,claude,cursor,github]\n                                      Install selected agent adapters into repo. In a TTY, prompts for agent selection.\n  doctor [--target repo] [--strict] [--agents ...]\n                                      Check kit installation for selected/installed agents\n  new-task <slug> [--target repo]       Create standard FE task folder\n  status <task> [--target repo]         Show current step, blockers, checklist summary\n  next <task> [--target repo]           Print Prompt bước tiếp theo from workflow-status.md\n  validate-task <task> [--target repo]  Validate standard task structure and workflow rules\n  validate-pr <task> [--target repo] [--base ref] [--no-scope]\n                                      Validate PR readiness; so git diff với bảng file trong plan\n  validate-workflow <task> [--target] [--scope]\n                                      Validate SRS/questions/plan/checklist/Figma gates\n  check-srs-reference <task> [--target] Validate task.md SRS/API maps\n  check-questions-routing <task> [--target] Validate questions.md routing sections/owners\n  check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections\n  check-plan-checklist-sync <task> [--target] Validate checklist mirrors plan file/hook/store decisions\n  check-input-sync-report <task> [--target] Validate tracking/input-sync-report.md when input sync is active\n  check-figma-evidence <task> [--target] Validate Figma summary, screenshots, and MCP/API evidence\n  check-asset-gate <task> [--target]     Validate embedded Asset Extraction Log\n`);
+  console.log(`Frontend Delivery Agent Kit CLI v${readKitVersion()}\nRules folder + plan input ledger + blocking question input-sync gate + scope diff tính từ git + command evidence trước PR.\n\nCommands:\n  # Agent prompt mode: FE quick <task> is available for small, low-risk localized changes. FE figma-review <task> is available for UI/Figma visual review.\n  init [--target repo] [--agents all|codex,claude,cursor,github]\n                                      Install selected agent adapters into repo. In a TTY, prompts for agent selection.\n  doctor [--target repo] [--strict] [--agents ...]\n                                      Check kit installation for selected/installed agents\n  new-task <slug> [--target repo]       Create standard FE task folder\n  status <task> [--target repo]         Show current step, blockers, checklist summary\n  next <task> [--target repo]           Print Prompt bước tiếp theo from workflow-status.md\n  validate-task <task> [--target repo]  Validate standard task structure and workflow rules\n  validate-pr <task> [--target repo] [--base ref] [--no-scope]\n                                      Validate PR readiness; so git diff với bảng file trong plan\n  validate-workflow <task> [--target] [--base <ref>] [--scope|--no-scope]\n                                      Validate SRS/questions/plan/checklist/Figma gates\n                                      (review/test/pr-ready: scope from git by default)\n  check-srs-reference <task> [--target] Validate task.md SRS/API maps\n  check-questions-routing <task> [--target] Validate questions.md routing sections/owners\n  check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections\n  check-plan-checklist-sync <task> [--target] Validate checklist mirrors plan file/hook/store decisions\n  check-input-sync-report <task> [--target] Validate tracking/input-sync-report.md when input sync is active\n  check-figma-evidence <task> [--target] Validate Figma summary, screenshots, and MCP/API evidence\n  check-asset-gate <task> [--target]     Validate embedded Asset Extraction Log\n`);
 }
 
 

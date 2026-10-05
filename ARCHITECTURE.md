@@ -63,6 +63,16 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
 5. **Handoff luôn qua `next_prompt`.** Mode kết thúc ghi `next_mode` + `next_prompt`. Không agent nào tự nhảy mode. `fe_begin_mode` so mode được yêu cầu với gate thật (câu hỏi blocking đếm từ `questions.md`, `build_ready`, Figma gate, review/bug) và với `next_mode` đã ghi.
 
 6. **Sự thật tính được thắng field tự khai.** Scope diff tính từ `git diff` so với bảng "File sẽ tạo / cập nhật" của plan (`packages/validators/src/scope.mjs`). Command evidence đọc từ bảng `Command evidence log` của `output/test-summary.md`. Các field tự khai (`token_budget_status`, `scope_diff_status`…) chỉ còn là dự phòng và đã thành optional trong schema.
+   - **Command evidence** (`summarizeCommandEvidence`): một dòng chỉ được tính là đã chạy khi cột "Đã chạy thật?" ghi `Có` và cột "Kết quả" ghi `Passed`/`Failed`. Ô trống, ô còn nguyên lựa chọn của template, `Có` kèm `Not run` là dòng thiếu dữ liệu và chỉ sinh cảnh báo. Lần chạy gần nhất của một lệnh mà `Failed` cũng chỉ cảnh báo, vì test fail đã route sang bugfix ở tầng mode.
+   - **Scope tại từng điểm chuyển gate:**
+
+     | Điểm | Nguồn danh sách file | Ghi chú |
+     |---|---|---|
+     | Cuối cook/bugfix/quick (hook) | File mới thay đổi trong mode, cộng file đã dirty từ trước mà nội dung bị đổi (so hash lúc mở mode) | Không hoàn tác thay đổi của người dùng; chỉ báo |
+     | `fe_validate_workflow` ở review/test/pr-ready | `git diff` so với base ref, cộng thay đổi chưa commit | Plan/input-sync/figma không tính, tránh chặn nhầm thay đổi không liên quan |
+     | `validate-pr` (CLI, CI) | Như trên | Luôn tính |
+
+     Plan chưa có bảng file (task tạo từ v1.x) thì mọi điểm đều cảnh báo và dùng `scope_diff_status` tự khai. File thuộc plan của task khác cùng thư mục không bị tính là ngoài plan.
 
 ## Hook runtime
 
@@ -79,6 +89,51 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
 - Chặn tối đa một lần mỗi lần dừng (`stop_hook_active`), sau đó thả kèm cảnh báo để không lặp vô hạn.
 - Mode bị gate từ chối chỉ cần `workflow-status.md` route đúng, không đòi artifact của mode.
 - Lỗi nội bộ của hook luôn thoát 0 và không in gì.
+
+Giới hạn đã biết (đều có test trong `tests/hook.test.mjs`):
+
+- **Marker hết hạn sau 4 giờ:** coi như không có mode đang chạy, nên không chặn sửa source theo gate của task và không kiểm tra kết thúc. Luật theo vai vẫn áp dụng vì không cần marker.
+- **Chuyển task giữa chừng:** lệnh FE mới thay marker của mode trước đang `pending` và phát cảnh báo nêu mode, task chưa qua gate kết thúc. Hook không tự quay lại kiểm tra task cũ.
+- **Mode bỏ dở:** người dùng ngắt mode rồi hỏi việc khác thì `Stop` của lượt sau vẫn kiểm gate kết thúc của mode đó. Ở mức `enforce`, hook chặn đúng một lần rồi thả và đóng marker.
+- **Ghi file qua shell:** hook chỉ thấy Edit/Write. Agent có Bash vẫn ghi được file; lưới chặn là scope diff ở các điểm chuyển gate phía trên.
+
+## Mức kiểm tra theo adapter
+
+| Adapter | Kiểm tra lúc agent chạy | Cách kiểm thủ công |
+|---|---|---|
+| Claude Code (plugin `fe`) | MCP `fe_begin_mode`/`fe_validate_workflow`/`fe_scope_diff`, hook, `disallowedTools` | Như cột bên dưới, khi cần |
+| Codex, Cursor, Copilot | Không có: chỉ hướng dẫn trong prompt | `node bin/fe-kit.mjs validate-workflow <task>` trước khi kết thúc mode; `node bin/fe-kit.mjs validate-pr <task> --base <nhánh>` trước PR. Copilot có thêm workflow CI `frontend-delivery-standard.yml` |
+| ChatGPT skill | Không có | `node scripts/validate-workflow.mjs <task>`, `node scripts/validate-pr.mjs <task> --base <nhánh>` trong gói skill |
+
+`bin/fe-kit.mjs` là bản CLI standalone mà `fe-kit init` copy vào repo dự án. Hướng dẫn của từng adapter (`core/adapters/*`, `core/SKILL.md`) ghi rõ: chưa chạy lệnh, hoặc lệnh báo lỗi, thì không được ghi gate là passed.
+
+## Ngân sách context theo mode
+
+`fe_begin_mode` trả nguyên văn rule của mode. Số ký tự đo ở v2.1.0, task có Figma (trường hợp lớn nhất):
+
+| Mode | Ký tự | Mode | Ký tự |
+|---|---|---|---|
+| plan | 7.987 | cook | 9.985 |
+| quick | 8.665 | bugfix | 9.372 |
+| input-sync | 7.411 | review | 10.692 |
+| figma | 7.344 | test | 8.088 |
+| figma-review | 8.664 | pr | 9.371 |
+
+Khoảng 2–3,5 nghìn token mỗi mode. `tests/context-budget.test.mjs` đặt trần bằng số đo cộng khoảng 15% để rule không phình lên mà không ai để ý. Chưa có số liệu cho thấy cần tách rule thành mục lục/reference; khi cố ý thêm rule thì đo lại và nâng trần trong cùng PR.
+
+## Eval hành vi
+
+`evals/` chạy bằng `claude plugin eval` qua workflow `plugin-evals.yml` (chạy tay, có input `hooks_level`).
+
+| Nhóm | Case |
+|---|---|
+| Đường đúng | `plan-routes-blocking-question`, `input-sync-closes-gate`, `review-writes-report` |
+| Gate bị lọt | `cook-refuses-when-blocked`, `test-without-shell-no-false-pass`, `pr-blocks-out-of-scope` |
+| Vai trò | `review-does-not-fix-when-asked` |
+| Chặn nhầm | `cook-proceeds-when-ready` |
+| Bàn giao | grader `handoff-complete` trong plan và review |
+
+Quyết định đổi mặc định hook sang `enforce` dựa trên pass rate và chi phí của bộ này ở cả hai mức `warn` và `enforce`.
 
 ## Luồng chuẩn một task
 

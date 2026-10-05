@@ -27,6 +27,7 @@ Yêu cầu:
 - Task có UI/Figma mà chưa có `output/figma-extraction-summary.md`: route `next_prompt` sang `FE figma <task-folder>`.
 - Thiết kế trước prompt triển khai: điền `Khung thiết kế trước triển khai` trong plan với ranh giới, trách nhiệm, luồng dữ liệu, contract, ràng buộc và tiêu chí chấp nhận. Dùng spec làm khung cho ma trận trace/checklist. Với deletion tests, phân tích điều bị mất khi bỏ thành phần và cách kiểm chứng; không xóa thật, không tự suy luận dư thừa từ việc thiếu import.
 - Trong mục `Ba câu hỏi kiến trúc` của plan, trả lời state nằm ở đâu, feedback nằm ở đâu và việc bỏ thành phần định thêm/sửa/bỏ ảnh hưởng gì. Nêu owner, nơi phụ thuộc và bằng chứng file/symbol/cấu hình liên quan; phân biệt state workflow với state frontend và feedback workflow với phản hồi UI. Phần không áp dụng phải có lý do; phần chưa rõ chặn triển khai phải ghi vào questions và route input-sync.
+- Điền mục `Kiểm chứng claim` theo rủi ro của task (tồn tại, luồng xử lý, lifetime, contract): chỉ ghi claim mà quyết định dựa vào, kèm bằng chứng bạn đã mở ra xem. Không đánh dấu "Đã xác minh" cho thứ chỉ đoán từ tên file.
 
 ## FE input-sync
 

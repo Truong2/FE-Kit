@@ -22657,22 +22657,70 @@ function countOpenBlockingQuestions(questionsMarkdown) {
   }
   return count;
 }
-function hasCommandEvidence(testSummaryMarkdown) {
+var RAN_YES = /^(có|co|yes|y|true|đã chạy|da chay|ran)(?=$|[\s(,.:;-])/i;
+var RAN_NO = /^(không|khong|no|n|false|chưa chạy|chua chay|not run)(?=$|[\s(,.:;-])/i;
+var RESULT_NOT_RUN = /^(not run|chưa chạy|chua chay|skipped|bỏ qua|bo qua)(?=$|[\s(,.:;-])/i;
+var RESULT_FAIL = /(fail|lỗi|không đạt|khong dat|error)/i;
+var RESULT_PASS = /(pass|đạt|\bdat\b|\bok\b|success|thành công|thanh cong)/i;
+function templateChoiceCell(v) {
+  return /\S\s*\/\s*(không|khong|no|failed|not run)\b/i.test(v);
+}
+function commandEvidenceRows(testSummaryMarkdown) {
   const text = String(testSummaryMarkdown || "");
   const section2 = text.match(
     /^##\s+(?:\d+\.\s*)?Command evidence log[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
   );
-  if (!section2) return false;
+  if (!section2) return [];
+  const rows = [];
   for (const line of section2[1].split(/\r?\n/)) {
     if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
     const cells = line.split("|").slice(1, -1).map((c) => c.trim().replace(/^`|`$/g, ""));
     if (/^command$/i.test(cells[0] || "")) continue;
     if (!realQuestionCell(cells[0])) continue;
-    const ran = cells[1] || "";
-    const notRun = /^(không|khong|no|chưa chạy|chua chay|not run)$/i.test(ran) || /\/\s*không/i.test(ran);
-    if (!notRun) return true;
+    rows.push({ command: cells[0], ran: cells[1] || "", result: cells[2] || "", time: cells[3] || "" });
   }
-  return false;
+  return rows;
+}
+function summarizeCommandEvidence(testSummaryMarkdown) {
+  const out = { ran: [], notRun: [], incomplete: [], missingTime: [], latestFailed: [] };
+  const latest = /* @__PURE__ */ new Map();
+  for (const row of commandEvidenceRows(testSummaryMarkdown)) {
+    const ranCell = templateChoiceCell(row.ran) ? "" : row.ran;
+    const resultCell = templateChoiceCell(row.result) ? "" : row.result;
+    if (RAN_NO.test(ranCell) || !ranCell && RESULT_NOT_RUN.test(resultCell)) {
+      out.notRun.push(row.command);
+      continue;
+    }
+    const outcome = RESULT_NOT_RUN.test(resultCell) ? "" : RESULT_FAIL.test(resultCell) ? "failed" : RESULT_PASS.test(resultCell) ? "passed" : "";
+    if (!RAN_YES.test(ranCell) || !outcome) {
+      out.incomplete.push(row.command);
+      continue;
+    }
+    out.ran.push(row.command);
+    if (!realQuestionCell(row.time)) out.missingTime.push(row.command);
+    latest.set(row.command, outcome);
+  }
+  for (const [command2, outcome] of latest) if (outcome === "failed") out.latestFailed.push(command2);
+  return out;
+}
+function hasCommandEvidence(testSummaryMarkdown) {
+  return summarizeCommandEvidence(testSummaryMarkdown).ran.length > 0;
+}
+function commandEvidenceWarnings(testSummaryMarkdown) {
+  const s = summarizeCommandEvidence(testSummaryMarkdown);
+  const warnings = [];
+  if (s.incomplete.length) {
+    warnings.push(
+      `Command evidence log c\xF3 d\xF2ng thi\u1EBFu d\u1EEF li\u1EC7u, kh\xF4ng \u0111\u01B0\u1EE3c t\xEDnh l\xE0 \u0111\xE3 ch\u1EA1y: ${s.incomplete.join(", ")}. Ghi r\xF5 "C\xF3" k\xE8m k\u1EBFt qu\u1EA3 Passed/Failed, ho\u1EB7c "Kh\xF4ng" k\xE8m l\xFD do.`
+    );
+  }
+  if (s.missingTime.length) {
+    warnings.push(`Command evidence log thi\u1EBFu th\u1EDDi \u0111i\u1EC3m ch\u1EA1y: ${s.missingTime.join(", ")}.`);
+  }
+  if (s.latestFailed.length) {
+    warnings.push(`L\u1EA7n ch\u1EA1y g\u1EA7n nh\u1EA5t \u0111ang Failed: ${s.latestFailed.join(", ")}. Route FE bugfix ho\u1EB7c ghi r\xF5 l\xFD do ch\u1EA5p nh\u1EADn.`);
+  }
+  return warnings;
 }
 var REQUIRED_TASK_FILES = [
   "task.md",
@@ -22815,6 +22863,7 @@ function evaluateWorkflowGates({ data, body, exists: exists2, read: read2, scope
   if (["passed", "completed"].includes(commandEvidence) && exists2("output/test-summary.md") && !hasCommandEvidence(read2("output/test-summary.md"))) {
     errors.push("command_evidence_status=passed/completed nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.");
   }
+  if (exists2("output/test-summary.md")) warnings.push(...commandEvidenceWarnings(read2("output/test-summary.md")));
   const criticalOrHigh = Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0;
   if (criticalOrHigh && ["test", "pr"].includes(normalizeCommand(data.next_mode))) {
     errors.push("C\xF2n issue Critical/High th\xEC next_mode kh\xF4ng \u0111\u01B0\u1EE3c l\xE0 test/pr; route sang bugfix, input-sync ho\u1EB7c figma-review.");
@@ -22853,6 +22902,7 @@ function evaluatePrGates({ data, exists: exists2, read: read2, scope }) {
     errors.push("scope_diff_status ph\u1EA3i passed/not_required tr\u01B0\u1EDBc PR (kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff t\u1EEB git).");
   }
   const evidenceOk = hasCommandEvidence(read2("output/test-summary.md"));
+  if (exists2("output/test-summary.md")) warnings.push(...commandEvidenceWarnings(read2("output/test-summary.md")));
   for (const key of ["command_evidence_status", "test_command_log_status"]) {
     const value = norm2(data[key]);
     if (value === "not_required") continue;
@@ -23014,6 +23064,7 @@ function listChangedFiles({ cwd, base = "" }) {
   }
   return { ok: true, files: [...files].map(toPosix), base };
 }
+var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
 
 // packages/validators/src/scaffold.mjs
 import fs from "node:fs";
@@ -23113,6 +23164,31 @@ function validateWorkflow(taskDir, { scope } = {}) {
   if (!parsed.ok) return parsed;
   return evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...taskIo(taskDir), scope });
 }
+var SCOPE_CHECKED_MODES = ["review-mode", "testing-mode", "pr-ready-mode"];
+function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
+  const parsed = loadWorkflow(taskDir);
+  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: [], scopeSource: "not_checked", base: "" };
+  const warnings = [];
+  let scope;
+  let scopeSource = "not_checked";
+  let usedBase = "";
+  if (repoRoot && SCOPE_CHECKED_MODES.includes(String(parsed.data.current_mode || ""))) {
+    usedBase = base || detectBaseRef(repoRoot);
+    const diff = scopeDiffForTask(taskDir, { repoRoot, base: usedBase });
+    if (!diff) {
+      scopeSource = "self_reported";
+      warnings.push("Kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff t\u1EEB git (kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng diff \u0111\u01B0\u1EE3c base); d\xF9ng scope_diff_status t\u1EF1 khai.");
+    } else if (diff.plannedEmpty) {
+      scopeSource = "self_reported";
+      warnings.push('implementation-plan.md ch\u01B0a khai file n\xE0o \u1EDF m\u1EE5c "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" n\xEAn kh\xF4ng \u0111\u1ED1i chi\u1EBFu \u0111\u01B0\u1EE3c scope v\u1EDBi git; d\xF9ng scope_diff_status t\u1EF1 khai.');
+    } else {
+      scope = diff;
+      scopeSource = "git";
+    }
+  }
+  const res = evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...taskIo(taskDir), scope });
+  return { ...res, warnings: [...res.warnings, ...warnings], scopeSource, base: usedBase };
+}
 function validatePr(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
   if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: [] };
@@ -23126,7 +23202,7 @@ function validatePr(taskDir, { scope } = {}) {
 // bin/fe-kit.mjs
 var __filename = fileURLToPath(import.meta.url);
 var kitRoot = path4.resolve(path4.dirname(__filename), "..");
-var BUNDLED_VERSION = true ? "2.0.1" : "";
+var BUNDLED_VERSION = true ? "2.1.0" : "";
 var PLUGIN_ID = "fe@frontend-delivery";
 var MARKETPLACE_NAME = "frontend-delivery";
 var args = process.argv.slice(2);
@@ -24016,7 +24092,13 @@ function validateWorkflowLean() {
     console.error("Task folder not found.");
     process.exit(1);
   }
-  const result = validateWorkflow(taskDir, { scope: args.includes("--scope") ? scopeForTask(taskDir, target) : void 0 });
+  let result;
+  if (args.includes("--no-scope")) result = validateWorkflow(taskDir);
+  else if (args.includes("--scope")) result = validateWorkflow(taskDir, { scope: scopeForTask(taskDir, target) });
+  else {
+    result = validateWorkflowAtGate(taskDir, { repoRoot: target, base: argValueFlexible("--base", "") || void 0 });
+    if (result.scopeSource === "git") console.log(`Scope: t\xEDnh t\u1EEB git (base: ${result.base || "ch\u1EC9 thay \u0111\u1ED5i ch\u01B0a commit"}).`);
+  }
   printWarnings(result);
   const errors = [...new Set(result.errors)];
   const md = walk(taskDir).filter((p) => p.endsWith(".md"));
@@ -24088,8 +24170,9 @@ Commands:
   validate-task <task> [--target repo]  Validate standard task structure and workflow rules
   validate-pr <task> [--target repo] [--base ref] [--no-scope]
                                       Validate PR readiness; so git diff v\u1EDBi b\u1EA3ng file trong plan
-  validate-workflow <task> [--target] [--scope]
+  validate-workflow <task> [--target] [--base <ref>] [--scope|--no-scope]
                                       Validate SRS/questions/plan/checklist/Figma gates
+                                      (review/test/pr-ready: scope from git by default)
   check-srs-reference <task> [--target] Validate task.md SRS/API maps
   check-questions-routing <task> [--target] Validate questions.md routing sections/owners
   check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections

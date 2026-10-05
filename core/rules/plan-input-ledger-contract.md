@@ -8,3 +8,4 @@
 - Nếu input không áp dụng, ghi `Không áp dụng` và lý do ngắn; không để trống làm agent sau phải đoán.
 - Khi `FE input-sync` nhận CR/câu trả lời/SRS update/Figma update, phải cập nhật lại input ledger và `next_prompt` trong `workflow-status.md`.
 - Nếu input ledger hoặc `questions.md` phát hiện câu hỏi blocking/open, plan phải set `next_mode: input-sync` và không được set `build_ready: true`.
+- `FE plan` ghi mục `Kiểm chứng claim` trong `implementation-plan.md` theo rủi ro của task: claim nào về sự tồn tại, luồng xử lý, lifetime của state hay contract mà quyết định dựa vào thì ghi kèm bằng chứng đã mở ra xem (`file:symbol`, endpoint, config key). Claim chưa xác minh mà ảnh hưởng triển khai là câu hỏi blocking, không phải giả định ngầm.

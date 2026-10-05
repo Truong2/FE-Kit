@@ -85,6 +85,8 @@ Chỉ `FE cook`, `FE bugfix` và `FE quick` được sửa source code của d�
 |---|---|---|
 | Tạo task folder | `fe_new_task` | `node bin/fe-kit.mjs new-task <tên-task>` |
 | Kiểm tra cấu trúc task | `fe_validate_task` | `node scripts/validate-task.mjs <task-folder>` |
-| Kiểm tra gate workflow | `fe_validate_workflow` | `node scripts/validate-workflow.mjs <task-folder>` |
-| Đối chiếu scope với plan | `fe_scope_diff` | `node bin/fe-kit.mjs validate-pr <task-folder>` |
+| Kiểm tra gate workflow | `fe_validate_workflow` | `node scripts/validate-workflow.mjs <task-folder>` (task ở review/test/pr tự đối chiếu scope với git) |
+| Đối chiếu scope với plan | `fe_scope_diff` | `node bin/fe-kit.mjs validate-pr <task-folder> --base <nhánh-đích>` |
 | Bước tiếp theo | `fe_next_step` | mục `Prompt bước tiếp theo` trong `workflow-status.md` |
+
+Ngoài Claude Code (plugin `fe`), kit không có MCP hay hook chặn sai gate lúc agent chạy. Gate chỉ được kiểm khi chạy các lệnh ở cột "Môi trường khác". Chưa chạy, hoặc lệnh báo lỗi, thì không ghi gate là passed trong `workflow-status.md`; ghi lại lệnh đã chạy và kết quả.

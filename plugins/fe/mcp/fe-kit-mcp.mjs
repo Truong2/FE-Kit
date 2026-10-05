@@ -33224,22 +33224,70 @@ function countOpenBlockingQuestions(questionsMarkdown) {
   }
   return count;
 }
-function hasCommandEvidence(testSummaryMarkdown) {
+var RAN_YES = /^(có|co|yes|y|true|đã chạy|da chay|ran)(?=$|[\s(,.:;-])/i;
+var RAN_NO = /^(không|khong|no|n|false|chưa chạy|chua chay|not run)(?=$|[\s(,.:;-])/i;
+var RESULT_NOT_RUN = /^(not run|chưa chạy|chua chay|skipped|bỏ qua|bo qua)(?=$|[\s(,.:;-])/i;
+var RESULT_FAIL = /(fail|lỗi|không đạt|khong dat|error)/i;
+var RESULT_PASS = /(pass|đạt|\bdat\b|\bok\b|success|thành công|thanh cong)/i;
+function templateChoiceCell(v) {
+  return /\S\s*\/\s*(không|khong|no|failed|not run)\b/i.test(v);
+}
+function commandEvidenceRows(testSummaryMarkdown) {
   const text = String(testSummaryMarkdown || "");
   const section = text.match(
     /^##\s+(?:\d+\.\s*)?Command evidence log[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
   );
-  if (!section) return false;
+  if (!section) return [];
+  const rows = [];
   for (const line of section[1].split(/\r?\n/)) {
     if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
     const cells = line.split("|").slice(1, -1).map((c) => c.trim().replace(/^`|`$/g, ""));
     if (/^command$/i.test(cells[0] || "")) continue;
     if (!realQuestionCell(cells[0])) continue;
-    const ran = cells[1] || "";
-    const notRun = /^(không|khong|no|chưa chạy|chua chay|not run)$/i.test(ran) || /\/\s*không/i.test(ran);
-    if (!notRun) return true;
+    rows.push({ command: cells[0], ran: cells[1] || "", result: cells[2] || "", time: cells[3] || "" });
   }
-  return false;
+  return rows;
+}
+function summarizeCommandEvidence(testSummaryMarkdown) {
+  const out = { ran: [], notRun: [], incomplete: [], missingTime: [], latestFailed: [] };
+  const latest = /* @__PURE__ */ new Map();
+  for (const row of commandEvidenceRows(testSummaryMarkdown)) {
+    const ranCell = templateChoiceCell(row.ran) ? "" : row.ran;
+    const resultCell = templateChoiceCell(row.result) ? "" : row.result;
+    if (RAN_NO.test(ranCell) || !ranCell && RESULT_NOT_RUN.test(resultCell)) {
+      out.notRun.push(row.command);
+      continue;
+    }
+    const outcome = RESULT_NOT_RUN.test(resultCell) ? "" : RESULT_FAIL.test(resultCell) ? "failed" : RESULT_PASS.test(resultCell) ? "passed" : "";
+    if (!RAN_YES.test(ranCell) || !outcome) {
+      out.incomplete.push(row.command);
+      continue;
+    }
+    out.ran.push(row.command);
+    if (!realQuestionCell(row.time)) out.missingTime.push(row.command);
+    latest.set(row.command, outcome);
+  }
+  for (const [command, outcome] of latest) if (outcome === "failed") out.latestFailed.push(command);
+  return out;
+}
+function hasCommandEvidence(testSummaryMarkdown) {
+  return summarizeCommandEvidence(testSummaryMarkdown).ran.length > 0;
+}
+function commandEvidenceWarnings(testSummaryMarkdown) {
+  const s = summarizeCommandEvidence(testSummaryMarkdown);
+  const warnings = [];
+  if (s.incomplete.length) {
+    warnings.push(
+      `Command evidence log c\xF3 d\xF2ng thi\u1EBFu d\u1EEF li\u1EC7u, kh\xF4ng \u0111\u01B0\u1EE3c t\xEDnh l\xE0 \u0111\xE3 ch\u1EA1y: ${s.incomplete.join(", ")}. Ghi r\xF5 "C\xF3" k\xE8m k\u1EBFt qu\u1EA3 Passed/Failed, ho\u1EB7c "Kh\xF4ng" k\xE8m l\xFD do.`
+    );
+  }
+  if (s.missingTime.length) {
+    warnings.push(`Command evidence log thi\u1EBFu th\u1EDDi \u0111i\u1EC3m ch\u1EA1y: ${s.missingTime.join(", ")}.`);
+  }
+  if (s.latestFailed.length) {
+    warnings.push(`L\u1EA7n ch\u1EA1y g\u1EA7n nh\u1EA5t \u0111ang Failed: ${s.latestFailed.join(", ")}. Route FE bugfix ho\u1EB7c ghi r\xF5 l\xFD do ch\u1EA5p nh\u1EADn.`);
+  }
+  return warnings;
 }
 var REQUIRED_TASK_FILES = [
   "task.md",
@@ -33382,6 +33430,7 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   if (["passed", "completed"].includes(commandEvidence) && exists("output/test-summary.md") && !hasCommandEvidence(read("output/test-summary.md"))) {
     errors.push("command_evidence_status=passed/completed nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.");
   }
+  if (exists("output/test-summary.md")) warnings.push(...commandEvidenceWarnings(read("output/test-summary.md")));
   const criticalOrHigh = Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0;
   if (criticalOrHigh && ["test", "pr"].includes(normalizeCommand(data.next_mode))) {
     errors.push("C\xF2n issue Critical/High th\xEC next_mode kh\xF4ng \u0111\u01B0\u1EE3c l\xE0 test/pr; route sang bugfix, input-sync ho\u1EB7c figma-review.");
@@ -33524,6 +33573,7 @@ function listChangedFiles({ cwd, base = "" }) {
   }
   return { ok: true, files: [...files].map(toPosix), base };
 }
+var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
 
 // packages/validators/src/scaffold.mjs
 import fs from "node:fs";
@@ -33678,14 +33728,34 @@ function plannedFilesOfSiblingTasks(taskDir) {
   }
   return planned;
 }
-function validateWorkflow(taskDir, { scope } = {}) {
+var SCOPE_CHECKED_MODES = ["review-mode", "testing-mode", "pr-ready-mode"];
+function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
   const parsed = loadWorkflow(taskDir);
-  if (!parsed.ok) return parsed;
-  return evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...taskIo(taskDir), scope });
+  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: [], scopeSource: "not_checked", base: "" };
+  const warnings = [];
+  let scope;
+  let scopeSource = "not_checked";
+  let usedBase = "";
+  if (repoRoot && SCOPE_CHECKED_MODES.includes(String(parsed.data.current_mode || ""))) {
+    usedBase = base || detectBaseRef(repoRoot);
+    const diff = scopeDiffForTask(taskDir, { repoRoot, base: usedBase });
+    if (!diff) {
+      scopeSource = "self_reported";
+      warnings.push("Kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff t\u1EEB git (kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng diff \u0111\u01B0\u1EE3c base); d\xF9ng scope_diff_status t\u1EF1 khai.");
+    } else if (diff.plannedEmpty) {
+      scopeSource = "self_reported";
+      warnings.push('implementation-plan.md ch\u01B0a khai file n\xE0o \u1EDF m\u1EE5c "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" n\xEAn kh\xF4ng \u0111\u1ED1i chi\u1EBFu \u0111\u01B0\u1EE3c scope v\u1EDBi git; d\xF9ng scope_diff_status t\u1EF1 khai.');
+    } else {
+      scope = diff;
+      scopeSource = "git";
+    }
+  }
+  const res = evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...taskIo(taskDir), scope });
+  return { ...res, warnings: [...res.warnings, ...warnings], scopeSource, base: usedBase };
 }
 
 // core/mcp/server.mjs
-var KIT_VERSION = true ? "2.0.1" : "dev";
+var KIT_VERSION = true ? "2.1.0" : "dev";
 var REQUIRED_TASK_FILES2 = [
   "task.md",
   "planning/implementation-plan.md",
@@ -33754,10 +33824,17 @@ var TOOLS = [
   },
   {
     name: "fe_validate_workflow",
-    description: "Ch\u1EA1y to\xE0n b\u1ED9 gate c\u1EE7a workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing h\u1EE3p l\u1EC7. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC m\u1ECDi mode; \u0111\xE2y l\xE0 gate ch\xEDnh ch\u1EB7n agent nh\u1EA3y mode sai.",
+    description: "Ch\u1EA1y to\xE0n b\u1ED9 gate c\u1EE7a workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing h\u1EE3p l\u1EC7. Task \u1EDF review/test/pr-ready th\xEC \u0111\u1ED1i chi\u1EBFu th\xEAm file \u0111\xE3 s\u1EEDa (git) v\u1EDBi plan. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC m\u1ECDi mode; \u0111\xE2y l\xE0 gate ch\xEDnh ch\u1EB7n agent nh\u1EA3y mode sai.",
     inputSchema: {
       type: "object",
-      properties: { workspace_root: workspaceProp, task_folder: taskProp },
+      properties: {
+        workspace_root: workspaceProp,
+        task_folder: taskProp,
+        base_ref: {
+          type: "string",
+          description: "Nh\xE1nh/commit g\u1ED1c \u0111\u1EC3 t\xEDnh scope \u1EDF review/test/pr (vd origin/main). B\u1ECF tr\u1ED1ng th\xEC t\u1EF1 d\xF2."
+        }
+      },
       required: ["workspace_root", "task_folder"]
     }
   },
@@ -33887,20 +33964,25 @@ var handlers = {
     if (ok && np) lines.push("", "Ti\u1EBFp theo: " + np);
     return textResult(lines.join("\n"), !ok);
   },
-  fe_validate_workflow({ workspace_root, task_folder }) {
+  fe_validate_workflow({ workspace_root, task_folder, base_ref }) {
     const taskDir = resolveTaskDir(workspace_root, task_folder);
     if (!fs3.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
-    const res = validateWorkflow(taskDir);
+    const res = validateWorkflowAtGate(taskDir, { repoRoot: workspace_root, base: base_ref });
     const warnings = (res.warnings || []).map((w) => "- C\u1EA3nh b\xE1o: " + w);
+    const scopeLine = {
+      git: `Scope: t\xEDnh t\u1EEB git (base: ${res.base || "ch\u1EC9 thay \u0111\u1ED5i ch\u01B0a commit"}).`,
+      self_reported: "Scope: d\xF9ng scope_diff_status t\u1EF1 khai."
+    }[res.scopeSource];
+    const head = scopeLine ? [scopeLine] : [];
     if (!res.ok) {
       return textResult(
-        ["validate-workflow: FAILED", "", ...res.errors.map((e) => "- " + e), ...warnings].join("\n"),
+        ["validate-workflow: FAILED", ...head, "", ...res.errors.map((e) => "- " + e), ...warnings].join("\n"),
         true
       );
     }
     const np = nextPrompt(taskDir);
     return textResult(
-      ["validate-workflow: PASSED", ...warnings, ...np ? ["", "Ti\u1EBFp theo: " + np] : []].join("\n")
+      ["validate-workflow: PASSED", ...head, ...warnings, ...np ? ["", "Ti\u1EBFp theo: " + np] : []].join("\n")
     );
   },
   fe_scope_diff({ workspace_root, task_folder, base_ref }) {

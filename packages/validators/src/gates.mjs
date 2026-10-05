@@ -67,18 +67,26 @@ export function countOpenBlockingQuestions(questionsMarkdown) {
   return count;
 }
 
-/**
- * `output/test-summary.md` có ít nhất một dòng command thật trong bảng
- * "Command evidence log" hay không. Dòng template để trống, hoặc dòng ghi
- * chưa chạy, không tính.
- */
-export function hasCommandEvidence(testSummaryMarkdown) {
+// Ô "Đã chạy thật?" và "Kết quả" của bảng Command evidence log.
+const RAN_YES = /^(có|co|yes|y|true|đã chạy|da chay|ran)(?=$|[\s(,.:;-])/i;
+const RAN_NO = /^(không|khong|no|n|false|chưa chạy|chua chay|not run)(?=$|[\s(,.:;-])/i;
+const RESULT_NOT_RUN = /^(not run|chưa chạy|chua chay|skipped|bỏ qua|bo qua)(?=$|[\s(,.:;-])/i;
+const RESULT_FAIL = /(fail|lỗi|không đạt|khong dat|error)/i;
+const RESULT_PASS = /(pass|đạt|\bdat\b|\bok\b|success|thành công|thanh cong)/i;
+
+/** Ô còn nguyên lựa chọn của template, vd `Có / Không`, `Passed / Failed / Not run`. */
+function templateChoiceCell(v) {
+  return /\S\s*\/\s*(không|khong|no|failed|not run)\b/i.test(v);
+}
+
+function commandEvidenceRows(testSummaryMarkdown) {
   const text = String(testSummaryMarkdown || '');
   const section = text.match(
     /^##\s+(?:\d+\.\s*)?Command evidence log[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
   );
-  if (!section) return false;
+  if (!section) return [];
 
+  const rows = [];
   for (const line of section[1].split(/\r?\n/)) {
     if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
     const cells = line
@@ -87,12 +95,75 @@ export function hasCommandEvidence(testSummaryMarkdown) {
       .map((c) => c.trim().replace(/^`|`$/g, ''));
     if (/^command$/i.test(cells[0] || '')) continue;
     if (!realQuestionCell(cells[0])) continue;
-
-    const ran = cells[1] || '';
-    const notRun = /^(không|khong|no|chưa chạy|chua chay|not run)$/i.test(ran) || /\/\s*không/i.test(ran);
-    if (!notRun) return true;
+    rows.push({ command: cells[0], ran: cells[1] || '', result: cells[2] || '', time: cells[3] || '' });
   }
-  return false;
+  return rows;
+}
+
+/**
+ * Phân loại từng dòng của bảng "Command evidence log" trong
+ * `output/test-summary.md`.
+ *
+ * Một dòng chỉ được tính là ĐÃ CHẠY khi ô "Đã chạy thật?" khẳng định rõ
+ * (`Có`/`Yes`) và ô "Kết quả" là kết quả thật (`Passed`/`Failed`...). Ô
+ * trống, ô còn nguyên lựa chọn của template, hoặc `Có` + `Not run` là dòng
+ * thiếu dữ liệu — không phải bằng chứng.
+ *
+ * @returns {{ ran: string[], notRun: string[], incomplete: string[], missingTime: string[], latestFailed: string[] }}
+ */
+export function summarizeCommandEvidence(testSummaryMarkdown) {
+  const out = { ran: [], notRun: [], incomplete: [], missingTime: [], latestFailed: [] };
+  const latest = new Map();
+
+  for (const row of commandEvidenceRows(testSummaryMarkdown)) {
+    const ranCell = templateChoiceCell(row.ran) ? '' : row.ran;
+    const resultCell = templateChoiceCell(row.result) ? '' : row.result;
+
+    if (RAN_NO.test(ranCell) || (!ranCell && RESULT_NOT_RUN.test(resultCell))) {
+      out.notRun.push(row.command);
+      continue;
+    }
+    const outcome = RESULT_NOT_RUN.test(resultCell)
+      ? ''
+      : RESULT_FAIL.test(resultCell)
+        ? 'failed'
+        : RESULT_PASS.test(resultCell)
+          ? 'passed'
+          : '';
+    if (!RAN_YES.test(ranCell) || !outcome) {
+      out.incomplete.push(row.command);
+      continue;
+    }
+    out.ran.push(row.command);
+    if (!realQuestionCell(row.time)) out.missingTime.push(row.command);
+    latest.set(row.command, outcome);
+  }
+
+  for (const [command, outcome] of latest) if (outcome === 'failed') out.latestFailed.push(command);
+  return out;
+}
+
+/** `output/test-summary.md` có ít nhất một dòng command đã chạy thật hay không. */
+export function hasCommandEvidence(testSummaryMarkdown) {
+  return summarizeCommandEvidence(testSummaryMarkdown).ran.length > 0;
+}
+
+/** Cảnh báo (không chặn) về chất lượng bảng Command evidence log. */
+function commandEvidenceWarnings(testSummaryMarkdown) {
+  const s = summarizeCommandEvidence(testSummaryMarkdown);
+  const warnings = [];
+  if (s.incomplete.length) {
+    warnings.push(
+      `Command evidence log có dòng thiếu dữ liệu, không được tính là đã chạy: ${s.incomplete.join(', ')}. Ghi rõ "Có" kèm kết quả Passed/Failed, hoặc "Không" kèm lý do.`
+    );
+  }
+  if (s.missingTime.length) {
+    warnings.push(`Command evidence log thiếu thời điểm chạy: ${s.missingTime.join(', ')}.`);
+  }
+  if (s.latestFailed.length) {
+    warnings.push(`Lần chạy gần nhất đang Failed: ${s.latestFailed.join(', ')}. Route FE bugfix hoặc ghi rõ lý do chấp nhận.`);
+  }
+  return warnings;
 }
 
 const REQUIRED_TASK_FILES = [
@@ -297,6 +368,7 @@ export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   ) {
     errors.push('command_evidence_status=passed/completed nhưng output/test-summary.md chưa có dòng command đã chạy thật.');
   }
+  if (exists('output/test-summary.md')) warnings.push(...commandEvidenceWarnings(read('output/test-summary.md')));
 
   const criticalOrHigh = Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0;
   if (criticalOrHigh && ['test', 'pr'].includes(normalizeCommand(data.next_mode))) {
@@ -365,6 +437,7 @@ export function evaluatePrGates({ data, exists, read, scope }) {
   }
 
   const evidenceOk = hasCommandEvidence(read('output/test-summary.md'));
+  if (exists('output/test-summary.md')) warnings.push(...commandEvidenceWarnings(read('output/test-summary.md')));
   for (const key of ['command_evidence_status', 'test_command_log_status']) {
     const value = norm(data[key]);
     if (value === 'not_required') continue;

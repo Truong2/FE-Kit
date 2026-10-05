@@ -7,7 +7,7 @@ Dùng skill `frontend-delivery-standard` trong `testing-mode` cho: $ARGUMENTS
 
 Bắt buộc tạo/cập nhật `output/test-summary.md` và `tracking/workflow-status.md`.
 
-Bảng `Command evidence log` trong `output/test-summary.md` phải có một dòng cho mỗi lệnh test/lint/typecheck/build: lệnh nguyên văn, đã chạy thật hay chưa, kết quả, thời điểm. Lệnh chưa chạy ghi `Không` kèm lý do. Validator đọc bảng này: không có dòng lệnh đã chạy thật thì không qua được gate PR.
+Bảng `Command evidence log` trong `output/test-summary.md` phải có một dòng cho mỗi lệnh test/lint/typecheck/build: lệnh nguyên văn, đã chạy thật hay chưa, kết quả, thời điểm. Lệnh chưa chạy ghi `Không` kèm lý do. Validator đọc bảng này: chỉ dòng `Có` kèm kết quả `Passed`/`Failed` được tính là đã chạy thật; không có dòng nào như vậy thì không qua được gate PR.
 
 Không claim pass nếu chưa chạy thật. Test fail do code thì ghi lại và route `FE bugfix`; mode này không sửa source.
 

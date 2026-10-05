@@ -27,6 +27,7 @@ Yêu cầu:
 - Task có UI/Figma mà chưa có `output/figma-extraction-summary.md`: route `next_prompt` sang `FE figma <task-folder>`.
 - Thiết kế trước prompt triển khai: điền `Khung thiết kế trước triển khai` trong plan với ranh giới, trách nhiệm, luồng dữ liệu, contract, ràng buộc và tiêu chí chấp nhận. Dùng spec làm khung cho ma trận trace/checklist. Với deletion tests, phân tích điều bị mất khi bỏ thành phần và cách kiểm chứng; không xóa thật, không tự suy luận dư thừa từ việc thiếu import.
 - Trong mục `Ba câu hỏi kiến trúc` của plan, trả lời state nằm ở đâu, feedback nằm ở đâu và việc bỏ thành phần định thêm/sửa/bỏ ảnh hưởng gì. Nêu owner, nơi phụ thuộc và bằng chứng file/symbol/cấu hình liên quan; phân biệt state workflow với state frontend và feedback workflow với phản hồi UI. Phần không áp dụng phải có lý do; phần chưa rõ chặn triển khai phải ghi vào questions và route input-sync.
+- Điền mục `Kiểm chứng claim` theo rủi ro của task (tồn tại, luồng xử lý, lifetime, contract): chỉ ghi claim mà quyết định dựa vào, kèm bằng chứng bạn đã mở ra xem. Không đánh dấu "Đã xác minh" cho thứ chỉ đoán từ tên file.
 
 ## FE input-sync
 
@@ -41,6 +42,16 @@ Output bắt buộc: `tracking/input-sync-report.md`, `planning/questions.md`, `
 2. **Đọc theo ledger:** đọc `tracking/workflow-status.md` trước; mục `Input ledger bắt buộc cho FE plan` là danh sách đọc chính. Rule của mode đã có nguyên văn trong kết quả `fe_begin_mode`, không cần mở file rule; ngoài ra chỉ đọc file thật sự cần cho mode.
 3. **State nằm trong file:** bạn không thấy hội thoại của agent khác và agent sau không thấy hội thoại của bạn. Mọi quyết định, câu hỏi và evidence phải được ghi vào artifact trong task folder, không để trong câu trả lời.
 4. **Ngôn ngữ:** mọi artifact `.md` viết bằng tiếng Việt có dấu đầy đủ; giữ nguyên code, path, command, API field, DTO, error code.
-5. **Kết thúc:** cập nhật `tracking/workflow-status.md` (`current_mode`, gate liên quan, `next_mode`, `next_prompt`, `updated_at`, mục `Prompt bước tiếp theo`), gọi `fe_validate_workflow` và sửa cho tới khi `PASSED`. Câu trả lời cuối cùng gồm: artifact đã tạo/cập nhật, blocker nếu có, và đúng một dòng `Tiếp theo: <next_prompt>`.
+5. **Kết thúc:** cập nhật `tracking/workflow-status.md` (`current_mode`, gate liên quan, `next_mode`, `next_prompt`, `updated_at`, mục `Prompt bước tiếp theo`), gọi `fe_validate_workflow` và sửa cho tới khi `PASSED`. Câu trả lời cuối cùng là báo cáo bàn giao, mỗi mục một hai dòng và trỏ vào artifact thay vì chép lại nội dung:
+   - **Mục tiêu:** mode và task đã làm.
+   - **Input đã đọc:** nguồn chính (theo Input ledger).
+   - **File đã sửa:** artifact và source (nếu có) đã tạo/cập nhật.
+   - **Tiêu chí chấp nhận:** đạt/chưa đạt, trỏ tới checklist.
+   - **Giới hạn/giả định:** điều chưa xác minh, phạm vi đã bỏ qua.
+   - **Bằng chứng:** lệnh đã chạy và kết quả, kết quả `fe_validate_workflow`.
+   - **Việc còn lại:** blocker, câu hỏi mở.
+   - Cuối cùng đúng một dòng `Tiếp theo: <next_prompt>`.
+
+   Agent sau chỉ đọc task folder: quyết định nào chỉ nằm trong báo cáo này mà không có trong artifact coi như bị mất.
 6. **Không tự nhảy mode:** không làm việc của mode khác. Nếu cần mode khác, ghi `next_prompt` để main thread điều phối.
 7. **Evidence thật:** không claim test/lint/typecheck/build pass nếu chưa chạy thật; không tự bật `human_override`.

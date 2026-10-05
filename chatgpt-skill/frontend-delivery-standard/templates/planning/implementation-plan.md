@@ -67,6 +67,17 @@ Chỉ điền nội dung thuộc phạm vi task; ghi `Không áp dụng` kèm l�
 
 Với câu hỏi cuối, thực hiện deletion test bằng phân tích: giả định bỏ thành phần, nêu khả năng quan sát/cơ chế bảo vệ bị mất và kiểm tra có thể phát hiện ảnh hưởng. Nếu chưa thấy ảnh hưởng, ghi ứng viên giản lược và bằng chứng còn thiếu; không xóa thật hoặc kết luận dư thừa chỉ vì không tìm thấy import.
 
+### Kiểm chứng claim
+
+Ghi các claim mà quyết định ở trên dựa vào, theo bốn góc. Chỉ điền góc liên quan tới rủi ro của task: task nhỏ có thể chỉ một hai dòng. Bằng chứng là `file:symbol`, endpoint hoặc config key đã mở ra xem, không phải suy đoán. Claim chưa xác minh mà ảnh hưởng triển khai phải thành câu hỏi trong `planning/questions.md` và route input-sync.
+
+| Góc | Câu hỏi | Claim | Bằng chứng | Trạng thái |
+|---|---|---|---|---|
+| Tồn tại | File, symbol, endpoint, config key có thật không? |  |  | Đã xác minh / Chưa xác minh / Không áp dụng |
+| Luồng xử lý | Entrypoint/caller nào dẫn tới hành vi đã mô tả? |  |  |  |
+| Lifetime | State thuộc component, request, task, session hay process; ai là owner? |  |  |  |
+| Contract | Consumer nào bị ảnh hưởng; thay đổi có tương thích không? |  |  |  |
+
 ## 5. Rule và feature mẫu áp dụng
 
 | Nguồn | Nội dung áp dụng | Ghi chú |

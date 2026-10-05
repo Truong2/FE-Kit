@@ -5,7 +5,7 @@ import {
   detectBaseRef,
   scopeDiffForTask,
   validatePr
-} from "./chunks/chunk-RXGQ2CEI.mjs";
+} from "./chunks/chunk-P4XLPMSO.mjs";
 
 // core/scripts/validate-pr.mjs
 import fs from "node:fs";

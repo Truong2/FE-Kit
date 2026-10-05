@@ -26,6 +26,14 @@ Bản này ép UI task có Figma phải đi qua `UI Implementation Contract`. Kh
 - Không fallback về UI base source nếu Figma gate passed và chưa có waiver.
 - PR cho UI/Figma task cần UI match review/evidence; Critical/High mismatch block PR.
 
+## Mức kiểm tra
+
+Cursor không có MCP hay hook của kit: không có gì tự chặn sai gate lúc agent chạy. Gate chỉ được kiểm khi chạy CLI của kit (`bin/fe-kit.mjs`, do `fe-kit init` copy vào repo):
+
+- Trước khi kết thúc mỗi mode: `node bin/fe-kit.mjs validate-workflow <task-folder>`. Task ở review/test/pr thì lệnh này đối chiếu file đã sửa (git) với plan.
+- Trước khi mở PR: `node bin/fe-kit.mjs validate-pr <task-folder> --base <nhánh-đích>`.
+- Chưa chạy, hoặc lệnh báo lỗi, thì không ghi gate là passed trong `workflow-status.md`; ghi lại lệnh đã chạy và kết quả.
+
 ## Ngôn ngữ output
 
 Viết bằng tiếng Việt có dấu đầy đủ (theo `.frontend-delivery/rules/vietnamese-output.md`). Giữ nguyên code/path/command/API field/DTO/error code/route/package/SRS section.
