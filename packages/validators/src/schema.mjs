@@ -7,6 +7,10 @@ import { z } from 'zod';
  * `questions_resolution_gate_status`) bị lặp lại bằng regex ở cả
  * `bin/fe-kit.mjs` và `scripts/validate-workflow.ts`. Từ giờ CLI,
  * script standalone và test suite đều import schema này.
+ *
+ * v2.0.0: field mà validator tự tính được từ file/git (trạng thái artifact
+ * theo mode, scope diff, command evidence, token budget) trở thành OPTIONAL.
+ * Không field nào bị xoá — task folder tạo từ v1.x vẫn hợp lệ.
  */
 
 const GateStatus = z.enum([
@@ -19,6 +23,11 @@ const GateStatus = z.enum([
   'blocked',
   'not_required',
   'unknown',
+  // Các giá trị template và PR validator đã dùng từ v1.x nhưng schema thiếu.
+  'partial',
+  'manual_review',
+  'waived',
+  'substituted',
 ]);
 
 const CoreMode = z.enum([
@@ -35,6 +44,9 @@ const CoreMode = z.enum([
 ]);
 
 const TriState = z.union([z.boolean(), z.literal('unknown')]);
+
+/** Field tự khai: giữ để tương thích, không còn bắt buộc. */
+const SelfReported = GateStatus.optional();
 
 export const WorkflowStatusSchema = z
   .object({
@@ -73,52 +85,55 @@ export const WorkflowStatusSchema = z
     api_contract_mapping_status: GateStatus,
     api_error_mapping_status: GateStatus,
     fe_error_display_status: GateStatus,
-    rule_contract_application_status: GateStatus,
-    clean_code_gate_status: GateStatus,
+    rule_contract_application_status: SelfReported,
+    clean_code_gate_status: SelfReported,
     questions_status: z.enum(['none', 'open', 'blocked', 'resolved', 'not_required']),
     blocking_questions_open: z.number().int().min(0),
     questions_resolution_gate_status: GateStatus,
     input_sync_required: z.boolean(),
     plan_recheck_required_after_input_sync: z.boolean(),
 
-    // --- Efficiency / evidence gates ---
-    token_budget_status: GateStatus,
-    required_files_read_status: GateStatus,
-    scope_diff_status: GateStatus,
-    command_evidence_status: GateStatus,
-    test_command_log_status: GateStatus,
-    playwright_screenshot_diff_status: GateStatus,
+    // --- Efficiency / evidence gates (tự khai → optional) ---
+    token_budget_status: SelfReported,
+    required_files_read_status: SelfReported,
+    scope_diff_status: SelfReported,
+    command_evidence_status: SelfReported,
+    test_command_log_status: SelfReported,
+    playwright_screenshot_diff_status: SelfReported,
 
     // --- Figma/UI gates ---
     figma_required: TriState,
-    figma_gate_status: z.union([GateStatus, z.literal('waived'), z.literal('substituted')]),
+    figma_gate_status: GateStatus,
     ui_implementation_contract_status: GateStatus,
     figma_node_matrix_status: GateStatus,
     figma_component_binding_status: GateStatus,
     ui_match_review_status: GateStatus,
     ui_match_severity_status: z.enum(['unknown', 'none', 'low', 'medium', 'high', 'critical']),
 
-    // --- Mode output status ---
-    input_sync_report_status: GateStatus,
-    figma_summary_status: GateStatus,
-    cook_status: GateStatus,
+    // --- Mode output status (suy ra được từ file tồn tại → optional) ---
+    input_sync_report_status: SelfReported,
+    figma_summary_status: SelfReported,
+    cook_status: SelfReported,
     review_status: z.enum([
       'not_started',
       'passed',
       'needs_bugfix',
       'blocked',
       'insufficient_evidence',
+      'not_required',
     ]),
-    review_report_status: GateStatus,
+    review_report_status: SelfReported,
     review_bug_status: z.enum(['none', 'open', 'blocked', 'closed']),
     critical_issues_open: z.number().int().min(0),
     high_issues_open: z.number().int().min(0),
     medium_issues_open: z.number().int().min(0),
     low_issues_open: z.number().int().min(0),
     bugfix_required: z.boolean(),
-    test_summary_status: z.enum(['not_started', 'created', 'updated', 'passed', 'failed']),
-    ui_figma_review_report_status: GateStatus,
-    pr_summary_status: GateStatus,
+    test_summary_status: z
+      .enum(['not_started', 'created', 'updated', 'passed', 'failed', 'partial'])
+      .optional(),
+    ui_figma_review_report_status: SelfReported,
+    pr_summary_status: SelfReported,
     pr_status: z.enum(['not_started', 'ready', 'opened', 'merged', 'blocked']),
     build_ready: z.boolean(),
   })

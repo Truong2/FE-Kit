@@ -1,8 +1,8 @@
 # Quickstart
 
-Version: 1.1.0
+Version: 2.0.0
 
-## Cài Claude Code plugin (nhanh nhất, chỉ cần slash command + skill)
+## Cài Claude Code plugin
 
 Dùng cho **tất cả dự án** trên máy (mặc định):
 
@@ -21,7 +21,7 @@ claude plugin marketplace add your-org/frontend-delivery-agent-kit --scope proje
 claude plugin install fe@frontend-delivery --scope project
 ```
 
-Cài xong là có luôn 11 command namespace `fe`:
+Cài xong là có 11 command namespace `fe`:
 
 ```text
 /fe:new-task FE-123-task-name
@@ -31,41 +31,39 @@ Cài xong là có luôn 11 command namespace `fe`:
 /fe:pr docs/frontend-tasks/FE-123-task-name
 ```
 
+Mỗi command được delegate cho subagent `fe:frontend-*` tương ứng; MCP tool `fe_begin_mode` kiểm tra gate trước khi làm. Hook mặc định ở mức `warn`; đặt `FE_KIT_HOOKS=enforce` để chặn thật.
+
 Cập nhật: `/plugin marketplace update frontend-delivery` rồi `/plugin update fe@frontend-delivery`.
 
-Plugin **không** kèm CLI `fe-kit` — muốn `new-task`/`validate-*` chạy được ngoài phiên chat (ví dụ trong CI) thì cài thêm phần dưới.
-
-## Cài dùng ngay qua CLI (team dùng kit)
+## Thêm rule, context và CLI cho repo dự án
 
 ```bash
 git clone <kit-repo-url> && cd frontend-delivery-agent-kit
-npm install
-node bin/fe-kit.mjs init --target /path/to/your-project --agents all
-node bin/fe-kit.mjs doctor --target /path/to/your-project --strict
-node bin/fe-kit.mjs new-task FE-123-task-name --target /path/to/your-project
+node standalone/fe-kit.mjs init --target /path/to/your-project --agents all
+cd /path/to/your-project && node bin/fe-kit.mjs doctor --strict
 ```
 
-Sau init, rule mặc định nằm trong `.frontend-delivery/rules/`. Context riêng của project nằm trong `docs/frontend-context/`. Bản cài qua CLI cũng dùng `/fe:plan`, `/fe:cook`… — nếu đã cài plugin thì bỏ `claude` khỏi `--agents` để tránh sinh bộ command trùng tên.
+Sau init, rule mặc định nằm trong `.frontend-delivery/rules/` (override bản trong plugin). Context riêng của project nằm trong `docs/frontend-context/`. Init lại không đè file context team đã sửa.
 
-Đầy đủ 4 đường cài (plugin, CLI, adapter Codex/Cursor/Copilot/ChatGPT, CI) xem [INSTALL.md](INSTALL.md).
+Đầy đủ các đường cài (plugin, init, adapter Codex/Cursor/Copilot/ChatGPT, CI) xem [INSTALL.md](INSTALL.md).
 
 `feature-source-context.md` chỉ mô tả feature mẫu/cách code feature mẫu nếu có. Không đặt rule chung trong file này.
 
 ## Phát triển kit (maintainer)
 
 ```bash
-npm install          # link npm workspace, cài zod/gray-matter/esbuild/vitest
-npm test              # chạy Vitest cho packages/validators
-npm run build          # sinh lại rules/templates/docs/scripts từ core/
-npm run build:check    # kiểm tra core/ đã đồng bộ chưa (CI dùng lệnh này)
+npm install          # npm workspaces, esbuild, vitest
+npm run build        # sinh lại mọi đích từ core/
+npm run build:check  # kiểm tra core/ đã đồng bộ chưa (CI dùng lệnh này)
+npm test             # validators + hook + CLI bundle
 ```
 
-**Không sửa tay** `rules/`, `templates/`, `docs/`, `standards/`, `scripts/` ở `.claude/skills/`, `chatgpt-skill/`, hay top-level — sửa trong `core/` rồi chạy `npm run build`.
+**Không sửa tay** output generate (`plugins/fe/`, `chatgpt-skill/`, `standalone/`, `rules/`, `templates/`, `docs/` top-level) — sửa trong `core/` rồi chạy `npm run build`.
 
 ## Token/evidence gates
 
 - Agent phải đọc đúng file cần thiết theo mode, không đọc/copy toàn bộ context nếu không cần.
-- Trước PR phải có scope diff passed/not_required và command evidence completed/not_required.
+- Trước PR, scope diff được tính từ `git diff` so với plan, và `output/test-summary.md` phải có lệnh đã chạy thật.
 - Với UI/Figma, Playwright screenshot diff là ưu tiên; nếu chưa có setup thì ghi manual/static evidence và lý do.
 
-Ghi chú v1.0.0: Câu hỏi blocking/open trong `planning/questions.md` sẽ chặn `FE cook`; `workflow-status.md` bắt buộc route sang `FE input-sync` cho tới khi câu trả lời được đồng bộ vào questions/plan/checklist và `questions_resolution_gate_status: passed`. Xem `CHANGELOG.md`.
+Câu hỏi blocking/open trong `planning/questions.md` chặn `FE cook`; `workflow-status.md` bắt buộc route sang `FE input-sync` cho tới khi câu trả lời được đồng bộ vào questions/plan/checklist và `questions_resolution_gate_status: passed`. Xem `CHANGELOG.md`.

@@ -1,10 +1,13 @@
 ---
 description: Đối chiếu UI đã build với Figma/reference screenshot, báo visual mismatch.
+argument-hint: <task-folder>
 ---
 
-Bạn đang chạy `figma-review-mode`.
+Dùng skill `frontend-delivery-standard` trong `figma-review-mode` cho: $ARGUMENTS
 
 Mục tiêu: đối chiếu UI đã build với Figma/reference screenshot và báo visual mismatch bằng tiếng Việt.
+
+Output bắt buộc: `output/ui-figma-review-report.md` và `tracking/workflow-status.md`.
 
 Luật:
 
@@ -14,12 +17,13 @@ Luật:
 - Không được coi UI pass chỉ vì dùng core/source component.
 - Nếu Figma gate passed, Figma là visual source of truth.
 - Ghi mismatch theo severity: Critical / High / Medium / Low.
-- Critical/High mismatch chưa fix/waive thì không PR-ready.
+- Critical/High mismatch chưa fix/waive thì không PR-ready; route `FE bugfix`.
+- Mode này không sửa source.
 
-Output nếu cần evidence riêng: `output/ui-figma-review-report.md`.
+## Rule và ngôn ngữ output
 
-## Ngôn ngữ output
+Lấy danh sách rule của mode từ MCP tool `fe_begin_mode`. Nếu không có MCP, đọc `.frontend-delivery/rules/` của repo (nếu có) hoặc thư mục `rules/` của skill `frontend-delivery-standard`.
 
-Viết bằng tiếng Việt có dấu đầy đủ (theo `.frontend-delivery/rules/vietnamese-output.md`, luôn áp dụng cho toàn project). Giữ nguyên code/path/command/API field/DTO/error code/route/package/SRS section.
+Viết bằng tiếng Việt có dấu đầy đủ. Giữ nguyên code/path/command/API field/DTO/error code/route/package/SRS section.
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`

@@ -1,0 +1,50 @@
+{
+  "description": "Gate runtime của Frontend Delivery Kit: ghi nhớ mode FE đang chạy, chặn sửa source sai vai/sai gate, không cho mode kết thúc khi workflow-status.md chưa cập nhật. Mức thực thi: biến môi trường FE_KIT_HOOKS=off|warn|enforce.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/fe-hook.mjs", "UserPromptSubmit"] }
+        ]
+      }
+    ],
+    "UserPromptExpansion": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/fe-hook.mjs", "UserPromptExpansion"] }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Agent|Task",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/fe-hook.mjs", "PreToolUse"] }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__.*__fe_begin_mode",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/fe-hook.mjs", "PostToolUse"] }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": ".*frontend-.*",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/fe-hook.mjs", "SubagentStop"] }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/fe-hook.mjs", "Stop"] }
+        ]
+      }
+    ]
+  }
+}

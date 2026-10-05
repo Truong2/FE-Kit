@@ -1,7 +1,7 @@
 # Version
 
-Current version: 1.1.0
+Current version: 2.0.0
 
-Status: stable — plugin đổi namespace slash command sang `/fe:*`.
+Status: stable — plugin là kênh duy nhất cho Claude Code; gate được thực thi bằng MCP tool và hook.
 
 Xem chi tiết trong `CHANGELOG.md`.

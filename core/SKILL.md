@@ -15,9 +15,21 @@ Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 - `tracking/workflow-status.md` là file duy nhất chứa `Prompt bước tiếp theo`.
 - `FE plan` phải ghi đủ Input ledger trong `tracking/workflow-status.md` để các mode sau biết cần đọc input nào.
 - Nếu `planning/questions.md` còn câu hỏi blocking/open, `workflow-status.md` phải route sang `FE input-sync`; không được route sang `FE cook` cho tới khi input-sync cập nhật câu trả lời, plan/checklist và đóng gate.
-- Rule mặc định nằm trong `rules/` của skill và khi init repo sẽ được copy sang `.frontend-delivery/rules/`.
 - Không copy rule dài vào output; chỉ ghi rule ID/path và quyết định liên quan trực tiếp tới task.
 - `docs/frontend-context/feature-source-context.md` chỉ mô tả feature mẫu/cách code feature mẫu nếu source base có mẫu đáng tin.
+
+## Bắt đầu và kết thúc một mode
+
+1. **Bắt đầu:** gọi MCP tool `fe_begin_mode` (`workspace_root`, `task_folder`, `mode`). Kết quả cho biết mode có được chạy không, prompt phải chạy thay thế nếu bị chặn, artifact bắt buộc và nguyên văn các rule áp dụng cho mode (không cần mở file rule riêng).
+2. **Bị chặn:** không làm việc của mode và không sửa source; chỉ cập nhật `next_mode`/`next_prompt` trong `tracking/workflow-status.md` theo prompt được trả về.
+3. **Kết thúc:** cập nhật `tracking/workflow-status.md`, gọi `fe_validate_workflow` và sửa tới khi `PASSED`.
+
+Môi trường không có MCP tool của kit (ChatGPT, Codex, Cursor, Copilot): tự đọc `tracking/workflow-status.md` + `planning/questions.md`, áp dụng `rules/question-resolution-contract.md`, và dùng script trong `scripts/` nếu có (`node scripts/validate-workflow.mjs <task-folder>`).
+
+## Vị trí rule
+
+- Rule mặc định nằm trong `rules/` cạnh file skill này.
+- Repo dự án có thể override bằng `.frontend-delivery/rules/` (tạo bởi `fe-kit init`); khi thư mục đó tồn tại thì nó được ưu tiên. `fe_begin_mode` tự chọn đúng nguồn và trả về nội dung rule.
 
 ## Rule loading theo mode
 
@@ -44,9 +56,9 @@ Không tạo `frontend-rule-context.md` trong `docs/frontend-context/`.
 
 | Mode | Artifact bắt buộc |
 |---|---|
-| `FE plan` | `task.md`, `planning/implementation-plan.md`, `planning/build-checklist.md`, `tracking/workflow-status.md` |
+| `FE plan` | `task.md`, `planning/implementation-plan.md`, `planning/build-checklist.md`, `planning/questions.md`, `tracking/workflow-status.md` |
 | `FE quick` | `tracking/workflow-status.md`, checklist nếu có task folder |
-| `FE input-sync` | `tracking/input-sync-report.md`, `tracking/workflow-status.md` |
+| `FE input-sync` | `tracking/input-sync-report.md`, `planning/questions.md`, `tracking/workflow-status.md` |
 | `FE figma` | `output/figma-extraction-summary.md`, `tracking/workflow-status.md` |
 | `FE cook` | code changes, `planning/build-checklist.md`, `tracking/workflow-status.md` |
 | `FE review` | `output/review-report.md`, `tracking/workflow-status.md`; có bug thì thêm `tracking/review-bugs.md` |
@@ -55,17 +67,24 @@ Không tạo `frontend-rule-context.md` trong `docs/frontend-context/`.
 | `FE figma-review` | `output/ui-figma-review-report.md`, `tracking/workflow-status.md` |
 | `FE pr` | `output/pr-summary.md`, `tracking/workflow-status.md` |
 
+## Ai được sửa source
+
+Chỉ `FE cook`, `FE bugfix` và `FE quick` được sửa source code của dự án, và chỉ trong các file thuộc bảng `File sẽ tạo / cập nhật` của `planning/implementation-plan.md`. Các mode còn lại chỉ ghi artifact trong `docs/frontend-tasks/` và `docs/frontend-context/`.
+
 ## Evidence gates
 
 - Trước PR phải có review/test evidence bắt buộc theo task.
 - Nếu có Figma/UI, cần UI review evidence hoặc waiver rõ ràng.
-- Không sửa file ngoài plan nếu chưa update plan/input-sync.
-- Không claim command pass nếu chưa chạy thật.
+- Không sửa file ngoài plan nếu chưa update plan/input-sync. Dùng MCP tool `fe_scope_diff` để đối chiếu `git diff` với plan thay vì tự khai `scope_diff_status`.
+- Không claim command pass nếu chưa chạy thật. `output/test-summary.md` phải có dòng lệnh đã chạy thật trong bảng `Command evidence log`.
+- `human_override: true` chỉ được bật khi người dùng xác nhận.
 
 ## Validation
 
-```bash
-npm run validate:task -- <task-folder>
-npm run validate:workflow -- <task-folder>
-npm run validate:pr -- <task-folder>
-```
+| Việc | Claude Code (plugin `fe`) | Môi trường khác |
+|---|---|---|
+| Tạo task folder | `fe_new_task` | `node bin/fe-kit.mjs new-task <tên-task>` |
+| Kiểm tra cấu trúc task | `fe_validate_task` | `node scripts/validate-task.mjs <task-folder>` |
+| Kiểm tra gate workflow | `fe_validate_workflow` | `node scripts/validate-workflow.mjs <task-folder>` |
+| Đối chiếu scope với plan | `fe_scope_diff` | `node bin/fe-kit.mjs validate-pr <task-folder>` |
+| Bước tiếp theo | `fe_next_step` | mục `Prompt bước tiếp theo` trong `workflow-status.md` |

@@ -1,19 +1,24 @@
 #!/usr/bin/env node
 /**
- * Sinh lại các bản "adapter" (rules/templates/docs dùng cho Claude skill và
- * ChatGPT skill) từ core/ — nguồn duy nhất.
+ * Sinh mọi bản phân phối của kit từ core/ — nguồn duy nhất.
  *
- * TRƯỚC ĐÂY: rules/, templates/, docs/ tồn tại y hệt (byte-for-byte) ở
- * top-level, .claude/skills/frontend-delivery-standard/, và
- * chatgpt-skill/frontend-delivery-standard/ — không có script nào đồng bộ,
- * sửa 1 chỗ phải nhớ sửa tay 3-4 chỗ.
+ *   core/rules, templates, docs, standards  -> top-level (CLI init đọc ở đây),
+ *                                              plugin skill, ChatGPT skill
+ *   core/commands                           -> plugins/fe/commands (chèn đoạn delegation)
+ *   core/agents                             -> plugins/fe/agents (nối _protocol.md)
+ *   core/hooks                              -> plugins/fe/hooks (hook script được bundle)
+ *   core/mcp/server.mjs                     -> plugins/fe/mcp/fe-kit-mcp.mjs (bundle)
+ *   core/scripts                            -> chatgpt-skill/.../scripts (bundle)
+ *   bin/fe-kit.mjs                          -> standalone/fe-kit.mjs (bundle, chạy không cần node_modules)
+ *   version trong package.json              -> plugin.json, marketplace.json, kit.yaml, ...
  *
- * TỪ BÂY GIỜ: core/rules, core/templates, core/docs, core/standards,
- * core/scripts là NGUỒN DUY NHẤT. Script này copy chúng ra các đích cần
- * thiết; riêng core/scripts được BUNDLE bằng esbuild thành file .mjs độc
- * lập (không cần ts-node, không cần node_modules ở đích) vì các script này
- * phải chạy được sau khi skill folder bị copy ra khỏi monorepo (ChatGPT
- * Skill zip, hoặc team khác copy riêng .claude/skills/ vào repo của họ).
+ * v2.0.0: plugin `fe` là kênh duy nhất cho Claude Code nên không còn sinh
+ * `.claude/commands|agents|skills`; payload init của từng agent nằm ở
+ * `core/adapters/<agent>/` và prompt Codex do `fe-kit init` sinh trực tiếp
+ * từ core/commands.
+ *
+ * Mọi so sánh đều chuẩn hoá CRLF -> LF: checkout trên Windows (autocrlf)
+ * không còn bị báo lệch giả.
  *
  * Dùng:
  *   node build/generate-adapters.mjs          # ghi đè các đích
@@ -23,360 +28,240 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as esbuild from 'esbuild';
+import { AGENT_FOR_COMMAND } from '../packages/validators/src/modes.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const CORE = path.join(ROOT, 'core');
 const CHECK_ONLY = process.argv.includes('--check');
 
-/** Mỗi entry: copy core/<from> -> <to>, đồng thời set lại top-level rules/templates/docs = symlink-equivalent copy để giữ tương thích ngược cho ai đang tham chiếu path cũ. */
-const TARGETS = [
-  { from: 'rules', to: 'rules' }, // top-level rules/ (tương thích ngược, README cũ còn trỏ tới đây)
-  { from: 'templates', to: 'templates' }, // top-level templates/
-  { from: 'docs', to: 'docs' }, // top-level docs/
-  { from: 'rules', to: '.claude/skills/frontend-delivery-standard/rules' },
-  { from: 'templates', to: '.claude/skills/frontend-delivery-standard/templates' },
-  { from: 'docs', to: '.claude/skills/frontend-delivery-standard/docs' },
-  { from: 'standards', to: '.claude/skills/frontend-delivery-standard/standards' },
-  { from: 'rules', to: 'chatgpt-skill/frontend-delivery-standard/rules' },
-  { from: 'templates', to: 'chatgpt-skill/frontend-delivery-standard/templates' },
-  { from: 'docs', to: 'chatgpt-skill/frontend-delivery-standard/docs' },
-  { from: 'standards', to: 'chatgpt-skill/frontend-delivery-standard/standards' },
-];
-
-/** scripts/ được bundle (esbuild), không copy nguyên văn như các target khác. */
-const SCRIPT_ENTRIES = ['validate-task.mjs', 'validate-workflow.mjs', 'validate-pr.mjs'];
-const SCRIPT_TARGET_DIRS = [
-  '.claude/skills/frontend-delivery-standard/scripts',
-  'chatgpt-skill/frontend-delivery-standard/scripts',
-];
-
-/** File đơn copy thẳng (không phải cả thư mục) tới nhiều đích. */
 /**
- * Plugin Claude Code phải TỰ CHỨA: khi user cài, Claude Code copy nguyên thư
- * mục plugin vào cache (~/.claude/plugins/cache), nên không được tham chiếu
- * file ngoài thư mục plugin bằng `../`. Vì vậy commands/agents/rules/templates
- * đều được copy vào trong plugin thay vì symlink.
- *
- * Tên thư mục PHẢI trùng `name` trong core/plugin.json và `name` của entry
- * trong .claude-plugin/marketplace.json (`fe`) — đây là convention của mọi
- * marketplace chính thức, và `name` cũng là namespace slash command (`/fe:plan`).
+ * Tên thư mục plugin PHẢI trùng `name` trong core/plugin.json và entry trong
+ * .claude-plugin/marketplace.json (`fe`): `name` cũng là namespace slash
+ * command (`/fe:plan`) và tiền tố của subagent (`fe:frontend-planner`).
+ * Plugin phải TỰ CHỨA vì Claude Code copy nguyên thư mục vào cache.
  */
-const PLUGIN_ROOT = 'plugins/fe';
+const PLUGIN_NAME = 'fe';
+const PLUGIN_ROOT = `plugins/${PLUGIN_NAME}`;
+const PLUGIN_SKILL = `${PLUGIN_ROOT}/skills/frontend-delivery-standard`;
+const CHATGPT_SKILL = 'chatgpt-skill/frontend-delivery-standard';
 
-const SINGLE_FILE_TARGETS = [
-  { from: 'skill-package.json', to: '.claude/skills/frontend-delivery-standard/package.json' },
-  { from: 'skill-package.json', to: 'chatgpt-skill/frontend-delivery-standard/package.json' },
-  { from: 'SKILL.md', to: '.claude/skills/frontend-delivery-standard/SKILL.md' },
-  { from: 'SKILL.md', to: 'chatgpt-skill/frontend-delivery-standard/SKILL.md' },
-  { from: 'SKILL.md', to: `${PLUGIN_ROOT}/skills/frontend-delivery-standard/SKILL.md` },
-  { from: 'plugin.json', to: `${PLUGIN_ROOT}/.claude-plugin/plugin.json` },
-  { from: 'mcp.json', to: `${PLUGIN_ROOT}/.mcp.json` },
-];
-const PLUGIN_COPY_TARGETS = [
-  { fromRepo: '.claude/agents', to: `${PLUGIN_ROOT}/agents` },
-  { fromCore: 'rules', to: `${PLUGIN_ROOT}/skills/frontend-delivery-standard/rules` },
-  { fromCore: 'templates', to: `${PLUGIN_ROOT}/skills/frontend-delivery-standard/templates` },
-  { fromCore: 'standards', to: `${PLUGIN_ROOT}/skills/frontend-delivery-standard/standards` },
-];
+const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
 
-/**
- * Command files sinh từ core/commands/ cho từng adapter.
- * - Claude (.claude/commands/fe/): giữ nguyên (nguồn đã có frontmatter description).
- * - Codex (.codex/prompts/): bỏ frontmatter, thay bằng heading `# FE <cmd>`.
- * Tên file Codex khác tên Claude ở 2 chỗ (lịch sử): cook→build, figma→figma-extract.
- */
-const COMMAND_CODEX_NAME = { 'cook.md': 'build.md', 'figma.md': 'figma-extract.md' };
+/** Thư mục đích do generator quản lý trọn vẹn: file thừa trong đó là file mồ côi phải xoá. */
+const managedDirs = new Set();
+/** path tương đối repo (POSIX) -> nội dung text đã chuẩn hoá LF. */
+const outputs = new Map();
 
-function generateCommands() {
-  const srcDir = path.join(CORE, 'commands');
-  if (!fs.existsSync(srcDir)) {
-    hadDrift = true;
-    console.error('[generate-adapters] Thiếu core/commands');
-    return;
-  }
-  const files = fs.readdirSync(srcDir).filter((f) => f.endsWith('.md'));
+const lf = (text) => String(text).replace(/\r\n/g, '\n');
+const posix = (p) => p.split(path.sep).join('/');
+const readCore = (rel) => lf(fs.readFileSync(path.join(CORE, rel), 'utf8'));
 
-  const outputs = [];
-  for (const f of files) {
-    const raw = fs.readFileSync(path.join(srcDir, f), 'utf8');
-    outputs.push({ to: path.join('.claude/commands/fe', f), content: raw });
-
-    const fm = raw.match(/^---\n[\s\S]*?\n---\n\n?/);
-    const body = fm ? raw.slice(fm[0].length) : raw;
-    const codexFile = COMMAND_CODEX_NAME[f] || f;
-    const codexCmd = codexFile.replace(/\.md$/, '').replace('figma-extract', 'figma');
-    outputs.push({ to: path.join('.codex/prompts', codexFile), content: `# FE ${codexCmd}\n\n${body}` });
-
-    // Plugin: commands/ trong plugin CHỈ nhận file .md phẳng — thư mục con bị
-    // Claude Code hiểu là skill (phải có SKILL.md) và bị bỏ qua. Namespace của
-    // slash command = `name` trong plugin.json + tên file, nên plugin tên `fe`
-    // + file phẳng `plan.md` => `/fe:plan` (không cần prefix trong tên file).
-    outputs.push({ to: path.join(PLUGIN_ROOT, 'commands', f), content: raw });
-  }
-
-  // commands/ của plugin phải sạch: file .md thừa (đổi tên lệnh, bỏ lệnh) vẫn
-  // được Claude Code load thành slash command mồ côi nếu không xoá.
-  const pluginCmdDir = path.join(ROOT, PLUGIN_ROOT, 'commands');
-  const expected = new Set(files);
-  const stale = fs.existsSync(pluginCmdDir)
-    ? fs.readdirSync(pluginCmdDir).filter((f) => !expected.has(f))
-    : [];
-  for (const f of stale) {
-    if (CHECK_ONLY) {
-      hadDrift = true;
-      console.error(`[generate-adapters] THỪA: ${PLUGIN_ROOT}/commands/${f} (không có trong core/commands)`);
-    } else {
-      fs.rmSync(path.join(pluginCmdDir, f), { recursive: true, force: true });
-      console.log(`[generate-adapters] Xoá command thừa ${PLUGIN_ROOT}/commands/${f}`);
-    }
-  }
-
-  for (const o of outputs) {
-    const destFile = path.join(ROOT, o.to);
-    if (CHECK_ONLY) {
-      const cur = fs.existsSync(destFile) ? fs.readFileSync(destFile, 'utf8') : null;
-      if (cur !== o.content) {
-        hadDrift = true;
-        console.error(`[generate-adapters] Lệch tại ${o.to} (nguồn: core/commands)`);
-      }
-    } else {
-      fs.mkdirSync(path.dirname(destFile), { recursive: true });
-      fs.writeFileSync(destFile, o.content);
-    }
-  }
-  if (!CHECK_ONLY) console.log(`[generate-adapters] core/commands -> .claude/commands/fe + .codex/prompts (${files.length} lệnh)`);
-}
-
-function listFilesRecursive(dir) {
-  const out = [];
-  if (!fs.existsSync(dir)) return out;
-  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+function listFiles(dir, base = dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((ent) => {
     const p = path.join(dir, ent.name);
-    if (ent.isDirectory()) out.push(...listFilesRecursive(p));
-    else out.push(p);
-  }
-  return out;
+    return ent.isDirectory() ? listFiles(p, base) : [posix(path.relative(base, p))];
+  });
 }
 
-function filesEqual(a, b) {
-  if (!fs.existsSync(a) || !fs.existsSync(b)) return false;
-  return fs.readFileSync(a).equals(fs.readFileSync(b));
+function emit(rel, content) {
+  outputs.set(posix(rel), lf(content));
 }
 
-function diffDirs(srcDir, destDir) {
-  const srcFiles = listFilesRecursive(srcDir).map((p) => path.relative(srcDir, p));
-  const destFiles = listFilesRecursive(destDir).map((p) => path.relative(destDir, p));
-  const drift = [];
-  for (const rel of srcFiles) {
-    const s = path.join(srcDir, rel);
-    const d = path.join(destDir, rel);
-    if (!fs.existsSync(d)) drift.push(`THIẾU: ${rel} (có ở core, chưa generate ở đích)`);
-    else if (!filesEqual(s, d)) drift.push(`LỆCH NỘI DUNG: ${rel}`);
-  }
-  for (const rel of destFiles) {
-    if (!srcFiles.includes(rel)) drift.push(`THỪA: ${rel} (không có trong core, có thể bị sửa tay)`);
-  }
-  return drift;
-}
-
-function copyDir(srcDir, destDir) {
-  fs.rmSync(destDir, { recursive: true, force: true });
-  fs.mkdirSync(destDir, { recursive: true });
-  fs.cpSync(srcDir, destDir, { recursive: true });
+/** Copy nguyên một thư mục con của core/ ra `to`, và đánh dấu `to` là thư mục được quản lý. */
+function copyCoreDir(from, to) {
+  const srcDir = path.join(CORE, from);
+  if (!fs.existsSync(srcDir)) throw new Error(`Thiếu core/${from}`);
+  managedDirs.add(to);
+  for (const rel of listFiles(srcDir)) emit(`${to}/${rel}`, readCore(`${from}/${rel}`));
 }
 
 let hadDrift = false;
+const drift = (msg) => {
+  hadDrift = true;
+  console.error(`[generate-adapters] ${msg}`);
+};
 
-for (const t of TARGETS) {
-  const srcDir = path.join(CORE, t.from);
-  const destDir = path.join(ROOT, t.to);
+// --- 0. Đồng bộ version (chạy trước vì các bước sau copy những file này) -------
 
-  if (!fs.existsSync(srcDir)) {
-    console.error(`[generate-adapters] Thiếu core/${t.from}, bỏ qua đích ${t.to}`);
-    hadDrift = true;
-    continue;
-  }
+/** File mang số version của kit (không phải output generate) và regex vị trí cần thay. */
+const VERSION_FILES = [
+  ['core/plugin.json', /("version":\s*")[^"]*(")/],
+  ['core/skill-package.json', /("version":\s*")[^"]*(")/],
+  ['.claude-plugin/marketplace.json', /("version":\s*")[^"]*(")/],
+  ['packages/validators/package.json', /("version":\s*")[^"]*(")/],
+  ['kit.yaml', /^(version:\s*)\S+()$/m],
+  ['standard.yaml', /^(version:\s*)\S+()$/m],
+  ['VERSION.md', /(Current version:\s*)\S+()/],
+];
 
-  if (CHECK_ONLY) {
-    const drift = diffDirs(srcDir, destDir);
-    if (drift.length) {
-      hadDrift = true;
-      console.error(`\n[generate-adapters] Lệch tại ${t.to} (nguồn: core/${t.from}):`);
-      for (const d of drift) console.error('  - ' + d);
-    }
-  } else {
-    copyDir(srcDir, destDir);
-    console.log(`[generate-adapters] core/${t.from} -> ${t.to}`);
-  }
-}
-
-async function bundleScripts() {
-  const entries = SCRIPT_ENTRIES.map((f) => path.join(CORE, 'scripts', f));
-  const missing = entries.filter((e) => !fs.existsSync(e));
-  if (missing.length) {
-    hadDrift = true;
-    console.error('[generate-adapters] Thiếu core/scripts: ' + missing.join(', '));
-    return;
-  }
-
-  for (const destRel of SCRIPT_TARGET_DIRS) {
-    const destDir = path.join(ROOT, destRel);
-
-    if (CHECK_ONLY) {
-      // check mode: bundle vào thư mục tạm rồi so sánh nội dung, không ghi đè đích thật
-      const tmpDir = fs.mkdtempSync(path.join(ROOT, '.tmp-bundle-check-'));
-      try {
-        await esbuild.build({
-          entryPoints: entries,
-          outdir: tmpDir,
-          bundle: true,
-          splitting: true,
-          platform: 'node',
-          format: 'esm',
-          target: 'node18',
-          outExtension: { '.js': '.mjs' },
-          chunkNames: 'chunks/[name]-[hash]',
-          banner: {
-            js: "import { createRequire as __fdkCreateRequire } from 'node:module';\nconst require = __fdkCreateRequire(import.meta.url);",
-          },
-          logLevel: 'silent',
-        });
-        const drift = diffDirs(tmpDir, destDir).filter((d) => !d.startsWith('THỪA: README.md'));
-        if (drift.length) {
-          hadDrift = true;
-          console.error(`\n[generate-adapters] Lệch tại ${destRel} (bundle từ core/scripts):`);
-          for (const d of drift) console.error('  - ' + d);
-        }
-      } finally {
-        fs.rmSync(tmpDir, { recursive: true, force: true });
-      }
-    } else {
-      fs.rmSync(destDir, { recursive: true, force: true });
-      fs.mkdirSync(destDir, { recursive: true });
-      await esbuild.build({
-        entryPoints: entries,
-        outdir: destDir,
-        bundle: true,
-        splitting: true,
-        platform: 'node',
-        format: 'esm',
-        target: 'node18',
-        outExtension: { '.js': '.mjs' },
-        chunkNames: 'chunks/[name]-[hash]',
-        banner: {
-          // gray-matter (CJS) gọi require('fs') tĩnh; ở output ESM không có
-          // `require` sẵn trong scope, nên esbuild rơi vào nhánh lỗi
-          // "Dynamic require ... not supported". Tạo require thật bằng
-          // node:module để shim của esbuild dùng được.
-          js: "import { createRequire as __fdkCreateRequire } from 'node:module';\nconst require = __fdkCreateRequire(import.meta.url);",
-        },
-      });
-      const readmeSrc = path.join(CORE, 'scripts', 'README.md');
-      if (fs.existsSync(readmeSrc)) fs.copyFileSync(readmeSrc, path.join(destDir, 'README.md'));
-      console.log(`[generate-adapters] core/scripts (bundled) -> ${destRel}`);
-    }
+for (const [rel, re] of VERSION_FILES) {
+  const file = path.join(ROOT, rel);
+  if (!fs.existsSync(file)) continue;
+  const current = lf(fs.readFileSync(file, 'utf8'));
+  const next = current.replace(re, `$1${VERSION}$2`);
+  if (current === next) continue;
+  if (CHECK_ONLY) drift(`Version lệch tại ${rel} (package.json là ${VERSION}).`);
+  else {
+    fs.writeFileSync(file, next);
+    console.log(`[generate-adapters] version ${VERSION} -> ${rel}`);
   }
 }
 
-await bundleScripts();
+// --- 1. Thư mục copy nguyên văn -------------------------------------------
+
+for (const dir of ['rules', 'templates', 'docs']) copyCoreDir(dir, dir); // top-level: nguồn cho `fe-kit init`
+for (const dir of ['rules', 'templates', 'docs', 'standards']) copyCoreDir(dir, `${CHATGPT_SKILL}/${dir}`);
+for (const dir of ['rules', 'templates', 'standards']) copyCoreDir(dir, `${PLUGIN_SKILL}/${dir}`);
+// Eval hành vi nằm ở evals/ của repo kit, chạy bằng `--eval-dir evals`, không ship trong plugin.
+
+// --- 2. File đơn ------------------------------------------------------------
+
+emit(`${CHATGPT_SKILL}/SKILL.md`, readCore('SKILL.md'));
+emit(`${CHATGPT_SKILL}/package.json`, readCore('skill-package.json'));
+emit(`${PLUGIN_SKILL}/SKILL.md`, readCore('SKILL.md'));
+emit(`${PLUGIN_ROOT}/.claude-plugin/plugin.json`, readCore('plugin.json'));
+emit(`${PLUGIN_ROOT}/.mcp.json`, readCore('mcp.json'));
+emit(`${PLUGIN_ROOT}/hooks/hooks.json`, readCore('hooks/hooks.json'));
+
+// --- 3. Commands của plugin (chèn delegation) -------------------------------
+
+const FRONTMATTER_RE = /^---\n[\s\S]*?\n---\n\n?/;
 
 /**
- * MCP server được bundle thành 1 file standalone đặt trong plugin.
- * Plugin bị copy vào cache của Claude Code nên không có node_modules —
- * mọi dependency (MCP SDK, zod, gray-matter) phải nằm trong bundle.
+ * Đoạn điều phối chỉ có trong command của plugin Claude Code. Không đưa vào
+ * SKILL.md: subagent preload skill đó và sẽ tự delegate vòng lặp.
  */
-async function bundleMcpServer() {
-  const entry = path.join(CORE, 'mcp', 'server.mjs');
-  const outfile = path.join(ROOT, PLUGIN_ROOT, 'mcp', 'fe-kit-mcp.mjs');
-  if (!fs.existsSync(entry)) {
-    hadDrift = true;
-    console.error('[generate-adapters] Thiếu core/mcp/server.mjs');
-    return;
-  }
+function delegationBlock(command, agent) {
+  return [
+    '## Điều phối (Claude Code)',
+    '',
+    'Bạn là main thread điều phối. Không tự làm việc của mode này, không tự gọi `fe_begin_mode` và không delegate cho agent nào khác (subagent sẽ tự kiểm tra gate).',
+    '',
+    `1. Delegate cho subagent \`${PLUGIN_NAME}:${agent}\` bằng Agent tool và chạy foreground (chờ kết quả). Brief phải gồm: mode \`${command}\`; task folder lấy từ argument; đường dẫn tuyệt đối của workspace; nguyên văn mọi input người dùng chỉ đưa trong hội thoại (SRS dán vào, câu trả lời, CR, link Figma); và toàn bộ mục "Hướng dẫn mode" bên dưới.`,
+    '2. Khi agent trả về, gọi MCP tool `fe_validate_workflow` cho task. Nếu `FAILED`, gửi danh sách lỗi cho chính agent đó để sửa; không tự sửa thay.',
+    '3. Trả lời người dùng ngắn gọn: artifact đã cập nhật, blocker nếu có, và dòng `Tiếp theo: <next_prompt>` lấy từ `tracking/workflow-status.md` (hoặc MCP tool `fe_next_step`).',
+    '',
+    'Không tự chuyển sang mode kế tiếp.',
+    '',
+    '## Hướng dẫn mode',
+    '',
+  ].join('\n');
+}
 
-  const prev = fs.existsSync(outfile) ? fs.readFileSync(outfile, 'utf8') : null;
+managedDirs.add(`${PLUGIN_ROOT}/commands`);
+for (const file of listFiles(path.join(CORE, 'commands'))) {
+  const raw = readCore(`commands/${file}`);
+  const command = file.replace(/\.md$/, '');
+  const agent = AGENT_FOR_COMMAND[command];
+  const fm = raw.match(FRONTMATTER_RE);
+  // commands/ trong plugin CHỈ nhận file .md phẳng — thư mục con bị Claude
+  // Code hiểu là skill. Namespace = tên plugin + tên file => `/fe:plan`.
+  emit(
+    `${PLUGIN_ROOT}/commands/${file}`,
+    agent && fm ? fm[0] + delegationBlock(command, agent) + raw.slice(fm[0].length) : raw
+  );
+}
+
+// --- 4. Agents của plugin (nối giao thức chung) ------------------------------
+
+managedDirs.add(`${PLUGIN_ROOT}/agents`);
+const protocol = readCore('agents/_protocol.md');
+for (const file of listFiles(path.join(CORE, 'agents'))) {
+  if (file.startsWith('_')) continue; // partial, không phải agent
+  emit(`${PLUGIN_ROOT}/agents/${file}`, `${readCore(`agents/${file}`).trimEnd()}\n\n${protocol}`);
+}
+
+// --- 5. Bundle (esbuild) -----------------------------------------------------
+
+// gray-matter là CJS và gọi `require('fs')`; output ESM không có `require` nên
+// phải tạo bằng node:module, nếu không esbuild rơi vào "Dynamic require ... not supported".
+const REQUIRE_BANNER =
+  "import { createRequire as __fdkCreateRequire } from 'node:module';\nconst require = __fdkCreateRequire(import.meta.url);";
+
+const BUNDLE_BASE = {
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  target: 'node18',
+  write: false,
+  logLevel: 'silent',
+  define: { __FE_KIT_VERSION__: JSON.stringify(VERSION) },
+};
+
+async function bundleFile(entry, to, { shebang = false } = {}) {
   const result = await esbuild.build({
-    entryPoints: [entry],
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    target: 'node18',
-    write: false,
-    // gray-matter là CJS và dùng `require` — shim để chạy được trong ESM bundle.
-    banner: { js: "import { createRequire } from 'node:module';\nconst require = createRequire(import.meta.url);" },
+    ...BUNDLE_BASE,
+    entryPoints: [path.join(ROOT, entry)],
+    banner: { js: (shebang ? '#!/usr/bin/env node\n' : '') + REQUIRE_BANNER },
   });
-  const next = result.outputFiles[0].text;
+  // esbuild giữ shebang của file nguồn ở dòng đầu; bỏ bản trùng nếu có.
+  emit(to, result.outputFiles[0].text.replace(/^(#![^\n]*\n)(#![^\n]*\n)/, '$1'));
+}
 
-  if (CHECK_ONLY) {
-    if (prev !== next) {
-      hadDrift = true;
-      console.error(`[generate-adapters] Lệch tại ${PLUGIN_ROOT}/mcp/fe-kit-mcp.mjs (nguồn: core/mcp/server.mjs)`);
+/** Các script validator dùng chung chunk (zod, gray-matter) nên bundle theo nhóm với splitting. */
+async function bundleScripts(to) {
+  const outdir = path.join(ROOT, '.bundle-out');
+  const result = await esbuild.build({
+    ...BUNDLE_BASE,
+    entryPoints: ['validate-task.mjs', 'validate-workflow.mjs', 'validate-pr.mjs'].map((f) => path.join(CORE, 'scripts', f)),
+    outdir,
+    splitting: true,
+    outExtension: { '.js': '.mjs' },
+    chunkNames: 'chunks/[name]-[hash]',
+    banner: { js: REQUIRE_BANNER },
+  });
+  managedDirs.add(to);
+  for (const file of result.outputFiles) emit(`${to}/${posix(path.relative(outdir, file.path))}`, file.text);
+  emit(`${to}/README.md`, readCore('scripts/README.md'));
+}
+
+managedDirs.add(`${PLUGIN_ROOT}/mcp`);
+managedDirs.add(`${PLUGIN_ROOT}/hooks`);
+managedDirs.add('standalone');
+await bundleFile('core/mcp/server.mjs', `${PLUGIN_ROOT}/mcp/fe-kit-mcp.mjs`);
+await bundleFile('core/hooks/fe-hook.mjs', `${PLUGIN_ROOT}/hooks/fe-hook.mjs`);
+await bundleFile('bin/fe-kit.mjs', 'standalone/fe-kit.mjs');
+await bundleScripts(`${CHATGPT_SKILL}/scripts`);
+
+// --- 6. Ghi hoặc kiểm tra -----------------------------------------------------
+
+for (const dir of managedDirs) {
+  for (const rel of listFiles(path.join(ROOT, dir))) {
+    const full = `${dir}/${rel}`;
+    if (outputs.has(full)) continue;
+    if (CHECK_ONLY) drift(`THỪA: ${full} (không có trong nguồn, có thể bị sửa tay)`);
+    else {
+      fs.rmSync(path.join(ROOT, full), { force: true });
+      console.log(`[generate-adapters] Xoá file thừa ${full}`);
     }
-  } else {
-    fs.mkdirSync(path.dirname(outfile), { recursive: true });
-    fs.writeFileSync(outfile, next);
-    console.log(`[generate-adapters] core/mcp -> ${PLUGIN_ROOT}/mcp/fe-kit-mcp.mjs`);
   }
 }
 
-await bundleMcpServer();
-
-generateCommands();
-
-// --- Plugin Claude Code: copy commands/agents/rules/templates vào trong plugin ---
-for (const t of PLUGIN_COPY_TARGETS) {
-  const srcDir = t.fromCore ? path.join(CORE, t.fromCore) : path.join(ROOT, t.fromRepo);
-  const destDir = path.join(ROOT, t.to);
-  const label = t.fromCore ? `core/${t.fromCore}` : t.fromRepo;
-
-  if (!fs.existsSync(srcDir)) {
-    hadDrift = true;
-    console.error(`[generate-adapters] Thiếu nguồn ${label}`);
-    continue;
-  }
-
-  if (CHECK_ONLY) {
-    const drift = diffDirs(srcDir, destDir);
-    if (drift.length) {
-      hadDrift = true;
-      console.error(`\n[generate-adapters] Lệch tại ${t.to} (nguồn: ${label}):`);
-      for (const d of drift) console.error('  - ' + d);
-    }
-  } else {
-    copyDir(srcDir, destDir);
-    console.log(`[generate-adapters] ${label} -> ${t.to}`);
-  }
-}
-
-for (const t of SINGLE_FILE_TARGETS) {
-  const srcFile = path.join(CORE, t.from);
-  const destFile = path.join(ROOT, t.to);
-  if (!fs.existsSync(srcFile)) {
-    hadDrift = true;
-    console.error(`[generate-adapters] Thiếu core/${t.from}`);
-    continue;
-  }
-  if (CHECK_ONLY) {
-    if (!filesEqual(srcFile, destFile)) {
-      hadDrift = true;
-      console.error(`[generate-adapters] Lệch tại ${t.to} (nguồn: core/${t.from})`);
-    }
-  } else {
-    fs.mkdirSync(path.dirname(destFile), { recursive: true });
-    fs.copyFileSync(srcFile, destFile);
-    console.log(`[generate-adapters] core/${t.from} -> ${t.to}`);
+let written = 0;
+for (const [rel, content] of outputs) {
+  const file = path.join(ROOT, rel);
+  const current = fs.existsSync(file) ? lf(fs.readFileSync(file, 'utf8')) : null;
+  if (current === content) continue;
+  if (CHECK_ONLY) drift(`${current === null ? 'THIẾU' : 'LỆCH NỘI DUNG'}: ${rel}`);
+  else {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, content);
+    written += 1;
   }
 }
 
 if (CHECK_ONLY) {
   if (hadDrift) {
     console.error(
-      '\n[generate-adapters] Có lệch giữa core/ và các đích generate. Chạy `npm run build` rồi commit lại, hoặc nếu đã sửa tay ở đích thì đưa thay đổi đó vào core/ trước.'
+      '\n[generate-adapters] Có lệch giữa nguồn và các đích generate. Chạy `npm run build` rồi commit lại, hoặc nếu đã sửa tay ở đích thì đưa thay đổi đó vào core/ trước.'
     );
     process.exit(1);
   }
-  console.log('[generate-adapters] Không có lệch. core/ và các đích đã đồng bộ.');
+  console.log(`[generate-adapters] Không có lệch. ${outputs.size} file generate đã đồng bộ (version ${VERSION}).`);
 } else {
-  console.log('[generate-adapters] Hoàn tất. Không sửa tay các thư mục đích ở trên — sửa trong core/ rồi chạy lại script này.');
+  console.log(
+    `[generate-adapters] Hoàn tất: ${outputs.size} file generate, ${written} file được ghi lại (version ${VERSION}). Không sửa tay các thư mục đích — sửa trong core/ rồi chạy lại script này.`
+  );
 }

@@ -1,10 +1,10 @@
 name: Kit CI
 
-# CI cho CHÍNH repo kit này (chạy test packages/validators + kiểm tra
-# core/ đã đồng bộ với các bản generate hay chưa). KHÔNG nhầm với
-# `.github/workflows/frontend-delivery-standard.yml` — file đó là
-# template được `fe-kit init` copy vào project của team dùng kit,
-# dùng để validate task folder của họ, không phải CI của kit repo này.
+# CI cho CHÍNH repo kit này (test validators/hook/CLI + kiểm tra core/ đã
+# đồng bộ với các bản generate). KHÔNG nhầm với
+# `core/adapters/github/.github/workflows/frontend-delivery-standard.yml` —
+# file đó là template được `fe-kit init --agents github` copy vào project
+# của team dùng kit.
 
 on:
   push:
@@ -23,20 +23,27 @@ jobs:
           cache: npm
 
       - name: Install (npm workspaces)
-        run: npm install
+        run: npm ci
 
-      - name: Test packages/validators (Vitest)
-        run: npm test
-
-      - name: Kiểm tra core/ đã đồng bộ với rules/templates/docs/scripts generate (build:check)
+      - name: Kiểm tra core/ đã đồng bộ với mọi bản generate (build:check)
         run: npm run build:check
 
-      - name: CLI smoke test — init + new-task + validate-task trên repo tạm
+      - name: Test validators, hook runtime và CLI bundle (Vitest)
+        run: npm test
+
+      - name: Validate plugin và marketplace manifest
+        run: |
+          npx -y @anthropic-ai/claude-code plugin validate ./plugins/fe --strict
+          npx -y @anthropic-ai/claude-code plugin validate .
+
+      - name: CLI smoke test — init + doctor + new-task + validate trên repo tạm (CLI bundle, không node_modules)
         run: |
           set -e
           TMP_REPO=$(mktemp -d)
           git init -q "$TMP_REPO"
-          node bin/fe-kit.mjs init --target "$TMP_REPO" --agents claude --yes
-          node bin/fe-kit.mjs new-task FE-ci-smoke-test --target "$TMP_REPO"
-          node bin/fe-kit.mjs validate-task docs/frontend-tasks/FE-ci-smoke-test --target "$TMP_REPO"
-          node bin/fe-kit.mjs validate-workflow docs/frontend-tasks/FE-ci-smoke-test --target "$TMP_REPO"
+          node standalone/fe-kit.mjs init --target "$TMP_REPO" --agents all --yes
+          cd "$TMP_REPO"
+          node bin/fe-kit.mjs doctor --strict
+          node bin/fe-kit.mjs new-task FE-ci-smoke-test
+          node bin/fe-kit.mjs validate-task FE-ci-smoke-test
+          node bin/fe-kit.mjs validate-workflow docs/frontend-tasks/FE-ci-smoke-test

@@ -1,11 +1,11 @@
-# Agent Adapter Matrix
+# Adapters
 
-Kit này hỗ trợ nhiều coding agents bằng cách cung cấp đúng artifact mà từng tool ưu tiên, đồng thời giữ `AGENTS.md` làm instruction canonical chung.
+Payload của từng adapter nằm ở `core/adapters/<agent>/` và được `fe-kit init --agents <list>` cài vào repo dự án.
 
-| Agent/tool | Primary files | Mục đích |
+| Tool | File được cài | Ghi chú |
 |---|---|---|
-| Codex / OpenAI agents | `AGENTS.md`, `.codex/prompts/*` | Prompt và rule chung cho planning/build/review/test |
-| Claude Code | `CLAUDE.md`, `.claude/commands/*`, `.claude/agents/*`, `.claude/skills/*` | Slash commands, agents và skill local |
+| Codex / OpenAI agents | `AGENTS.md`, `.codex/rules/*`, `.codex/prompts/*` | Prompt sinh từ `core/commands/` lúc init |
+| Claude Code | `CLAUDE.md`, `.claude/rules/*`, bật plugin `fe` trong `.claude/settings.json` | Commands, agents, skill, hook, MCP đến từ plugin |
 | Cursor | `.cursor/rules/*.mdc` | Rule theo path cho task docs và source code |
-| GitHub Copilot | `.github/copilot-instructions.md`, `.github/instructions/*` | Repository và path-specific instructions |
+| GitHub Copilot | `.github/copilot-instructions.md`, `.github/instructions/*`, PR template, workflow validate task | Repository và path-specific instructions |
 | ChatGPT | `dist/chatgpt-skill.zip` | Upload skill trực tiếp |

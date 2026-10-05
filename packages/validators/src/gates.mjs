@@ -6,7 +6,12 @@
  * `countOpenBlockingQuestions` trong scripts/validate-workflow.ts.
  * Từ v1.0.0, đây là bản DUY NHẤT; cả CLI lẫn script standalone đều
  * import từ đây để tránh drift.
+ *
+ * v2.0.0: thêm `evaluatePrGates` (trước đây CLI và core/scripts mỗi nơi
+ * một bản, lệch tập giá trị hợp lệ), `hasCommandEvidence`, cảnh báo chuyển
+ * mode, và kiểm tra scope diff tính từ git thay vì tin field tự khai.
  */
+import { checkRecordedNextMode, normalizeCommand } from './transitions.mjs';
 
 function norm(v) {
   return String(v ?? '').trim().toLowerCase();
@@ -62,6 +67,34 @@ export function countOpenBlockingQuestions(questionsMarkdown) {
   return count;
 }
 
+/**
+ * `output/test-summary.md` có ít nhất một dòng command thật trong bảng
+ * "Command evidence log" hay không. Dòng template để trống, hoặc dòng ghi
+ * chưa chạy, không tính.
+ */
+export function hasCommandEvidence(testSummaryMarkdown) {
+  const text = String(testSummaryMarkdown || '');
+  const section = text.match(
+    /^##\s+(?:\d+\.\s*)?Command evidence log[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
+  );
+  if (!section) return false;
+
+  for (const line of section[1].split(/\r?\n/)) {
+    if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((c) => c.trim().replace(/^`|`$/g, ''));
+    if (/^command$/i.test(cells[0] || '')) continue;
+    if (!realQuestionCell(cells[0])) continue;
+
+    const ran = cells[1] || '';
+    const notRun = /^(không|khong|no|chưa chạy|chua chay|not run)$/i.test(ran) || /\/\s*không/i.test(ran);
+    if (!notRun) return true;
+  }
+  return false;
+}
+
 const REQUIRED_TASK_FILES = [
   'task.md',
   'planning/implementation-plan.md',
@@ -93,10 +126,12 @@ const MD_FILES_WITHOUT_NEXT_PROMPT = [
  * @param {string} params.body           phần body markdown của workflow-status.md
  * @param {(rel: string) => boolean} params.exists  kiểm tra file có tồn tại (relative path trong task folder)
  * @param {(rel: string) => string}  params.read    đọc nội dung file (rỗng nếu không tồn tại)
- * @returns {{ ok: boolean, errors: string[] }}
+ * @param {{ outOfPlan: string[], plannedEmpty?: boolean }} [params.scope] kết quả `computeScopeDiff` nếu caller tính được
+ * @returns {{ ok: boolean, errors: string[], warnings: string[] }}
  */
-export function evaluateWorkflowGates({ data, body, exists, read }) {
+export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   const errors = [];
+  const warnings = [];
 
   for (const rel of REQUIRED_TASK_FILES) {
     if (!exists(rel)) errors.push(`Thiếu ${rel}`);
@@ -219,11 +254,10 @@ export function evaluateWorkflowGates({ data, body, exists, read }) {
     if (openBlockingQuestions > 0) {
       errors.push('build_ready=true nhưng còn blocking question.');
     }
-    if (!['passed', 'documented', 'not_required'].includes(tokenBudget)) {
-      errors.push('build_ready=true yêu cầu token_budget_status=passed/documented/not_required.');
-    }
-    if (!['passed', 'documented', 'not_required'].includes(requiredRead)) {
-      errors.push('build_ready=true yêu cầu required_files_read_status=passed/documented/not_required.');
+    // token_budget_status / required_files_read_status là field tự khai: từ
+    // v2.0.0 không còn là điều kiện của build_ready, chỉ chặn khi tự báo fail.
+    if (['failed', 'blocked'].includes(tokenBudget) || ['failed', 'blocked'].includes(requiredRead)) {
+      errors.push('build_ready=true nhưng token_budget_status/required_files_read_status đang failed/blocked.');
     }
     if (
       bool(data.srs_required) &&
@@ -233,8 +267,7 @@ export function evaluateWorkflowGates({ data, body, exists, read }) {
     }
     if (
       bool(data.figma_required) &&
-      !['passed', 'not_required'].includes(norm(data.figma_gate_status)) &&
-      !['waived', 'substituted'].includes(norm(data.figma_gate_status))
+      !['passed', 'not_required', 'waived', 'substituted'].includes(norm(data.figma_gate_status))
     ) {
       errors.push('build_ready=true yêu cầu Figma gate passed/waived/not_required/substituted.');
     }
@@ -250,5 +283,114 @@ export function evaluateWorkflowGates({ data, body, exists, read }) {
     errors.push('playwright_screenshot_diff_status=failed/blocked cho task Figma/UI.');
   }
 
-  return { ok: errors.length === 0, errors };
+  // --- Sự thật tính được thắng field tự khai ---
+  if (scope?.outOfPlan?.length) {
+    errors.push(
+      `Scope diff: có file sửa ngoài bảng "File sẽ tạo / cập nhật" của plan: ${scope.outOfPlan.join(', ')}. Cập nhật plan/input-sync hoặc hoàn tác.`
+    );
+  }
+  if (
+    ['passed', 'completed'].includes(commandEvidence) &&
+    exists('output/test-summary.md') &&
+    !hasCommandEvidence(read('output/test-summary.md'))
+  ) {
+    errors.push('command_evidence_status=passed/completed nhưng output/test-summary.md chưa có dòng command đã chạy thật.');
+  }
+
+  const criticalOrHigh = Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0;
+  if (criticalOrHigh && ['test', 'pr'].includes(normalizeCommand(data.next_mode))) {
+    errors.push('Còn issue Critical/High thì next_mode không được là test/pr; route sang bugfix, input-sync hoặc figma-review.');
+  }
+  warnings.push(...checkRecordedNextMode({ currentMode: data.current_mode, nextMode: data.next_mode }).warnings);
+
+  return { ok: errors.length === 0, errors, warnings };
+}
+
+const PR_REQUIRED_FILES = [
+  'output/review-report.md',
+  'output/test-summary.md',
+  'output/pr-summary.md',
+  'tracking/workflow-status.md',
+];
+
+/**
+ * Gate PR readiness. Bản DUY NHẤT cho `fe-kit validate-pr` và
+ * `core/scripts/validate-pr.mjs`.
+ *
+ * Field tự khai (`scope_diff_status`, `command_evidence_status`,
+ * `test_command_log_status`) chỉ còn là dự phòng: khi caller truyền `scope`
+ * tính từ git, hoặc test-summary có dòng command thật, sự thật đó thắng.
+ *
+ * @param {object} params
+ * @param {object} params.data frontmatter đã parse
+ * @param {(rel: string) => boolean} params.exists
+ * @param {(rel: string) => string} params.read
+ * @param {{ outOfPlan: string[], plannedEmpty?: boolean }} [params.scope]
+ * @returns {{ ok: boolean, errors: string[], warnings: string[] }}
+ */
+export function evaluatePrGates({ data, exists, read, scope }) {
+  const errors = [];
+  const warnings = [];
+
+  for (const rel of PR_REQUIRED_FILES) {
+    if (!exists(rel)) errors.push(`Thiếu ${rel}`);
+  }
+
+  if (!['passed', 'not_required'].includes(norm(data.review_status))) {
+    errors.push('review_status phải passed/not_required trước PR.');
+  }
+  if (
+    bool(data.bugfix_required) ||
+    Number(data.critical_issues_open || 0) > 0 ||
+    Number(data.high_issues_open || 0) > 0 ||
+    ['open', 'blocked'].includes(norm(data.review_bug_status))
+  ) {
+    errors.push('Còn review bug/Critical/High trước PR.');
+  }
+
+  const scopeStatus = norm(data.scope_diff_status);
+  if (scope) {
+    if (scope.outOfPlan?.length) {
+      errors.push(`Scope diff: file sửa ngoài plan: ${scope.outOfPlan.join(', ')}.`);
+    } else if (scope.plannedEmpty) {
+      warnings.push('implementation-plan.md chưa khai file nào ở mục "File sẽ tạo / cập nhật" nên không đối chiếu được scope.');
+    }
+    if (['failed', 'blocked'].includes(scopeStatus)) errors.push('scope_diff_status=failed/blocked.');
+  } else if (!['passed', 'not_required'].includes(scopeStatus)) {
+    errors.push('scope_diff_status phải passed/not_required trước PR (không tính được scope diff từ git).');
+  }
+
+  const evidenceOk = hasCommandEvidence(read('output/test-summary.md'));
+  for (const key of ['command_evidence_status', 'test_command_log_status']) {
+    const value = norm(data[key]);
+    if (value === 'not_required') continue;
+    if (!value) {
+      if (!evidenceOk) {
+        errors.push(`Thiếu command evidence: output/test-summary.md chưa có dòng command đã chạy thật (${key} không khai).`);
+      }
+    } else if (!['completed', 'passed'].includes(value)) {
+      errors.push(`${key} phải completed/passed/not_required trước PR.`);
+    } else if (!evidenceOk) {
+      errors.push(`${key}=${value} nhưng output/test-summary.md chưa có dòng command đã chạy thật.`);
+    }
+  }
+
+  if (bool(data.figma_required)) {
+    if (!['passed', 'waived', 'not_required'].includes(norm(data.ui_match_review_status))) {
+      errors.push('Task UI/Figma cần ui_match_review_status=passed/waived/not_required trước PR.');
+    }
+    if (['critical', 'high', 'blocked'].includes(norm(data.ui_match_severity_status))) {
+      errors.push('Còn UI mismatch Critical/High/Blocked trước PR.');
+    }
+    const playwright = norm(data.playwright_screenshot_diff_status);
+    if (playwright && !['passed', 'manual_review', 'not_required', 'waived'].includes(playwright)) {
+      errors.push('Task UI/Figma cần playwright_screenshot_diff_status=passed/manual_review/not_required/waived trước PR.');
+    }
+  }
+
+  if (!['ready', 'opened', 'merged'].includes(norm(data.pr_status))) {
+    errors.push('pr_status phải ready/opened/merged trước PR validation.');
+  }
+
+  return { ok: errors.length === 0, errors, warnings };
 }
