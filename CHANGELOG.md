@@ -5,6 +5,13 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.0.1] — 2026-10-05
+
+### Sửa lỗi
+
+- `validate-pr` chặn nhầm task tạo từ v1.x: plan không có bảng "File sẽ tạo / cập nhật" khiến mọi file đã sửa bị coi là "ngoài plan". Nay trường hợp này chỉ cảnh báo và dùng `scope_diff_status` tự khai, giống v1.1.
+- PR gộp nhiều task: file nằm trong plan của task khác không còn bị tính là "ngoài plan" của task đang kiểm tra.
+
 ## [2.0.0] — 2026-10-05
 
 Đưa kiến trúc orchestrator–worker và "gate được thực thi" mô tả trong `ARCHITECTURE.md` thành cơ chế chạy thật.

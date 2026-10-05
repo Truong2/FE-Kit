@@ -94,6 +94,8 @@ const VERSION_FILES = [
   ['kit.yaml', /^(version:\s*)\S+()$/m],
   ['standard.yaml', /^(version:\s*)\S+()$/m],
   ['VERSION.md', /(Current version:\s*)\S+()/],
+  ['README.md', /^(Version:\s*)\S+()$/m],
+  ['QUICKSTART.md', /^(Version:\s*)\S+()$/m],
 ];
 
 for (const [rel, re] of VERSION_FILES) {

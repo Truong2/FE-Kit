@@ -22898,7 +22898,7 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   if (bool(data.figma_required) && ["failed", "blocked"].includes(playwrightDiff)) {
     errors.push("playwright_screenshot_diff_status=failed/blocked cho task Figma/UI.");
   }
-  if (scope?.outOfPlan?.length) {
+  if (scope && !scope.plannedEmpty && scope.outOfPlan?.length) {
     errors.push(
       `Scope diff: c\xF3 file s\u1EEDa ngo\xE0i b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" c\u1EE7a plan: ${scope.outOfPlan.join(", ")}. C\u1EADp nh\u1EADt plan/input-sync ho\u1EB7c ho\xE0n t\xE1c.`
     );
@@ -22932,11 +22932,12 @@ function evaluatePrGates({ data, exists, read, scope }) {
     errors.push("C\xF2n review bug/Critical/High tr\u01B0\u1EDBc PR.");
   }
   const scopeStatus = norm2(data.scope_diff_status);
-  if (scope) {
+  if (scope && scope.plannedEmpty) {
+    warnings.push('implementation-plan.md ch\u01B0a khai file n\xE0o \u1EDF m\u1EE5c "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" n\xEAn kh\xF4ng \u0111\u1ED1i chi\u1EBFu \u0111\u01B0\u1EE3c scope v\u1EDBi git; d\xF9ng scope_diff_status t\u1EF1 khai.');
+  }
+  if (scope && !scope.plannedEmpty) {
     if (scope.outOfPlan?.length) {
       errors.push(`Scope diff: file s\u1EEDa ngo\xE0i plan: ${scope.outOfPlan.join(", ")}.`);
-    } else if (scope.plannedEmpty) {
-      warnings.push('implementation-plan.md ch\u01B0a khai file n\xE0o \u1EDF m\u1EE5c "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" n\xEAn kh\xF4ng \u0111\u1ED1i chi\u1EBFu \u0111\u01B0\u1EE3c scope.');
     }
     if (["failed", "blocked"].includes(scopeStatus)) errors.push("scope_diff_status=failed/blocked.");
   } else if (!["passed", "not_required"].includes(scopeStatus)) {
@@ -22999,7 +23000,27 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   }
   const { read } = taskIo(taskDir);
   const plannedFiles = parsePlannedFiles(read("planning/implementation-plan.md"));
-  return { ...computeScopeDiff({ plannedFiles, changedFiles: files }), plannedFiles };
+  const result = computeScopeDiff({ plannedFiles, changedFiles: files });
+  const otherPlanned = plannedFilesOfSiblingTasks(taskDir);
+  if (otherPlanned.length && result.outOfPlan.length) {
+    const others = computeScopeDiff({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
+    result.outOfPlan = others.outOfPlan;
+    result.otherTasks = others.inScope;
+    result.ok = result.outOfPlan.length === 0;
+  }
+  return { ...result, plannedFiles };
+}
+function plannedFilesOfSiblingTasks(taskDir) {
+  const parent = path.dirname(taskDir);
+  if (!fs.existsSync(parent)) return [];
+  const self = path.basename(taskDir);
+  const planned = [];
+  for (const ent of fs.readdirSync(parent, { withFileTypes: true })) {
+    if (!ent.isDirectory() || ent.name === self) continue;
+    const plan = path.join(parent, ent.name, "planning", "implementation-plan.md");
+    if (fs.existsSync(plan)) planned.push(...parsePlannedFiles(fs.readFileSync(plan, "utf8")));
+  }
+  return planned;
 }
 function validateWorkflow(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);

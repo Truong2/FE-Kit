@@ -284,7 +284,8 @@ export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   }
 
   // --- Sự thật tính được thắng field tự khai ---
-  if (scope?.outOfPlan?.length) {
+  // Plan chưa khai bảng file (task tạo từ v1.x) thì không có gì để đối chiếu: bỏ qua.
+  if (scope && !scope.plannedEmpty && scope.outOfPlan?.length) {
     errors.push(
       `Scope diff: có file sửa ngoài bảng "File sẽ tạo / cập nhật" của plan: ${scope.outOfPlan.join(', ')}. Cập nhật plan/input-sync hoặc hoàn tác.`
     );
@@ -349,11 +350,14 @@ export function evaluatePrGates({ data, exists, read, scope }) {
   }
 
   const scopeStatus = norm(data.scope_diff_status);
-  if (scope) {
+  if (scope && scope.plannedEmpty) {
+    // Task tạo từ v1.x thường chưa có bảng file trong plan: không đối chiếu
+    // được nên quay về field tự khai như v1.x, kèm cảnh báo.
+    warnings.push('implementation-plan.md chưa khai file nào ở mục "File sẽ tạo / cập nhật" nên không đối chiếu được scope với git; dùng scope_diff_status tự khai.');
+  }
+  if (scope && !scope.plannedEmpty) {
     if (scope.outOfPlan?.length) {
       errors.push(`Scope diff: file sửa ngoài plan: ${scope.outOfPlan.join(', ')}.`);
-    } else if (scope.plannedEmpty) {
-      warnings.push('implementation-plan.md chưa khai file nào ở mục "File sẽ tạo / cập nhật" nên không đối chiếu được scope.');
     }
     if (['failed', 'blocked'].includes(scopeStatus)) errors.push('scope_diff_status=failed/blocked.');
   } else if (!['passed', 'not_required'].includes(scopeStatus)) {

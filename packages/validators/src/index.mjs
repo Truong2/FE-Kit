@@ -44,7 +44,31 @@ export function scopeDiffForTask(taskDir, { repoRoot, base = '', changedFiles } 
   }
   const { read } = taskIo(taskDir);
   const plannedFiles = parsePlannedFiles(read('planning/implementation-plan.md'));
-  return { ...computeScopeDiff({ plannedFiles, changedFiles: files }), plannedFiles };
+  const result = computeScopeDiff({ plannedFiles, changedFiles: files });
+
+  // PR gộp nhiều task: file thuộc plan của task khác không tính là "ngoài plan" của task này.
+  const otherPlanned = plannedFilesOfSiblingTasks(taskDir);
+  if (otherPlanned.length && result.outOfPlan.length) {
+    const others = computeScopeDiff({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
+    result.outOfPlan = others.outOfPlan;
+    result.otherTasks = others.inScope;
+    result.ok = result.outOfPlan.length === 0;
+  }
+  return { ...result, plannedFiles };
+}
+
+/** File/glob khai trong plan của các task folder cùng cấp (docs/frontend-tasks/*). */
+function plannedFilesOfSiblingTasks(taskDir) {
+  const parent = path.dirname(taskDir);
+  if (!fs.existsSync(parent)) return [];
+  const self = path.basename(taskDir);
+  const planned = [];
+  for (const ent of fs.readdirSync(parent, { withFileTypes: true })) {
+    if (!ent.isDirectory() || ent.name === self) continue;
+    const plan = path.join(parent, ent.name, 'planning', 'implementation-plan.md');
+    if (fs.existsSync(plan)) planned.push(...parsePlannedFiles(fs.readFileSync(plan, 'utf8')));
+  }
+  return planned;
 }
 
 /**

@@ -95,6 +95,16 @@ describe('evaluatePrGates', () => {
     expect(evaluatePrGates({ data: noSelfReport, ...io(ALL_FILES) }).ok).toBe(false);
   });
 
+  it('plan chưa có bảng file (task v1.x): cảnh báo và dùng field tự khai như v1.x', () => {
+    const scope = { plannedEmpty: true, outOfPlan: ['src/components/OrderCancelButton.tsx'] };
+    const passed = evaluatePrGates({ data: READY, ...io(ALL_FILES), scope });
+    expect(passed.ok).toBe(true);
+    expect(passed.warnings.join('\n')).toMatch(/chưa khai file nào/);
+
+    const { scope_diff_status, ...noSelfReport } = READY;
+    expect(evaluatePrGates({ data: noSelfReport, ...io(ALL_FILES), scope }).ok).toBe(false);
+  });
+
   it('fail khi thiếu artifact, còn bug High hoặc pr_status chưa ready', () => {
     const { 'output/pr-summary.md': _omit, ...missing } = ALL_FILES;
     expect(evaluatePrGates({ data: READY, ...io(missing) }).errors).toContain('Thiếu output/pr-summary.md');
