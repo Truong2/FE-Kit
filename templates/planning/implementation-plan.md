@@ -34,6 +34,17 @@
 
 ## 4. Code shape contract
 
+### Khung thiết kế trước triển khai
+
+Điền trước khi viết prompt triển khai. Dùng SRS/API/Figma đã rõ làm spec; chỉ ghi quyết định task-specific, dẫn nguồn và nối tiêu chí chấp nhận với ma trận trace/checklist. Không tạo thêm spec riêng hoặc chép lại toàn bộ input.
+
+| Nội dung | Quyết định / tham chiếu |
+|---|---|
+| Ranh giới module, trách nhiệm và luồng dữ liệu |  |
+| Contract đầu vào/đầu ra và ràng buộc phải giữ |  |
+| Hành vi thành công/lỗi và tiêu chí chấp nhận |  |
+| Lựa chọn thiết kế và lý do |  |
+
 | Concern | Quyết định | File/hook/component | Rule áp dụng | Ghi chú |
 |---|---|---|---|---|
 | Component tree |  |  |  |  |
@@ -43,6 +54,18 @@
 | Error flow |  |  |  |  |
 | State ownership |  |  |  |  |
 | Test/review |  |  |  |  |
+
+### Ba câu hỏi kiến trúc
+
+Chỉ điền nội dung thuộc phạm vi task; ghi `Không áp dụng` kèm lý do khi phù hợp. Dẫn file/symbol/cấu hình làm bằng chứng, phân biệt giả định với kết luận. Phần chưa rõ chặn triển khai phải ghi vào `planning/questions.md` và route input-sync.
+
+| Câu hỏi | Quyết định cho task | Bằng chứng | Cách kiểm chứng |
+|---|---|---|---|
+| State nằm ở đâu? | Nguồn chính, owner, phạm vi, thời điểm cập nhật; phân biệt state workflow và UI/form/URL/server state |  |  |
+| Feedback nằm ở đâu? | Artifact nhận feedback, vòng phát hiện → sửa → kiểm tra lại → đóng; nơi hiển thị phản hồi UI khi áp dụng |  |  |
+| Bỏ thành phần này thì cái gì bị ảnh hưởng? | Thành phần định thêm/sửa/bỏ, trách nhiệm, nơi phụ thuộc, hành vi/dữ liệu/contract/gate bị ảnh hưởng |  |  |
+
+Với câu hỏi cuối, thực hiện deletion test bằng phân tích: giả định bỏ thành phần, nêu khả năng quan sát/cơ chế bảo vệ bị mất và kiểm tra có thể phát hiện ảnh hưởng. Nếu chưa thấy ảnh hưởng, ghi ứng viên giản lược và bằng chứng còn thiếu; không xóa thật hoặc kết luận dư thừa chỉ vì không tìm thấy import.
 
 ## 5. Rule và feature mẫu áp dụng
 

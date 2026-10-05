@@ -25,6 +25,8 @@ Yêu cầu:
 - Quyết định rõ Error DTO/status/error code map sang UI nào (inline field, form alert, toast core, page error, redirect, fallback).
 - Thiếu thông tin chặn triển khai thì ghi vào `planning/questions.md` mục `Câu hỏi blocking` với bên trả lời phù hợp, đặt `build_ready: false`, `input_sync_required: true`, `next_mode: input-sync`. Không gợi ý `FE cook` khi còn câu hỏi blocking.
 - Task có UI/Figma mà chưa có `output/figma-extraction-summary.md`: route `next_prompt` sang `FE figma <task-folder>`.
+- Thiết kế trước prompt triển khai: điền `Khung thiết kế trước triển khai` trong plan với ranh giới, trách nhiệm, luồng dữ liệu, contract, ràng buộc và tiêu chí chấp nhận. Dùng spec làm khung cho ma trận trace/checklist. Với deletion tests, phân tích điều bị mất khi bỏ thành phần và cách kiểm chứng; không xóa thật, không tự suy luận dư thừa từ việc thiếu import.
+- Trong mục `Ba câu hỏi kiến trúc` của plan, trả lời state nằm ở đâu, feedback nằm ở đâu và việc bỏ thành phần định thêm/sửa/bỏ ảnh hưởng gì. Nêu owner, nơi phụ thuộc và bằng chứng file/symbol/cấu hình liên quan; phân biệt state workflow với state frontend và feedback workflow với phản hồi UI. Phần không áp dụng phải có lý do; phần chưa rõ chặn triển khai phải ghi vào questions và route input-sync.
 
 ## FE input-sync
 
