@@ -33374,7 +33374,7 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   if (bool2(data.figma_required) && ["failed", "blocked"].includes(playwrightDiff)) {
     errors.push("playwright_screenshot_diff_status=failed/blocked cho task Figma/UI.");
   }
-  if (scope?.outOfPlan?.length) {
+  if (scope && !scope.plannedEmpty && scope.outOfPlan?.length) {
     errors.push(
       `Scope diff: c\xF3 file s\u1EEDa ngo\xE0i b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" c\u1EE7a plan: ${scope.outOfPlan.join(", ")}. C\u1EADp nh\u1EADt plan/input-sync ho\u1EB7c ho\xE0n t\xE1c.`
     );
@@ -33656,7 +33656,27 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   }
   const { read } = taskIo(taskDir);
   const plannedFiles = parsePlannedFiles(read("planning/implementation-plan.md"));
-  return { ...computeScopeDiff({ plannedFiles, changedFiles: files }), plannedFiles };
+  const result = computeScopeDiff({ plannedFiles, changedFiles: files });
+  const otherPlanned = plannedFilesOfSiblingTasks(taskDir);
+  if (otherPlanned.length && result.outOfPlan.length) {
+    const others = computeScopeDiff({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
+    result.outOfPlan = others.outOfPlan;
+    result.otherTasks = others.inScope;
+    result.ok = result.outOfPlan.length === 0;
+  }
+  return { ...result, plannedFiles };
+}
+function plannedFilesOfSiblingTasks(taskDir) {
+  const parent = path3.dirname(taskDir);
+  if (!fs2.existsSync(parent)) return [];
+  const self = path3.basename(taskDir);
+  const planned = [];
+  for (const ent of fs2.readdirSync(parent, { withFileTypes: true })) {
+    if (!ent.isDirectory() || ent.name === self) continue;
+    const plan = path3.join(parent, ent.name, "planning", "implementation-plan.md");
+    if (fs2.existsSync(plan)) planned.push(...parsePlannedFiles(fs2.readFileSync(plan, "utf8")));
+  }
+  return planned;
 }
 function validateWorkflow(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
@@ -33665,7 +33685,7 @@ function validateWorkflow(taskDir, { scope } = {}) {
 }
 
 // core/mcp/server.mjs
-var KIT_VERSION = true ? "2.0.0" : "dev";
+var KIT_VERSION = true ? "2.0.1" : "dev";
 var REQUIRED_TASK_FILES2 = [
   "task.md",
   "planning/implementation-plan.md",

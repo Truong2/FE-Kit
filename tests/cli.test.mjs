@@ -127,6 +127,70 @@ describe('CLI bundle trong repo dự án (không có node_modules)', () => {
     expect(r.out).toMatch(/review_status phải passed/);
   });
 
+  describe('validate-pr với scope diff tính từ git', () => {
+    const git = (...a) => spawnSync('git', a, { cwd: target, encoding: 'utf8' });
+
+    /** Task sẵn sàng PR; `plannedFiles` rỗng = plan kiểu v1.x không có bảng file. */
+    function readyTask(name, plannedFiles) {
+      const dir = path.join(target, 'docs', 'frontend-tasks', name);
+      fs.cpSync(path.join(ROOT, 'packages', 'validators', 'test', 'fixtures', 'task-ready-to-cook'), dir, { recursive: true });
+      const status = path.join(dir, 'tracking', 'workflow-status.md');
+      let text = fs.readFileSync(status, 'utf8');
+      for (const [k, v] of Object.entries({ current_mode: 'pr-ready-mode', next_mode: 'none', review_status: 'passed', pr_status: 'ready', scope_diff_status: 'passed', command_evidence_status: 'completed', test_command_log_status: 'completed' })) {
+        text = text.replace(new RegExp(`^${k}:.*$`, 'm'), `${k}: ${v}`);
+      }
+      fs.writeFileSync(status, text);
+      fs.mkdirSync(path.join(dir, 'output'), { recursive: true });
+      fs.writeFileSync(path.join(dir, 'output', 'review-report.md'), '# Review\n');
+      fs.writeFileSync(path.join(dir, 'output', 'pr-summary.md'), '# PR\n');
+      fs.writeFileSync(path.join(dir, 'output', 'test-summary.md'), '## 1. Command evidence log\n\n| Command | Đã chạy thật? | Kết quả |\n|---|---|---|\n| `npm test` | Có | Passed |\n');
+      if (plannedFiles.length) {
+        const rows = plannedFiles.map((f) => `| \`${f}\` | Tạo | x | C1 |`).join('\n');
+        fs.appendFileSync(path.join(dir, 'planning', 'implementation-plan.md'), `\n## 7. File sẽ tạo / cập nhật\n\n| File | Hành động | Lý do | Checklist ref |\n|---|---|---|---|\n${rows}\n`);
+      }
+    }
+
+    function commitBase() {
+      git('init', '-q');
+      git('add', '-A');
+      git('-c', 'user.email=a@b', '-c', 'user.name=a', 'commit', '-qm', 'base');
+    }
+
+    function writeSource(rel) {
+      fs.mkdirSync(path.dirname(path.join(target, rel)), { recursive: true });
+      fs.writeFileSync(path.join(target, rel), 'export const x = 1;\n');
+    }
+
+    it('task v1.x không có bảng file trong plan vẫn qua như v1.1, kèm cảnh báo', () => {
+      readyTask('FE-1-old', []);
+      commitBase();
+      writeSource('src/components/OrderCancelButton.tsx');
+      const r = project('validate-pr', 'FE-1-old');
+      expect(r.out).toMatch(/validate-pr passed/);
+      expect(r.out).toMatch(/chưa khai file nào/);
+    });
+
+    it('chặn file sửa ngoài plan', () => {
+      readyTask('FE-2-new', ['src/components/OrderCancelButton.tsx']);
+      commitBase();
+      writeSource('src/components/OrderCancelButton.tsx');
+      writeSource('src/store/global.ts');
+      const r = project('validate-pr', 'FE-2-new');
+      expect(r.status).toBe(1);
+      expect(r.out).toMatch(/file sửa ngoài plan: src\/store\/global\.ts/);
+    });
+
+    it('PR gộp hai task: file thuộc plan của task kia không bị tính là ngoài plan', () => {
+      readyTask('FE-3-a', ['src/a.ts']);
+      readyTask('FE-4-b', ['src/b.ts']);
+      commitBase();
+      writeSource('src/a.ts');
+      writeSource('src/b.ts');
+      expect(project('validate-pr', 'FE-3-a').out).toMatch(/validate-pr passed/);
+      expect(project('validate-pr', 'FE-4-b').out).toMatch(/validate-pr passed/);
+    });
+  });
+
   it('in đúng version của kit, không đọc package.json của dự án', () => {
     fs.writeFileSync(path.join(target, 'package.json'), JSON.stringify({ name: 'app', version: '9.9.9' }));
     const kitVersion = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
