@@ -1,21 +1,26 @@
-# Claude Frontend Delivery Kit
+# FE-Kit — hướng dẫn cho người bảo trì kit
 
-## Bắt buộc
+Repo này là **mã nguồn của kit**, không phải repo dự án dùng kit. Hướng dẫn cho repo dự án nằm ở `core/adapters/claude/CLAUDE.md` (được `fe-kit init` ghi vào repo dự án).
 
-- Mọi artifact `.md` phải viết bằng tiếng Việt có dấu đầy đủ.
-- Không mode nào được kết thúc chỉ bằng chat response.
-- Mọi mode phải cập nhật `tracking/workflow-status.md`.
-- `FE plan` phải cập nhật Input ledger trong `tracking/workflow-status.md` với đầy đủ input để các mode sau biết cần đọc gì.
-- Rule mặc định nằm trong `.frontend-delivery/rules/`.
-- `docs/frontend-context/feature-source-context.md` chỉ dùng cho feature mẫu/cách code feature mẫu nếu có.
-- Cache marker: `vi-diacritics-rules-folder-v1.0.0`.
+## Nguồn duy nhất
 
-Claude adapter: đọc thêm `.claude/rules/frontend-delivery.md` và command trong `.claude/commands/fe/`.
+- Sửa trong `core/` và `packages/validators/`, rồi chạy `npm run build`. Không sửa tay output generate: `plugins/fe/`, `chatgpt-skill/`, `standalone/`, `rules/`, `templates/`, `docs/` ở top-level.
+- `npm run build:check` chặn PR khi quên build hoặc sửa tay output.
+- Version chỉ đổi ở `package.json` gốc; generator đồng bộ sang các manifest.
 
-## Token/evidence gates
+## Kiểm tra trước khi xong việc
 
-- Áp dụng `.frontend-delivery/rules/efficiency-budget-contract.md` để chỉ đọc file cần thiết theo mode.
-- Áp dụng `.frontend-delivery/rules/evidence-scope-contract.md` khi cook/review/test/figma-review/pr.
-- Không claim test/lint/typecheck/build pass nếu chưa chạy thật.
-- Không sửa file ngoài plan nếu chưa update plan/input-sync.
-- Nếu còn câu hỏi blocking/open trong `planning/questions.md`, prompt tiếp theo phải là `FE input-sync`; không được sang `FE cook` cho tới khi input-sync cập nhật câu trả lời, plan/checklist và đóng gate.
+```bash
+npm run build && npm run build:check
+npm test                                   # validators + hook + CLI bundle
+claude plugin validate ./plugins/fe --strict
+```
+
+Test hook và CLI chạy trên bản bundle, nên phải `npm run build` trước `npm test`.
+
+## Quy ước
+
+- Gate logic chỉ nằm trong `packages/validators/src/`. Mỗi gate mới cần ít nhất một test pass và một test fail.
+- Schema `workflow-status.md` phải tương thích ngược: không xoá field, không bắt buộc field mới.
+- Artifact và tài liệu viết tiếng Việt có dấu đầy đủ; commit message tiếng Anh.
+- Kiến trúc và nơi thực thi từng gate: `ARCHITECTURE.md`.

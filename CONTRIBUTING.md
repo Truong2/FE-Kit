@@ -1,38 +1,44 @@
 # Contributing
 
-## Quy tắc quan trọng nhất: sửa ở `core/`, không sửa bản generate
+## Quy tắc quan trọng nhất: sửa ở nguồn, không sửa bản generate
+
+Nguồn: `core/`, `packages/validators/`, `bin/fe-kit.mjs`, `evals/`, `tests/`.
 
 Các thư mục sau là **output generate**, sửa tay sẽ bị `npm run build:check` chặn trong CI:
 
-- `rules/`, `templates/`, `docs/`, `standards/` (top-level)
-- `.claude/skills/frontend-delivery-standard/{rules,templates,docs,standards,scripts,package.json}`
+- `plugins/fe/` (toàn bộ plugin)
 - `chatgpt-skill/frontend-delivery-standard/**`
+- `standalone/fe-kit.mjs`
+- `rules/`, `templates/`, `docs/` (top-level)
 - `dist/**`
 
-Sửa trong `core/` rồi chạy `npm run build`.
+Sửa ở nguồn rồi chạy `npm run build`. Version chỉ sửa ở `package.json` gốc; generator đồng bộ sang `core/plugin.json`, `marketplace.json`, `kit.yaml`, `standard.yaml`, `VERSION.md`…
 
 ## Quy trình
 
 ```bash
-npm install          # npm workspaces, cài zod/gray-matter/esbuild/vitest
-npm test              # Vitest cho packages/validators
-npm run build          # generate lại toàn bộ adapter từ core/
-npm run build:check    # xác nhận không lệch (CI chạy lệnh này)
+npm install          # npm workspaces, esbuild, vitest
+npm run build        # generate lại toàn bộ đích từ nguồn
+npm run build:check  # xác nhận không lệch (CI chạy lệnh này)
+npm test             # validators + hook + CLI bundle (cần build trước)
+claude plugin validate ./plugins/fe --strict
 ```
 
-Trước khi mở PR, cả 3 lệnh `npm test`, `npm run build:check`, và CLI smoke test trong `.github/workflows/kit-ci.yml` phải xanh.
+Trước khi mở PR, các lệnh trên và CLI smoke test trong `.github/workflows/kit-ci.yml` phải xanh. Thay đổi prompt của command/agent/skill nên chạy thêm eval hành vi (`.github/workflows/plugin-evals.yml`, chạy tay vì tốn chi phí API).
 
 ## Thay đổi schema `workflow-status.md`
 
-Schema nằm ở `packages/validators/src/schema.mjs`. Thêm/xoá/đổi enum của field là **breaking change** (mọi task folder cũ sẽ fail validate) → bump major version và ghi rõ trong `CHANGELOG.md` mục Breaking.
+Schema nằm ở `packages/validators/src/schema.mjs`. Phải tương thích ngược: không xoá field, không đổi field optional thành bắt buộc, không bỏ giá trị enum. Thêm giá trị enum hoặc field optional thì được. Thay đổi breaking phải bump major và ghi mục Breaking trong `CHANGELOG.md`.
 
 ## Thay đổi gate logic
 
-Logic gate chỉ nằm ở `packages/validators/src/gates.mjs` — nguồn duy nhất. Không copy logic sang `bin/fe-kit.mjs` hay `core/scripts/`. Mỗi thay đổi gate phải kèm ít nhất 1 test case pass + 1 test case fail trong `packages/validators/test/`.
+Logic gate chỉ nằm trong `packages/validators/src/` (`gates.mjs`, `transitions.mjs`, `scope.mjs`, `modes.mjs`). CLI, MCP server, hook và script đều import từ đây — không copy logic sang chỗ khác. Mỗi thay đổi gate phải kèm ít nhất 1 test pass + 1 test fail.
 
-## Command files
+## Command, agent, adapter
 
-`.claude/commands/fe/*.md` và `.codex/prompts/*.md` được **generate từ `core/commands/`** — sửa trong `core/commands/` rồi `npm run build`. Còn `.cursor/rules/*.mdc` và `.github/instructions/*.md` vẫn sửa tay (nội dung khác biệt theo tool, chưa unify).
+- `core/commands/*.md`: nguồn của slash command plugin (generator chèn đoạn "Điều phối" theo bảng `AGENT_FOR_COMMAND`) và prompt Codex (`fe-kit init` sinh, bỏ frontmatter).
+- `core/agents/*.md` + `core/agents/_protocol.md`: generator nối protocol vào cuối mỗi agent.
+- `core/adapters/<agent>/`: payload `fe-kit init` copy vào repo dự án. `.cursor/rules/*.mdc` và `.github/instructions/*.md` vẫn viết tay (khác biệt theo tool).
 
 ## Commit convention
 

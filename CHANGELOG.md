@@ -5,6 +5,49 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.0.0] — 2026-10-05
+
+Đưa kiến trúc orchestrator–worker và "gate được thực thi" mô tả trong `ARCHITECTURE.md` thành cơ chế chạy thật.
+
+### Breaking
+
+- **Plugin `fe` là kênh duy nhất cho Claude Code.** `fe-kit init --agents claude` không còn copy `.claude/commands/fe/`, `.claude/agents/`, `.claude/skills/` vào repo dự án; init chỉ ghi `CLAUDE.md`, `.claude/rules/` và bật `fe@frontend-delivery` trong `.claude/settings.json`. Repo đã init bằng v1.x cần xoá ba thư mục trên (`doctor` báo `TRÙNG` cho tới khi xoá).
+- Payload init chuyển vào `core/adapters/<agent>/`; repo kit không còn `.claude/`, `.codex/`, `.cursor/`, `AGENTS.md` ở gốc. `.codex/prompts/` do `init` sinh trực tiếp từ `core/commands/`.
+- `fe-kit init` chạy từ `standalone/fe-kit.mjs` (hoặc `bin/fe-kit.mjs` trong repo kit đã `npm install`). Bản `bin/fe-kit.mjs` trong repo dự án không chạy `init`.
+
+### Thực thi gate
+
+- **Delegation thật:** 9 command theo mode được chèn đoạn "Điều phối (Claude Code)" — main thread delegate cho đúng subagent `fe:frontend-*`, chuyển nguyên văn input trong chat, rồi gọi `fe_validate_workflow`. `quick` và `new-task` chạy inline.
+- **Hook runtime** (`plugins/fe/hooks/`): ghi nhớ mode theo phiên; chặn agent không phải developer sửa source; chặn cook/bugfix/quick sửa source khi gate chưa mở; hỏi người dùng khi agent bật `human_override: true`; không cho mode kết thúc khi `workflow-status.md` chưa cập nhật, sai `current_mode`, thiếu artifact hoặc fail validator. Mức `FE_KIT_HOOKS=off|warn|enforce`, mặc định `warn`.
+- **MCP tool mới:** `fe_begin_mode` (verdict gate + artifact bắt buộc + nguyên văn rule của mode, ưu tiên `.frontend-delivery/rules/` của repo rồi tới bản trong plugin), `fe_scope_diff`, `fe_new_task`.
+- **Subagent** viết lại: prompt đầy đủ theo vai, giao thức chung `core/agents/_protocol.md`, preload skill, dùng `disallowedTools` thay whitelist `tools:` để thừa hưởng Skill, MCP của kit và Figma MCP.
+
+### Validator tự tính sự thật
+
+- Scope diff tính từ `git diff` so với bảng "File sẽ tạo / cập nhật" của plan (`validate-pr`, `fe_scope_diff`, hook khi kết thúc cook/bugfix/quick).
+- Command evidence đọc từ bảng `Command evidence log` của `output/test-summary.md`.
+- Bảng chuyển mode và `evaluateModeEntry`; `next_mode` lạ chỉ cảnh báo. Còn Critical/High mà route sang test/pr là lỗi.
+- Một `evaluatePrGates` cho cả CLI và script; trước đây CLI từ chối `command_evidence_status: passed` mà script chấp nhận.
+- CLI bỏ parser frontmatter regex (không đọc được CRLF), dùng gray-matter như validators.
+
+### Tương thích ngược của schema
+
+- Không xoá field nào. Field tự khai (`token_budget_status`, `required_files_read_status`, `scope_diff_status`, `command_evidence_status`, `test_command_log_status`, `playwright_screenshot_diff_status`, trạng thái artifact theo mode…) thành optional và không còn là điều kiện của `build_ready`.
+- Thêm giá trị `partial`, `manual_review`, `waived`, `substituted` mà template và PR validator đã dùng từ v1.x.
+
+### Phân phối
+
+- CLI bundle standalone: chạy trong repo dự án không cần `node_modules`, version được nhúng lúc build.
+- `init` không đè `docs/frontend-context/*`; `CLAUDE.md`/`AGENTS.md` chỉ thay khối `fe-kit:start…end`. `--agents github` không còn rò `kit-ci.yml` của kit.
+- Một version duy nhất từ `package.json`, generator đồng bộ sang mọi manifest. `.gitattributes` ép LF; generator so sánh sau khi chuẩn hoá CRLF.
+- `doctor` kiểm tra plugin đã bật và báo bản copy v1.x gây trùng.
+
+### Test và eval
+
+- Test mới cho bảng chuyển mode, scope diff, gate PR, resolver, hook (chạy bản bundle với payload JSON qua stdin) và CLI (bundle trong repo tạm không có `node_modules`).
+- Eval hành vi `evals/` cho `claude plugin eval` (plan route input-sync, cook từ chối khi blocked, input-sync đóng gate, review tạo report); workflow `plugin-evals.yml` chạy tay.
+- Kit CI chạy thêm `claude plugin validate` và `doctor --strict` trên repo tạm.
+
 ## [1.1.0] — 2026-09-02
 
 ### Breaking — plugin đổi tên, slash command ngắn lại

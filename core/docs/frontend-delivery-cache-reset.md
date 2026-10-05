@@ -7,13 +7,15 @@ Bản này dùng cache marker `vi-diacritics-rules-folder-v1.0.0` để tránh a
 1. Gỡ skill cũ trong ChatGPT tại `/skills`.
 2. Upload lại `skill.zip` bản v1.0.0.
 3. Mở chat mới trước khi chạy skill.
-4. Trong repo, chạy lại init từ kit mới:
+4. Chạy lại init từ repo kit mới (không chạy từ bản `bin/fe-kit.mjs` trong repo dự án):
 
 ```bash
-node bin/fe-kit.mjs init --target /path/to/project --agents all
+node standalone/fe-kit.mjs init --target /path/to/project --agents all
 ```
 
-Bản v1.0.0 sẽ ghi đè các file agent/context cũ để tránh cache local.
+Init ghi đè rule, template và adapter rule do kit quản lý; giữ nguyên `docs/frontend-context/*` và phần team tự viết ngoài khối `fe-kit` trong `CLAUDE.md`/`AGENTS.md`.
+
+5. Với Claude Code: `/plugin marketplace update frontend-delivery` rồi `/plugin update fe@frontend-delivery`.
 
 ## Kiểm tra nhanh trong repo
 

@@ -1,0 +1,54 @@
+name: Plugin behaviour evals
+
+# Eval hành vi của plugin `fe` (delegation, gate câu hỏi blocking, không sửa
+# source sai vai). Tốn chi phí API nên chỉ chạy tay hoặc trước release.
+# Cần secret ANTHROPIC_API_KEY. Chạy trên ubuntu vì scaffold script là bash.
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Model chạy agent
+        default: claude-sonnet-5-5
+      runs:
+        description: Số lần chạy mỗi case
+        default: "3"
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Chạy eval
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npx -y @anthropic-ai/claude-code plugin eval ./plugins/fe \
+            --eval-dir evals \
+            --ablation none \
+            --scaffold \
+            --allow-tools Write Edit "mcp__plugin_fe_frontend-delivery__*" \
+            --allow-real-servers \
+            --trust-plugin \
+            --runs "${{ inputs.runs }}" \
+            --model "${{ inputs.model }}" \
+            --judge-model claude-haiku-4-5 \
+            --threshold 0.8 \
+            --max-cost-usd 20 \
+            --no-publish \
+            --json eval-results.json \
+            --output-dir eval-report
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plugin-eval-results
+          path: |
+            eval-results.json
+            eval-report/

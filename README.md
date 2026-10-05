@@ -2,7 +2,7 @@
 
 Bộ chuẩn frontend delivery tiếng Việt cho ChatGPT Skill, Claude Code, Codex, Cursor và GitHub Copilot.
 
-Version: 1.1.0
+Version: 2.0.0
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 
@@ -12,7 +12,7 @@ Chi tiết đầy đủ (4 đường cài, repo private, CI) xem [INSTALL.md](IN
 
 ### Cách 1 — Claude Code plugin (khuyến nghị cho team dùng Claude Code)
 
-Cài 1 lần là có luôn skill `frontend-delivery-standard`, 11 slash command và 6 subagent.
+Cài 1 lần là có luôn skill `frontend-delivery-standard`, 11 slash command, 6 subagent, MCP server validator và hook chặn gate lúc chạy. Cơ chế chi tiết: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 **Dùng cho tất cả dự án** (mặc định — scope `user`):
 
@@ -48,7 +48,7 @@ Cài xong gõ command với namespace `fe`:
 /fe:cook docs/frontend-tasks/FE-123-abc
 ```
 
-Đúng cú pháp với bản cài project-level qua CLI, không phải nhớ 2 kiểu gõ.
+Mỗi command được delegate cho subagent `fe:frontend-*` tương ứng. Hook mặc định ở mức `warn`; đặt `FE_KIT_HOOKS=enforce` để chặn thật, `off` để tắt.
 
 Cập nhật (nhớ `--scope` đúng với lúc cài, mặc định là `user`):
 
@@ -57,53 +57,48 @@ Cập nhật (nhớ `--scope` đúng với lúc cài, mặc định là `user`):
 /plugin update fe@frontend-delivery
 ```
 
-### Cách 2 — CLI `fe-kit` (cần cho `new-task`, `validate-*`, CI)
-
-Plugin chỉ mang skill/command/agent; CLI mới tạo được task folder và chạy gate trong CI.
+### Cách 2 — `fe-kit init` (rule/context/CI cho repo dự án)
 
 ```bash
 git clone https://github.com/your-org/frontend-delivery-agent-kit
 cd frontend-delivery-agent-kit
-npm install                                        # link workspace, cài zod/gray-matter
-node bin/fe-kit.mjs init --target /path/to/project --agents all
-node bin/fe-kit.mjs doctor --target /path/to/project --strict
+node standalone/fe-kit.mjs init --target /path/to/project --agents all
+cd /path/to/project && node bin/fe-kit.mjs doctor --strict
 ```
 
-Bản cài qua CLI cũng dùng `/fe:plan`, `/fe:cook`… Nếu đã cài plugin ở cách 1 thì bỏ `claude` khỏi `--agents` để khỏi sinh bộ command trùng tên — xem [INSTALL.md](INSTALL.md).
+`init` ghi `.frontend-delivery/rules|templates`, `docs/frontend-context/` (không đè file team đã sửa), CLI standalone `bin/fe-kit.mjs` (chạy không cần `node_modules`) và adapter của từng agent. Với `claude`, init chỉ ghi `CLAUDE.md`, `.claude/rules/` và bật plugin `fe` trong `.claude/settings.json` — commands/agents/skill đến từ plugin, không còn copy vào repo.
 
 ### Cách 3 — adapter khác
 
-`--agents codex,cursor,github` copy adapter Codex/Cursor/Copilot vào repo dự án. ChatGPT Skill: `npm run pack:chatgpt` rồi upload `dist/chatgpt-skill.zip`.
+`--agents codex,cursor,github` cài adapter Codex/Cursor/Copilot. ChatGPT Skill: `npm run pack:chatgpt` rồi upload `dist/chatgpt-skill.zip`.
 
 ## Kiến trúc repo (dành cho người maintain kit)
 
 ```text
 core/                     # NGUỒN DUY NHẤT — sửa ở đây
-  rules/                  # rule mặc định dùng chung cho các agent
-  templates/              # template task folder
-  standards/              # tài liệu chuẩn chi tiết theo mode
-  docs/                   # docs/frontend-context mặc định
-  scripts/                # nguồn validator script (bundle bằng esbuild)
-  skill-package.json      # package.json mẫu cho skill folder
+  SKILL.md                # skill frontend-delivery-standard
+  commands/               # 11 slash command (generator chèn đoạn delegation cho plugin)
+  agents/                 # 6 subagent + _protocol.md dùng chung
+  hooks/                  # hook runtime (bundle) + hooks.json
+  mcp/server.mjs          # MCP server: fe_begin_mode, fe_validate_*, fe_scope_diff, fe_new_task...
+  rules/ templates/ standards/ docs/ scripts/
+  adapters/<agent>/       # payload `fe-kit init` cho claude/codex/cursor/github
 
-packages/validators/       # Zod schema + gray-matter parser + gate logic dùng chung
-  src/{schema,parse,gates,index}.mjs
-  test/                    # Vitest, chạy `npm test`
+packages/validators/       # schema, parser, gate, bảng mode, scope diff, scaffold — dùng chung
+bin/fe-kit.mjs             # nguồn CLI; bản bundle standalone/fe-kit.mjs được copy vào repo dự án
+evals/                     # eval hành vi plugin (claude plugin eval --eval-dir evals)
+tests/                     # test hook và CLI trên bản bundle
 
-bin/fe-kit.mjs             # CLI, import từ @frontend-delivery-kit/validators (npm workspace)
-
-build/
-  generate-adapters.mjs    # core/ -> rules/, templates/, docs/, .claude/skills/*, chatgpt-skill/*
-  pack-chatgpt-skill.mjs   # đóng gói dist/chatgpt-skill.zip lúc release
+build/generate-adapters.mjs  # core/ -> plugins/fe, chatgpt-skill, standalone, rules/templates/docs top-level
 ```
 
-**Quy tắc bắt buộc:** không sửa tay `rules/`, `templates/`, `docs/`, `standards/` ở top-level hay trong `.claude/skills/frontend-delivery-standard/`, `chatgpt-skill/frontend-delivery-standard/` — các thư mục này là output generate. Sửa trong `core/` rồi chạy:
+**Quy tắc bắt buộc:** không sửa tay output generate (`plugins/fe/`, `chatgpt-skill/`, `standalone/`, `rules/`, `templates/`, `docs/` top-level). Sửa trong `core/` hoặc `packages/validators/` rồi chạy:
 
 ```bash
-npm install        # lần đầu, link npm workspace
-npm run build       # sinh lại rules/templates/docs/scripts/package.json ở mọi đích
-npm run build:check # CI dùng cái này để chặn PR nếu quên chạy build
-npm test             # chạy Vitest cho packages/validators
+npm install          # lần đầu
+npm run build        # sinh lại mọi đích, đồng bộ version từ package.json
+npm run build:check  # CI chặn PR nếu quên build
+npm test             # validators + hook + CLI bundle
 ```
 
 ## Cấu trúc rule/context (khi đã cài vào project của team)
@@ -139,8 +134,8 @@ Mọi mode phải cập nhật artifact bắt buộc và `tracking/workflow-stat
 ## Token/evidence gates
 
 - Agent phải đọc đúng file cần thiết theo mode, không đọc/copy toàn bộ context nếu không cần.
-- Trước PR phải có scope diff passed/not_required và command evidence completed/not_required.
+- Trước PR, scope diff được tính từ `git diff` so với bảng "File sẽ tạo / cập nhật" của plan, và `output/test-summary.md` phải có lệnh đã chạy thật.
 - Với UI/Figma, Playwright screenshot diff là ưu tiên; nếu chưa có setup thì ghi manual/static evidence và lý do.
 
 
-Ghi chú v1.0.0: Câu hỏi blocking/open trong `planning/questions.md` sẽ chặn `FE cook`; `workflow-status.md` bắt buộc route sang `FE input-sync` cho tới khi câu trả lời được đồng bộ vào questions/plan/checklist và `questions_resolution_gate_status: passed`. Xem `CHANGELOG.md` để biết chi tiết thay đổi so với bản 0.1.16.
+Ghi chú v1.0.0: Câu hỏi blocking/open trong `planning/questions.md` sẽ chặn `FE cook`; `workflow-status.md` bắt buộc route sang `FE input-sync` cho tới khi câu trả lời được đồng bộ vào questions/plan/checklist và `questions_resolution_gate_status: passed`. Từ v2.0.0 gate này còn được thực thi bằng `fe_begin_mode` và hook. Xem `CHANGELOG.md`.

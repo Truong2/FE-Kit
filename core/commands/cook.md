@@ -1,14 +1,21 @@
 ---
 description: Implement FE task theo implementation-plan và build-checklist.
+argument-hint: <task-folder>
 ---
 
-Dùng skill `frontend-delivery-standard` trong `implementation-mode`.
+Dùng skill `frontend-delivery-standard` trong `implementation-mode` cho: $ARGUMENTS
 
 Trước khi code, đọc `task.md`, `workflow-status.md`, `questions.md`, `implementation-plan.md`, `build-checklist.md`, và Figma summary nếu có. Không build nếu còn blocker hoặc gate chưa pass.
 
+Output bắt buộc: code changes, `planning/build-checklist.md`, `tracking/workflow-status.md`.
+
 ## Chặn cook khi còn câu hỏi blocking
 
-Trước khi code, nếu `planning/questions.md` còn câu hỏi blocking open hoặc `workflow-status.md` có `blocking_questions_open > 0`, `input_sync_required: true`, `plan_recheck_required_after_input_sync: true`, hoặc `questions_resolution_gate_status` chưa `passed/not_required`, phải dừng và cập nhật `Prompt bước tiếp theo` thành `FE input-sync <task-folder> <answer-or-cr>`. Không được code.
+Trước khi code, nếu `fe_begin_mode` báo `BỊ CHẶN`, hoặc `planning/questions.md` còn câu hỏi blocking open, hoặc `workflow-status.md` có `blocking_questions_open > 0`, `input_sync_required: true`, `plan_recheck_required_after_input_sync: true`, hay `questions_resolution_gate_status` chưa `passed/not_required`: phải dừng và cập nhật `Prompt bước tiếp theo` thành `FE input-sync <task-folder> <answer-or-cr>`. Không được code.
+
+## Scope
+
+Chỉ sửa file nằm trong bảng `File sẽ tạo / cập nhật` của `implementation-plan.md`. Cần sửa file khác thì dừng, cập nhật plan qua `FE input-sync`/`FE plan` trước. Trước khi kết thúc, gọi MCP tool `fe_scope_diff` và xử lý mọi file bị báo ngoài plan.
 
 ## Ghi chú lỗi API và hiển thị FE
 
@@ -16,11 +23,12 @@ Trước khi code, nếu `planning/questions.md` còn câu hỏi blocking open h
 
 ## Ghi chú feature source pattern
 
-Trước khi plan/cook/quick/review, đọc `.frontend-delivery/rules/` như rules folder bắt buộc. `feature-source-context.md` chỉ dùng để tham chiếu feature mẫu/cách code feature mẫu nếu source base có mẫu đáng tin; không copy pattern xấu.
+`feature-source-context.md` chỉ dùng để tham chiếu feature mẫu/cách code feature mẫu nếu source base có mẫu đáng tin; không copy pattern xấu.
 
-## Ngôn ngữ output
+## Rule và ngôn ngữ output
 
-Viết bằng tiếng Việt có dấu đầy đủ (theo `.frontend-delivery/rules/vietnamese-output.md`, luôn áp dụng cho toàn project). Giữ nguyên code/path/command/API field/DTO/error code/route/package/SRS section.
+Lấy danh sách rule của mode từ MCP tool `fe_begin_mode`. Nếu không có MCP, đọc `.frontend-delivery/rules/` của repo (nếu có) hoặc thư mục `rules/` của skill `frontend-delivery-standard`.
+
+Viết bằng tiếng Việt có dấu đầy đủ. Giữ nguyên code/path/command/API field/DTO/error code/route/package/SRS section.
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
-

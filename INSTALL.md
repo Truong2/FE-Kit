@@ -129,44 +129,52 @@ Nếu bản cũ cài ở scope `project`/`local` thì thêm `--scope` tương �
 
 ---
 
-## 2. CLI `fe-kit` (cần cho `new-task`, `validate-*`, CI)
+### Hook và mức thực thi
 
-Plugin ở trên chỉ mang skill/command/agent. CLI dùng để tạo task folder và chạy gate trong CI:
+Plugin kèm hook chặn gate lúc chạy (sửa source sai vai, cook khi còn câu hỏi blocking, kết thúc mode khi chưa cập nhật `workflow-status.md`). Mức thực thi đặt bằng biến môi trường:
+
+| `FE_KIT_HOOKS` | Hành vi |
+|---|---|
+| `warn` (mặc định) | Chỉ cảnh báo |
+| `enforce` | Từ chối tool call và chặn kết thúc mode (tối đa một lần mỗi lần dừng) |
+| `off` | Tắt hook |
+
+Đặt cho cả team trong `.claude/settings.json` của repo: `"env": { "FE_KIT_HOOKS": "enforce" }`.
+
+---
+
+## 2. `fe-kit init` (rule, context, CLI cho CI)
 
 ```bash
 git clone https://github.com/your-org/frontend-delivery-agent-kit
 cd frontend-delivery-agent-kit
-npm install
+node standalone/fe-kit.mjs init --target /path/to/your-project --agents all
 
-node bin/fe-kit.mjs init --target /path/to/your-project --agents all
-node bin/fe-kit.mjs doctor --target /path/to/your-project --strict
+cd /path/to/your-project
+node bin/fe-kit.mjs doctor --strict
+node bin/fe-kit.mjs new-task FE-123-ten-task
 ```
 
-Cài toàn cục cho tiện:
+`standalone/fe-kit.mjs` là bản bundle, không cần `npm install`. `init` copy bản này vào `bin/fe-kit.mjs` của repo dự án; bản copy chạy `new-task`, `status`, `next`, `validate-*`, `doctor` nhưng không chạy `init` (init luôn chạy từ repo kit).
 
-```bash
-npm install -g /path/to/frontend-delivery-agent-kit
-fe-kit new-task FE-123-ten-task
-```
-
-**Nếu đã cài plugin ở cách 1 thì `--agents claude` là thừa** — nó copy thêm `.claude/commands/fe/*.md` vào repo dự án, tạo ra bộ `/fe:*` thứ hai trùng tên với plugin. Nội dung hai bên sinh từ cùng `core/commands/` nên chạy vẫn đúng, nhưng danh sách slash command sẽ hiện trùng. Team dùng plugin nên init bằng `--agents codex,cursor,github` (hoặc bỏ hẳn `claude`) và chỉ lấy `.frontend-delivery/rules/` + `docs/frontend-context/` từ CLI.
+| Loại file | Hành vi khi init lại |
+|---|---|
+| `.frontend-delivery/rules/`, `templates/`, `bin/fe-kit.mjs`, adapter rules | Ghi đè (kit quản lý) |
+| `docs/frontend-context/*`, `.frontend-delivery/standard.yaml` | Chỉ tạo khi chưa có |
+| `CLAUDE.md`, `AGENTS.md` | Chỉ thay khối giữa `<!-- fe-kit:start -->` và `<!-- fe-kit:end -->`, giữ phần team tự viết |
 
 ---
 
-## 3. Adapter khác (Codex / Cursor / Copilot / ChatGPT)
-
-`fe-kit init --agents <list>` copy adapter tương ứng vào repo dự án:
+## 3. Adapter theo agent
 
 | Agent | Giá trị `--agents` | File được cài |
 |---|---|---|
-| Claude Code | `claude` | `.claude/`, `CLAUDE.md` |
-| Codex | `codex` | `.codex/`, `AGENTS.md` |
+| Claude Code | `claude` | `CLAUDE.md`, `.claude/rules/`, bật `fe@frontend-delivery` trong `.claude/settings.json` |
+| Codex | `codex` | `AGENTS.md`, `.codex/rules/`, `.codex/prompts/` (sinh từ `core/commands`) |
 | Cursor | `cursor` | `.cursor/rules/*.mdc` |
-| GitHub Copilot | `github` | `.github/copilot-instructions.md`, `.github/instructions/` |
+| GitHub Copilot | `github` | `.github/copilot-instructions.md`, `.github/instructions/`, PR template, workflow validate task |
 
-```bash
-node bin/fe-kit.mjs init --target /path/to/project --agents cursor,github
-```
+Từ v2.0.0 `--agents claude` **không** copy commands/agents/skill nữa — chúng đến từ plugin. Repo đã init bằng v1.x còn `.claude/commands/fe/`, `.claude/agents/frontend-*.md`, `.claude/skills/frontend-delivery-standard/` thì xoá đi; `doctor` báo `TRÙNG` cho đến khi xoá xong.
 
 **ChatGPT Skill:** chạy `npm run pack:chatgpt` rồi upload `dist/chatgpt-skill.zip` lên ChatGPT Skills UI.
 
@@ -174,7 +182,7 @@ node bin/fe-kit.mjs init --target /path/to/project --agents cursor,github
 
 ## 4. Dùng trong CI
 
-`.github/workflows/frontend-delivery-standard.yml` được `fe-kit init --agents github` copy sang repo dự án, tự validate task folder nào thay đổi trong PR.
+`.github/workflows/frontend-delivery-standard.yml` (cài bởi `--agents github`) chạy `doctor --strict` và validate mọi task folder thay đổi trong PR. `validate-pr` so `git diff` với nhánh đích của PR (tự đọc `GITHUB_BASE_REF`) để phát hiện file sửa ngoài plan.
 
 ---
 

@@ -31,7 +31,7 @@ git push -u origin main
 git tag v1.0.0 && git push --tags
 ```
 
-**Phải commit các thư mục generate** (`plugins/`, `.claude/`, `.codex/`, `.cursor/`, `.github/`, `rules/`, `templates/`, `standards/`, `docs/`): marketplace trỏ tới `./plugins/fe` bằng relative path, và người cài plugin không chạy `npm run build`. `.gitignore` hiện đã đúng — chỉ bỏ `node_modules`.
+**Phải commit các thư mục generate** (`plugins/`, `chatgpt-skill/`, `standalone/`, `rules/`, `templates/`, `docs/`): marketplace trỏ tới `./plugins/fe` bằng relative path, và người cài plugin không chạy `npm run build`. `.gitignore` hiện đã đúng — chỉ bỏ `node_modules`.
 
 ## Bước 3 — Team cài
 

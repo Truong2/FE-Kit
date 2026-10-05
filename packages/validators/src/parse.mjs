@@ -2,6 +2,27 @@ import matter from 'gray-matter';
 import { WorkflowStatusSchema } from './schema.mjs';
 
 /**
+ * Đọc YAML frontmatter KHÔNG kiểm schema.
+ *
+ * Dùng cho các lệnh `check-*` đọc field nằm ngoài schema và cho hook (vốn
+ * không được chặn chỉ vì file đang viết dở). Thay cho parser regex từng nằm
+ * ở `bin/fe-kit.mjs`, vốn không xử lý CRLF, multiline hay giá trị có dấu `:`.
+ *
+ * @returns {{ data: object, body: string, hasFrontMatter: boolean, error?: string }}
+ */
+export function parseFrontMatterLoose(raw) {
+  const text = String(raw ?? '');
+  const hasFrontMatter = /^﻿?---\r?\n/.test(text);
+  if (!hasFrontMatter) return { data: {}, body: text, hasFrontMatter: false };
+  try {
+    const parsed = matter(text);
+    return { data: parsed.data || {}, body: parsed.content, hasFrontMatter: true };
+  } catch (err) {
+    return { data: {}, body: text, hasFrontMatter: true, error: err.message };
+  }
+}
+
+/**
  * Parse + validate nội dung tracking/workflow-status.md.
  *
  * Trước đây mỗi nơi (CLI, ts-node script) tự viết regex
