@@ -5,6 +5,34 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.1.0] — 2026-10-05
+
+Củng cố bằng chứng và gate của bản 2.0 theo `output/fe-kit-architecture-evolution.md` (bước 1–2 của lộ trình). Không thêm agent, hook event hay field schema.
+
+### Có thể ảnh hưởng task đang chạy
+
+- **Command evidence chặt hơn.** Một dòng trong `Command evidence log` chỉ được tính là đã chạy khi ghi `Có` và kết quả `Passed`/`Failed`. Trước đây dòng có tên lệnh nhưng ô "Đã chạy thật?" và "Kết quả" để trống vẫn được tính. Task mà mọi dòng đều trống sẽ không qua `validate-pr` cho tới khi ghi đủ.
+- **`fe_validate_workflow` và `fe-kit validate-workflow` tự đối chiếu scope** khi task ở review/test/pr-ready: file sửa ngoài plan (theo git) là lỗi, như `validate-pr`. Plan/input-sync/figma không bị ảnh hưởng. Tắt ở CLI bằng `--no-scope`.
+
+### Gate và hook
+
+- `summarizeCommandEvidence` phân loại từng dòng: đã chạy, chưa chạy, thiếu dữ liệu, thiếu thời điểm, lần gần nhất `Failed`. Ba loại sau chỉ cảnh báo.
+- Hook chụp hash nội dung các file đang dirty lúc mở cook/bugfix/quick. Cuối mode, file vốn đã có thay đổi của người dùng mà bị sửa thêm ngoài plan sẽ bị báo, kèm lời nhắc không hoàn tác thay đổi gốc. Marker cũ (chỉ có danh sách path) vẫn chạy như trước.
+- Bắt đầu lệnh FE mới khi mode trước còn chưa qua gate kết thúc thì hook cảnh báo thay vì ghi đè marker im lặng.
+- `core/scripts/validate-workflow.mjs` (gói ChatGPT skill) dùng cùng hàm với MCP và nhận `--base`.
+
+### Chất lượng thiết kế và bàn giao
+
+- Template plan có mục `Kiểm chứng claim` theo bốn góc: tồn tại, luồng xử lý, lifetime, contract. Chỉ điền theo rủi ro; claim chưa xác minh mà ảnh hưởng triển khai thành câu hỏi blocking.
+- Template review có mục `Đối chiếu claim của plan`; các mục sau đánh số lại (issue là mục 4).
+- Giao thức agent: báo cáo cuối theo khung bàn giao (mục tiêu, input, file đã sửa, tiêu chí chấp nhận, giới hạn, bằng chứng, việc còn lại, `Tiếp theo:`).
+- Hướng dẫn Codex, Cursor, Copilot và skill ghi rõ mức kiểm tra: không có MCP/hook, gate chỉ được kiểm khi chạy CLI.
+
+### Kiểm chứng
+
+- Test mới cho evidence, scope tại điểm chuyển gate (repo git thật), hook (file dirty từ trước, marker hết hạn, chuyển task, mode bỏ dở), MCP server qua stdio, và trần context rule theo mode (`tests/context-budget.test.mjs`).
+- Bốn case eval mới: `cook-proceeds-when-ready` (chặn nhầm), `review-does-not-fix-when-asked`, `test-without-shell-no-false-pass`, `pr-blocks-out-of-scope`; grader `handoff-complete`. Workflow eval có input `hooks_level`. Bộ eval chưa được chạy cho bản này.
+
 ## [2.0.1] — 2026-10-05
 
 ### Sửa lỗi

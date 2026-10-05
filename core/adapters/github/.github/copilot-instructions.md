@@ -15,6 +15,15 @@ Core rule: plan decides; build follows plan; checklist verifies; questions route
 Use `FE quick <task>` only for small, low-risk localized changes with clear requirements, no unresolved questions, no Figma dependency, no new API/DTO ambiguity, and no new store/hook architecture decision. Otherwise use `FE plan` or `FE input-sync`.
 
 
+## Mức kiểm tra
+
+Copilot không có MCP hay hook của kit: không có gì tự chặn sai gate lúc agent chạy. Gate được kiểm bằng CLI của kit (`bin/fe-kit.mjs`, do `fe-kit init` copy vào repo) và workflow CI `frontend-delivery-standard.yml`:
+
+- Trước khi kết thúc mỗi mode: `node bin/fe-kit.mjs validate-workflow <task-folder>`. Task ở review/test/pr thì lệnh này đối chiếu file đã sửa (git) với plan.
+- Trước khi mở PR: `node bin/fe-kit.mjs validate-pr <task-folder> --base <nhánh-đích>`.
+- Chưa chạy, hoặc lệnh báo lỗi, thì không ghi gate là passed trong `workflow-status.md`; ghi lại lệnh đã chạy và kết quả.
+
+
 ## Ngôn ngữ artifact
 
 Mọi file Markdown do agent tạo/cập nhật trong task phải viết bằng tiếng Việt có dấu. Chỉ giữ nguyên code/path/command/API field/DTO/error code/route/package/SRS section.

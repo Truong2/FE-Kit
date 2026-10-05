@@ -27,6 +27,8 @@ import {
   validateWorkflow,
   scopeDiffForTask,
   listChangedFiles,
+  snapshotFiles,
+  filesTouchedSince,
   resolveTaskDir,
   relativePosix,
   isPathInside,
@@ -121,6 +123,11 @@ function parseFePrompt(prompt) {
   return { command, taskArg: m[2] };
 }
 
+/**
+ * Ghi marker cho mode vừa bắt đầu.
+ * @returns {{ marker: object, replaced: object | null } | null} `replaced` là marker
+ *   của mode trước còn `pending` (chưa qua gate kết thúc) vừa bị thay thế.
+ */
 function beginMode(payload, { command, taskArg, workspace }) {
   if (!COMMANDS.includes(command)) return null;
   let taskDir;
@@ -132,8 +139,9 @@ function beginMode(payload, { command, taskArg, workspace }) {
 
   const existing = readMarker(payload.session_id);
   if (existing && existing.status === 'pending' && existing.task === taskDir && existing.command === command) {
-    return existing; // cùng mode đang chạy (vd subagent gọi lại fe_begin_mode): giữ startedAt
+    return { marker: existing, replaced: null }; // cùng mode đang chạy (vd subagent gọi lại fe_begin_mode): giữ startedAt
   }
+  const replaced = existing && existing.status === 'pending' ? existing : null;
 
   const marker = {
     task: taskDir,
@@ -143,36 +151,47 @@ function beginMode(payload, { command, taskArg, workspace }) {
     startedAt: Date.now(),
     status: 'pending',
     delegated: false,
-    baselineChanged: [],
+    // path → dấu vân tay nội dung của file đang dirty lúc mở mode
+    baseline: {},
   };
   if (SOURCE_EDIT_COMMANDS.includes(command)) {
     const changed = listChangedFiles({ cwd: workspace });
-    if (changed.ok) marker.baselineChanged = changed.files;
+    if (changed.ok) marker.baseline = snapshotFiles(workspace, changed.files);
   }
   writeMarker(payload.session_id, marker);
-  return marker;
+  return { marker, replaced };
+}
+
+function replacedMessage(replaced) {
+  return (
+    `[FE-Kit cảnh báo] FE ${replaced.command} cho ${replaced.taskRef} chưa qua gate kết thúc mode thì đã bắt đầu lệnh FE khác. ` +
+    `Kiểm tra lại tracking/workflow-status.md của ${replaced.taskRef} trước khi tiếp tục task đó.`
+  );
 }
 
 function onPrompt(payload) {
   const parsed = parseFePrompt(payload.prompt);
   if (!parsed) return;
   const workspace = path.resolve(payload.cwd || process.cwd());
-  const marker = beginMode(payload, { ...parsed, workspace });
-  if (!marker) return;
+  const begun = beginMode(payload, { ...parsed, workspace });
+  if (!begun) return;
+  const { marker, replaced } = begun;
+  const out = replaced ? { systemMessage: replacedMessage(replaced) } : {};
 
   // Đưa verdict của gate vào ngữ cảnh ngay từ đầu, không phụ thuộc việc model có gọi fe_begin_mode hay không.
   const { data, openBlockingQuestions, raw } = loadTask(marker.task);
-  if (!raw) return;
-  const entry = evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, taskRef: marker.taskRef });
-  if (entry.allowed) return;
-  emit({
-    hookSpecificOutput: {
+  const entry = raw
+    ? evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, taskRef: marker.taskRef })
+    : { allowed: true };
+  if (!entry.allowed) {
+    out.hookSpecificOutput = {
       hookEventName: payload.hook_event_name,
       additionalContext:
         `[FE-Kit gate] FE ${marker.command} đang BỊ CHẶN cho ${marker.taskRef}: ${entry.reasons.join(' ')} ` +
         `Không sửa source. Cập nhật tracking/workflow-status.md và route sang: ${entry.redirect}`,
-    },
-  });
+    };
+  }
+  if (Object.keys(out).length) emit(out);
 }
 
 function onBeginModeTool(payload) {
@@ -180,7 +199,8 @@ function onBeginModeTool(payload) {
   const command = normalizeCommand(input.mode);
   if (!command || !input.task_folder) return;
   const workspace = path.resolve(input.workspace_root || payload.cwd || process.cwd());
-  beginMode(payload, { command, taskArg: input.task_folder, workspace });
+  const begun = beginMode(payload, { command, taskArg: input.task_folder, workspace });
+  if (begun?.replaced) emit({ systemMessage: replacedMessage(begun.replaced) });
 }
 
 // ---------------------------------------------------------------------------
@@ -272,6 +292,12 @@ function onPreEdit(payload) {
 // Stop / SubagentStop
 // ---------------------------------------------------------------------------
 
+/** Marker từ v2.0.x chỉ lưu danh sách path (`baselineChanged`): khi đó chỉ so theo path như trước. */
+function baselineOf(marker) {
+  if (marker.baseline && typeof marker.baseline === 'object') return marker.baseline;
+  return Object.fromEntries((marker.baselineChanged || []).map((f) => [f, 'skipped']));
+}
+
 /** Trả về danh sách lý do mode chưa được coi là xong (rỗng = đạt). */
 function completionProblems(marker) {
   const problems = [];
@@ -314,10 +340,18 @@ function completionProblems(marker) {
   if (SOURCE_EDIT_COMMANDS.includes(marker.command)) {
     const changed = listChangedFiles({ cwd: marker.workspace });
     if (changed.ok) {
-      const baseline = new Set(marker.baselineChanged || []);
-      const delta = changed.files.filter((f) => !baseline.has(f));
-      const diff = scopeDiffForTask(marker.task, { repoRoot: marker.workspace, changedFiles: delta });
-      if (diff && !diff.plannedEmpty) scope = diff;
+      const { touched, preDirtyTouched } = filesTouchedSince(marker.workspace, baselineOf(marker), changed.files);
+      const diff = scopeDiffForTask(marker.task, { repoRoot: marker.workspace, changedFiles: touched });
+      if (diff && !diff.plannedEmpty) {
+        scope = diff;
+        const userFiles = diff.outOfPlan.filter((f) => preDirtyTouched.includes(f));
+        if (userFiles.length) {
+          problems.push(
+            `Các file sau đã có thay đổi chưa commit của người dùng từ trước FE ${marker.command} và bị sửa thêm trong mode này, ngoài plan: ${userFiles.join(', ')}. ` +
+              'Không hoàn tác thay đổi gốc của người dùng; chỉ gỡ phần mode này đã sửa, hoặc cập nhật plan qua input-sync.'
+          );
+        }
+      }
     }
   }
 

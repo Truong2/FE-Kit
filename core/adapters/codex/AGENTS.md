@@ -21,3 +21,11 @@ Dùng `FE plan`, `FE input-sync`, `FE figma`, `FE cook`, `FE review`, `FE bugfix
 - Không claim test/lint/typecheck/build pass nếu chưa chạy thật.
 - Không sửa file ngoài plan nếu chưa update plan/input-sync.
 - Nếu còn câu hỏi blocking/open trong `planning/questions.md`, prompt tiếp theo phải là `FE input-sync`; không được sang `FE cook` cho tới khi input-sync cập nhật câu trả lời, plan/checklist và đóng gate.
+
+## Mức kiểm tra
+
+Codex không có MCP hay hook của kit: không có gì tự chặn sai gate lúc agent chạy. Gate chỉ được kiểm khi chạy CLI của kit (`bin/fe-kit.mjs`, do `fe-kit init` copy vào repo):
+
+- Trước khi kết thúc mỗi mode: `node bin/fe-kit.mjs validate-workflow <task-folder>`. Task ở review/test/pr thì lệnh này đối chiếu file đã sửa (git) với plan.
+- Trước khi mở PR: `node bin/fe-kit.mjs validate-pr <task-folder> --base <nhánh-đích>`.
+- Chưa chạy, hoặc lệnh báo lỗi, thì không ghi gate là passed trong `workflow-status.md`; ghi lại lệnh đã chạy và kết quả.

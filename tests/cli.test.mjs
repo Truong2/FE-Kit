@@ -189,6 +189,29 @@ describe('CLI bundle trong repo dự án (không có node_modules)', () => {
       expect(project('validate-pr', 'FE-3-a').out).toMatch(/validate-pr passed/);
       expect(project('validate-pr', 'FE-4-b').out).toMatch(/validate-pr passed/);
     });
+
+    it('validate-workflow ở pr-ready-mode tự đối chiếu scope; --no-scope tắt được', () => {
+      readyTask('FE-5-wf', ['src/components/OrderCancelButton.tsx']);
+      commitBase();
+      writeSource('src/store/global.ts');
+      const r = project('validate-workflow', 'FE-5-wf');
+      expect(r.status).toBe(1);
+      expect(r.out).toMatch(/Scope: tính từ git/);
+      expect(r.out).toMatch(/src\/store\/global\.ts/);
+      expect(project('validate-workflow', 'FE-5-wf', '--no-scope').out).toMatch(/validate-workflow passed/);
+    });
+
+    it('test-summary có dòng evidence trống không qua validate-pr', () => {
+      readyTask('FE-6-ev', []);
+      fs.writeFileSync(
+        path.join(target, 'docs', 'frontend-tasks', 'FE-6-ev', 'output', 'test-summary.md'),
+        '## 1. Command evidence log\n\n| Command | Đã chạy thật? | Kết quả | Thời điểm | Ghi chú |\n|---|---|---|---|---|\n| `npm test` |  |  |  |  |\n'
+      );
+      commitBase();
+      const r = project('validate-pr', 'FE-6-ev');
+      expect(r.status).toBe(1);
+      expect(r.out).toMatch(/chưa có dòng command đã chạy thật/);
+    });
   });
 
   it('in đúng version của kit, không đọc package.json của dự án', () => {

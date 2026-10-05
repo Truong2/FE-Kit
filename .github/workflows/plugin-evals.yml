@@ -1,7 +1,8 @@
 name: Plugin behaviour evals
 
-# Eval hành vi của plugin `fe` (delegation, gate câu hỏi blocking, không sửa
-# source sai vai). Tốn chi phí API nên chỉ chạy tay hoặc trước release.
+# Eval hành vi của plugin `fe`: delegation, gate câu hỏi blocking, không sửa
+# source sai vai, gate bị lọt (evidence giả, file ngoài plan) và chặn nhầm.
+# Tốn chi phí API nên chỉ chạy tay hoặc trước release.
 # Cần secret ANTHROPIC_API_KEY. Chạy trên ubuntu vì scaffold script là bash.
 
 on:
@@ -13,11 +14,16 @@ on:
       runs:
         description: Số lần chạy mỗi case
         default: "3"
+      hooks_level:
+        description: Mức hook của kit trong lúc eval (FE_KIT_HOOKS)
+        type: choice
+        options: [enforce, warn]
+        default: enforce
 
 jobs:
   evals:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +34,8 @@ jobs:
       - name: Chạy eval
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Hook đọc biến này từ môi trường của phiên Claude Code mà eval dựng lên.
+          FE_KIT_HOOKS: ${{ inputs.hooks_level }}
         run: |
           npx -y @anthropic-ai/claude-code plugin eval ./plugins/fe \
             --eval-dir evals \
@@ -40,10 +48,27 @@ jobs:
             --model "${{ inputs.model }}" \
             --judge-model claude-haiku-4-5 \
             --threshold 0.8 \
-            --max-cost-usd 20 \
+            --max-cost-usd 30 \
             --no-publish \
             --json eval-results.json \
             --output-dir eval-report
+
+      # Số liệu cho quyết định bật `enforce` mặc định: pass rate theo case và chi phí.
+      # Tên field chi tiết của file JSON chưa được tài liệu hoá nên in nguyên `aggregates`.
+      - name: Tóm tắt kết quả
+        if: always()
+        run: |
+          {
+            echo "## Plugin eval — model ${{ inputs.model }}, FE_KIT_HOOKS=${{ inputs.hooks_level }}, runs=${{ inputs.runs }}"
+            echo
+            if [ -f eval-results.json ]; then
+              echo '```json'
+              jq '.aggregates // .' eval-results.json
+              echo '```'
+            else
+              echo "Không có eval-results.json (eval lỗi trước khi ghi kết quả)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         if: always()

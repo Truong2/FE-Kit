@@ -6,6 +6,7 @@ import {
   evaluatePrGates,
   countOpenBlockingQuestions,
   hasCommandEvidence,
+  summarizeCommandEvidence,
   realQuestionCell,
 } from './gates.mjs';
 import { WorkflowStatusSchema, GateStatus, CoreMode } from './schema.mjs';
@@ -86,6 +87,47 @@ export function validateWorkflow(taskDir, { scope } = {}) {
   return evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...taskIo(taskDir), scope });
 }
 
+/** Mode sau cook: diff đã ổn định nên validate-workflow tự đối chiếu scope với git. */
+export const SCOPE_CHECKED_MODES = ['review-mode', 'testing-mode', 'pr-ready-mode'];
+
+/**
+ * `validateWorkflow` tại điểm chuyển gate (MCP `fe_validate_workflow`).
+ *
+ * Khi task đang ở review/test/pr-ready, scope tính từ git thắng
+ * `scope_diff_status` tự khai. Plan/input-sync/figma không tính scope để không
+ * chặn nhầm vì thay đổi không liên quan trong working tree.
+ *
+ * @param {string} taskDir
+ * @param {{ repoRoot?: string, base?: string }} [opts] `base` bỏ trống thì tự dò
+ * @returns {{ ok: boolean, errors: string[], warnings: string[], scopeSource: 'git' | 'self_reported' | 'not_checked', base: string }}
+ */
+export function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
+  const parsed = loadWorkflow(taskDir);
+  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: [], scopeSource: 'not_checked', base: '' };
+
+  const warnings = [];
+  let scope;
+  let scopeSource = 'not_checked';
+  let usedBase = '';
+  if (repoRoot && SCOPE_CHECKED_MODES.includes(String(parsed.data.current_mode || ''))) {
+    usedBase = base || detectBaseRef(repoRoot);
+    const diff = scopeDiffForTask(taskDir, { repoRoot, base: usedBase });
+    if (!diff) {
+      scopeSource = 'self_reported';
+      warnings.push('Không tính được scope diff từ git (không phải git repo hoặc không diff được base); dùng scope_diff_status tự khai.');
+    } else if (diff.plannedEmpty) {
+      scopeSource = 'self_reported';
+      warnings.push('implementation-plan.md chưa khai file nào ở mục "File sẽ tạo / cập nhật" nên không đối chiếu được scope với git; dùng scope_diff_status tự khai.');
+    } else {
+      scope = diff;
+      scopeSource = 'git';
+    }
+  }
+
+  const res = evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...taskIo(taskDir), scope });
+  return { ...res, warnings: [...res.warnings, ...warnings], scopeSource, base: usedBase };
+}
+
 /**
  * Validate PR readiness: toàn bộ gate workflow + gate PR.
  *
@@ -110,6 +152,7 @@ export {
   evaluatePrGates,
   countOpenBlockingQuestions,
   hasCommandEvidence,
+  summarizeCommandEvidence,
   realQuestionCell,
   computeScopeDiff,
   parsePlannedFiles,
@@ -119,6 +162,7 @@ export {
   GateStatus,
   CoreMode,
 };
+export { snapshotFiles, filesTouchedSince, fingerprintFile } from './scope.mjs';
 export { resolveTaskDir, isPathInside, relativePosix, toPosix, TASKS_ROOT } from './resolve.mjs';
 export { scaffoldTask, isValidTaskName, TASK_TEMPLATE_FILES } from './scaffold.mjs';
 export {

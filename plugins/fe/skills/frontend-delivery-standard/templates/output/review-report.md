@@ -16,13 +16,21 @@
 |---|---|---|---|
 |  | Có / Không | Passed / Failed |  |
 
-## 3. Issue phát hiện
+## 3. Đối chiếu claim của plan
+
+Kiểm lại các claim ở mục "Kiểm chứng claim" của `planning/implementation-plan.md` so với diff thật. Claim không còn đúng thì ghi thành issue ở mục 4. Plan không có claim nào thì ghi `Không áp dụng`.
+
+| Claim (góc) | Còn đúng với diff? | Bằng chứng | Issue ID |
+|---|---|---|---|
+|  | Có / Không / Chưa kiểm |  |  |
+
+## 4. Issue phát hiện
 
 | ID | Severity | Nhóm | File/evidence | Expected | Actual | Owner | Trạng thái |
 |---|---|---|---|---|---|---|---|
 |  |  |  |  |  |  |  |  |
 
-## 4. Cập nhật workflow-status.md
+## 5. Cập nhật workflow-status.md
 
 | Field | Giá trị |
 |---|---|
@@ -33,7 +41,7 @@
 | bugfix_required | true / false |
 | next_mode |  |
 
-## 5. Kết luận review
+## 6. Kết luận review
 
 - Kết luận: 
 - Blocker: Có / Không

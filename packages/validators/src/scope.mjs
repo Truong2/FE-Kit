@@ -1,4 +1,7 @@
 import { spawnSync } from 'node:child_process';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { toPosix } from './resolve.mjs';
 
 /**
@@ -146,4 +149,76 @@ export function listChangedFiles({ cwd, base = '' }) {
     (git(cwd, args) || []).forEach((f) => files.add(f));
   }
   return { ok: true, files: [...files].map(toPosix), base };
+}
+
+const SNAPSHOT_MAX_FILES = 2000;
+const SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Dấu vân tay nội dung một file: sha1, `deleted` khi không tồn tại, hoặc
+ * `unknown` khi không đọc được. File quá lớn dùng size + mtime thay cho hash.
+ */
+export function fingerprintFile(absPath) {
+  try {
+    const st = fs.statSync(absPath);
+    if (!st.isFile()) return 'unknown';
+    if (st.size > SNAPSHOT_MAX_BYTES) return `size:${st.size}:${st.mtimeMs}`;
+    return crypto.createHash('sha1').update(fs.readFileSync(absPath)).digest('hex');
+  } catch (e) {
+    return e && e.code === 'ENOENT' ? 'deleted' : 'unknown';
+  }
+}
+
+/**
+ * Chụp nội dung các file đang thay đổi lúc mở mode, để cuối mode nhận ra file
+ * vốn đã dirty mà bị sửa thêm. Chỉ đọc, không đụng file của người dùng.
+ * Vượt quá giới hạn số file thì phần còn lại chỉ so theo path (`skipped`).
+ *
+ * @param {string} cwd
+ * @param {string[]} files path relative so với `cwd`
+ * @returns {Record<string, string>}
+ */
+export function snapshotFiles(cwd, files) {
+  const snapshot = {};
+  files.forEach((f, i) => {
+    snapshot[f] = i < SNAPSHOT_MAX_FILES ? fingerprintFile(path.join(cwd, f)) : 'skipped';
+  });
+  return snapshot;
+}
+
+/**
+ * File bị thay đổi kể từ lúc chụp `snapshot`:
+ *   - file mới xuất hiện trong danh sách thay đổi;
+ *   - file đã dirty từ trước mà nội dung khác đi;
+ *   - file đã dirty từ trước mà nay sạch (bị hoàn tác về HEAD).
+ *
+ * @param {string} cwd
+ * @param {Record<string, string>} snapshot kết quả của `snapshotFiles`
+ * @param {string[]} currentFiles danh sách file đang thay đổi hiện tại
+ * @returns {{ touched: string[], preDirtyTouched: string[] }}
+ */
+export function filesTouchedSince(cwd, snapshot, currentFiles) {
+  const touched = [];
+  const preDirtyTouched = [];
+  const current = new Set(currentFiles);
+
+  for (const f of current) {
+    if (!Object.prototype.hasOwnProperty.call(snapshot, f)) {
+      touched.push(f);
+      continue;
+    }
+    const before = snapshot[f];
+    if (before === 'skipped') continue;
+    if (before === 'unknown' || fingerprintFile(path.join(cwd, f)) !== before) {
+      touched.push(f);
+      preDirtyTouched.push(f);
+    }
+  }
+  for (const f of Object.keys(snapshot)) {
+    if (!current.has(f) && snapshot[f] !== 'skipped') {
+      touched.push(f);
+      preDirtyTouched.push(f);
+    }
+  }
+  return { touched, preDirtyTouched };
 }

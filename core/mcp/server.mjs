@@ -19,7 +19,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import {
-  validateWorkflow,
+  validateWorkflowAtGate,
   parseWorkflowStatus,
   parseFrontMatterLoose,
   countOpenBlockingQuestions,
@@ -126,10 +126,17 @@ const TOOLS = [
   {
     name: 'fe_validate_workflow',
     description:
-      'Chạy toàn bộ gate của workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing hợp lệ. GỌI TRƯỚC KHI KẾT THÚC mọi mode; đây là gate chính chặn agent nhảy mode sai.',
+      'Chạy toàn bộ gate của workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing hợp lệ. Task ở review/test/pr-ready thì đối chiếu thêm file đã sửa (git) với plan. GỌI TRƯỚC KHI KẾT THÚC mọi mode; đây là gate chính chặn agent nhảy mode sai.',
     inputSchema: {
       type: 'object',
-      properties: { workspace_root: workspaceProp, task_folder: taskProp },
+      properties: {
+        workspace_root: workspaceProp,
+        task_folder: taskProp,
+        base_ref: {
+          type: 'string',
+          description: 'Nhánh/commit gốc để tính scope ở review/test/pr (vd origin/main). Bỏ trống thì tự dò.',
+        },
+      },
       required: ['workspace_root', 'task_folder'],
     },
   },
@@ -274,21 +281,26 @@ const handlers = {
     return textResult(lines.join('\n'), !ok);
   },
 
-  fe_validate_workflow({ workspace_root, task_folder }) {
+  fe_validate_workflow({ workspace_root, task_folder, base_ref }) {
     const taskDir = resolveTaskDir(workspace_root, task_folder);
     if (!fs.existsSync(taskDir)) return textResult(`Không tìm thấy task folder: ${taskDir}`, true);
 
-    const res = validateWorkflow(taskDir);
+    const res = validateWorkflowAtGate(taskDir, { repoRoot: workspace_root, base: base_ref });
     const warnings = (res.warnings || []).map((w) => '- Cảnh báo: ' + w);
+    const scopeLine = {
+      git: `Scope: tính từ git (base: ${res.base || 'chỉ thay đổi chưa commit'}).`,
+      self_reported: 'Scope: dùng scope_diff_status tự khai.',
+    }[res.scopeSource];
+    const head = scopeLine ? [scopeLine] : [];
     if (!res.ok) {
       return textResult(
-        ['validate-workflow: FAILED', '', ...res.errors.map((e) => '- ' + e), ...warnings].join('\n'),
+        ['validate-workflow: FAILED', ...head, '', ...res.errors.map((e) => '- ' + e), ...warnings].join('\n'),
         true,
       );
     }
     const np = nextPrompt(taskDir);
     return textResult(
-      ['validate-workflow: PASSED', ...warnings, ...(np ? ['', 'Tiếp theo: ' + np] : [])].join('\n'),
+      ['validate-workflow: PASSED', ...head, ...warnings, ...(np ? ['', 'Tiếp theo: ' + np] : [])].join('\n'),
     );
   },
 

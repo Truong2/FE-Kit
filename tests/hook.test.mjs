@@ -241,6 +241,138 @@ describe('Stop / SubagentStop', () => {
   });
 });
 
+describe('scope cuối cook khi workspace có thay đổi từ trước', () => {
+  const git = (...a) => spawnSync('git', a, { cwd: workspace, encoding: 'utf8' });
+
+  /** Task sẵn sàng cook, plan chỉ khai `src/features/order/`; `src/legacy.ts` đã commit rồi bị người dùng sửa dở. */
+  function gitTask() {
+    const task = addTask('task-ready-to-cook');
+    fs.appendFileSync(
+      path.join(workspace, task, 'planning', 'implementation-plan.md'),
+      '\n## 7. File sẽ tạo / cập nhật\n\n| File | Hành động | Lý do | Checklist ref |\n|---|---|---|---|\n| `src/features/order/` | Tạo | Màn hình huỷ đơn | IMP-01 |\n'
+    );
+    fs.mkdirSync(path.join(workspace, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(workspace, 'src', 'legacy.ts'), 'export const a = 1;\n');
+    git('init', '-q');
+    git('add', '-A');
+    git('-c', 'user.email=a@b', '-c', 'user.name=a', 'commit', '-qm', 'base');
+    fs.writeFileSync(path.join(workspace, 'src', 'legacy.ts'), 'export const a = 2; // người dùng đang sửa\n');
+    return task;
+  }
+
+  function finishCook(task) {
+    fs.mkdirSync(path.join(workspace, 'src', 'features', 'order'), { recursive: true });
+    fs.writeFileSync(path.join(workspace, 'src', 'features', 'order', 'CancelButton.tsx'), 'export {};\n');
+    updateStatus(task, { current_mode: 'implementation-mode', next_mode: 'review' });
+    return runHook({ hook_event_name: 'Stop', stop_hook_active: false });
+  }
+
+  it('file đã dirty từ trước bị sửa thêm ngoài plan thì bị báo, nói rõ là thay đổi của người dùng', () => {
+    const task = gitTask();
+    begin(`/fe:cook ${task}`);
+    fs.appendFileSync(path.join(workspace, 'src', 'legacy.ts'), 'export const b = 3;\n');
+
+    const out = finishCook(task);
+    expect(out.decision).toBe('block');
+    expect(out.reason).toMatch(/src\/legacy\.ts/);
+    expect(out.reason).toMatch(/thay đổi chưa commit của người dùng/);
+    // Hook chỉ đọc: thay đổi của người dùng vẫn còn nguyên.
+    expect(fs.readFileSync(path.join(workspace, 'src', 'legacy.ts'), 'utf8')).toMatch(/người dùng đang sửa/);
+  });
+
+  it('file đã dirty từ trước mà mode không đụng tới thì không bị tính', () => {
+    const task = gitTask();
+    begin(`/fe:cook ${task}`);
+    expect(finishCook(task)).toBeNull();
+  });
+
+  it('marker kiểu v2.0.x (chỉ có danh sách path) vẫn chạy, so theo path như trước', () => {
+    const task = gitTask();
+    fs.mkdirSync(path.join(dataDir, 'sessions'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dataDir, 'sessions', 'test-session.json'),
+      JSON.stringify({
+        task: path.join(workspace, task),
+        taskRef: task,
+        workspace,
+        command: 'cook',
+        startedAt: Date.now(),
+        status: 'pending',
+        delegated: false,
+        baselineChanged: ['src/legacy.ts'],
+      })
+    );
+    fs.appendFileSync(path.join(workspace, 'src', 'legacy.ts'), 'export const b = 3;\n');
+    expect(finishCook(task)).toBeNull();
+  });
+});
+
+describe('hành vi biên của marker', () => {
+  function writeMarker(fields) {
+    fs.mkdirSync(path.join(dataDir, 'sessions'), { recursive: true });
+    fs.writeFileSync(path.join(dataDir, 'sessions', 'test-session.json'), JSON.stringify(fields));
+  }
+
+  it('marker quá 4 giờ coi như không có mode: không chặn sửa source, không kiểm kết thúc', () => {
+    const task = addTask('task-blocked-question');
+    writeMarker({
+      task: path.join(workspace, task),
+      taskRef: task,
+      workspace,
+      command: 'cook',
+      startedAt: Date.now() - 5 * 60 * 60 * 1000,
+      status: 'pending',
+      delegated: false,
+      baseline: {},
+    });
+    expect(edit('src/App.tsx', { agent_type: 'fe:frontend-developer' })).toBeNull();
+    expect(runHook({ hook_event_name: 'Stop', stop_hook_active: false })).toBeNull();
+  });
+
+  it('bắt đầu lệnh FE khác khi mode trước chưa qua gate kết thúc thì cảnh báo', () => {
+    const a = addTask('task-ready-to-cook', 'FE-1');
+    const b = addTask('task-ready-to-cook', 'FE-2');
+    begin(`/fe:cook ${a}`);
+    const out = begin(`/fe:plan ${b}`);
+    expect(out.systemMessage).toMatch(/FE cook cho docs\/frontend-tasks\/FE-1 chưa qua gate kết thúc/);
+    expect(marker()).toMatchObject({ command: 'plan', taskRef: b, status: 'pending' });
+  });
+
+  it('không cảnh báo khi mode trước đã đóng hoặc lặp lại cùng mode', () => {
+    const task = addTask('task-ready-to-cook');
+    begin(`/fe:plan ${task}`);
+    expect(begin(`/fe:plan ${task}`)).toBeNull();
+    updateStatus(task, { current_mode: 'planning-mode' });
+    runHook({ hook_event_name: 'Stop', stop_hook_active: false });
+    expect(marker().status).toBe('done');
+    expect(begin(`/fe:plan ${task}`)).toBeNull();
+    expect(marker().status).toBe('pending');
+  });
+
+  it('cảnh báo chuyển mode và gate bị chặn đi chung một output JSON', () => {
+    const a = addTask('task-ready-to-cook', 'FE-1');
+    const b = addTask('task-blocked-question', 'FE-2');
+    begin(`/fe:plan ${a}`);
+    const out = begin(`/fe:cook ${b}`);
+    expect(out.systemMessage).toMatch(/chưa qua gate kết thúc/);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/BỊ CHẶN/);
+  });
+
+  it('mode bỏ dở rồi hỏi việc khác: Stop chặn đúng một lần, lần sau thả ra và đóng marker', () => {
+    const task = addTask('task-ready-to-cook');
+    begin(`/fe:plan ${task}`);
+    const file = path.join(workspace, task, 'tracking', 'workflow-status.md');
+    const past = new Date(Date.now() - 60_000);
+    fs.utimesSync(file, past, past);
+
+    expect(begin('Giải thích giúp file vite.config.ts')).toBeNull(); // không phải lệnh FE: marker giữ nguyên
+    expect(runHook({ hook_event_name: 'Stop', stop_hook_active: false }).decision).toBe('block');
+    expect(runHook({ hook_event_name: 'Stop', stop_hook_active: true }).systemMessage).toMatch(/chưa đạt gate/);
+    expect(marker().status).toBe('done');
+    expect(runHook({ hook_event_name: 'Stop', stop_hook_active: false })).toBeNull();
+  });
+});
+
 describe('an toàn', () => {
   it('payload hỏng hoặc sự kiện lạ không làm hook lỗi', () => {
     const r = spawnSync(process.execPath, [HOOK, 'Stop'], { input: 'không phải json', encoding: 'utf8', env: { ...process.env, CLAUDE_PLUGIN_DATA: dataDir } });
