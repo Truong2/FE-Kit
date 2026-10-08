@@ -24752,7 +24752,7 @@ function validateInputSyncReport(taskDir) {
 // bin/fe-kit.mjs
 var __filename = fileURLToPath(import.meta.url);
 var kitRoot = path10.resolve(path10.dirname(__filename), "..");
-var BUNDLED_VERSION = true ? "2.3.0" : "";
+var BUNDLED_VERSION = true ? "2.4.0" : "";
 var PLUGIN_ID = "fe@frontend-delivery";
 var MARKETPLACE_NAME = "frontend-delivery";
 var args = process.argv.slice(2);

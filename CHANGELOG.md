@@ -5,6 +5,28 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.4.0] — 2026-10-08
+
+Phase 3 của [ROADMAP.md](ROADMAP.md): tách engine dùng chung khỏi domain pack FE. Không đổi hành vi: output của validators, hook, MCP và CLI giống từng byte bản 2.3.0 (golden test), plugin `fe`, lệnh `/fe:*`, tool `fe_*`, đường dẫn và field giữ nguyên.
+
+### Kiến trúc
+
+- `packages/engine`: state machine của mode (`createStateMachine`), gate kết thúc mode (`createModeCompletion`), nội dung mở mode (`createModeBriefing`), scope diff, run-log, report, project config, scaffold, hook runtime (`runHook`), tool MCP (`createMcpTools`) và schema manifest (`PackManifestSchema`). Không chứa khái niệm FE.
+- `packages/pack-fe`: `pack.yaml` (mode, agent, artifact, rule, đường dẫn, chuỗi MCP) và schema, gate, parser của FE. `build/compile-packs.mjs` kiểm schema rồi sinh `src/manifest.gen.mjs`; `build:check` kiểm cả bước này.
+- `@frontend-delivery-kit/validators` re-export `pack-fe` với đúng tên và đường dẫn module cũ.
+- `core/hooks/fe-hook.mjs` và `core/mcp/server.mjs` chỉ còn gắn pack FE vào engine. Generator lấy tên plugin, thư mục skill, bảng agent và tên tool từ manifest.
+- `kit.yaml` sinh từ manifest FE.
+
+### Kiểm chứng
+
+- `tests/golden.test.mjs` + `tests/golden/capture.mjs`: 140 trường hợp chụp trước khi tách (66 trạng thái task × gate workflow/PR/vào mode/kết thúc mode, hook, MCP, CLI). Danh sách export chỉ được thêm, không được bớt.
+- `packages/pack-sample-docs` + `tests/engine-genericity.test.mjs`: pack mẫu khác FE ở mọi chỗ; engine chạy được (cả hook như một process) và không chứa khái niệm FE. Pack mẫu bắt và đã sửa hai giả định FE: tiền tố lệnh dựng từ cả tên plugin lẫn tiền tố lệnh, run-log nằm cạnh file trạng thái của pack.
+- `npm test` chạy mọi workspace.
+
+### Quy ước (CLAUDE.md, CONTRIBUTING)
+
+- Gate dùng chung nằm trong `packages/engine/src/`, gate của domain trong `packages/pack-<id>/src/`; dữ liệu domain trong `pack.yaml`.
+
 ## [2.3.0] — 2026-10-08
 
 Phase 2 của [ROADMAP.md](ROADMAP.md): gate tự đếm thay cho field tự khai, input không tin cậy, kiểm ghi qua shell. Schema `workflow-status.md` vẫn tương thích ngược: không xoá field, chỉ nới field bắt buộc thành optional và thêm giá trị enum.

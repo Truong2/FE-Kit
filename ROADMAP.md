@@ -37,7 +37,7 @@ Mặc định đổi được khi review từng phase:
 | 0 | 2.1.1 | Eval chạy được, có baseline; khôi phục lộ trình; gom danh sách file/rule về một nguồn | Code xong; chờ chạy eval thật để có baseline |
 | 1 | 2.2.0 | Run-log `tracking/run-log.jsonl`, reason code, `fe-kit report`, `fe-kit mode begin/end` cho adapter không có hook, quyết định `enforce` | Code xong; `enforce` chưa bật vì chưa có baseline (xem bên dưới) |
 | 2 | 2.3.0 | Đếm issue từ `review-bugs.md`, taxonomy bug (nhóm + nguyên nhân gốc), deprecate field không gate nào đọc, chuyển gate `check-*` ra khỏi CLI, rule input không tin cậy, kiểm ghi qua shell | Code xong; eval `plan-ignores-injected-srs` chờ chạy thật |
-| 3 | 2.4.0 | Tách `packages/engine` + `packages/pack-fe` theo kiểu strangler, có golden test; pack mẫu thứ hai chỉ dùng trong test | Chưa làm |
+| 3 | 2.4.0 | Tách `packages/engine` + `packages/pack-fe` theo kiểu strangler, có golden test; pack mẫu thứ hai chỉ dùng trong test | Xong; phần còn lại chuyển sang Phase 5 (xem bên dưới) |
 | 4 | 2.5.0 | `retro`: tổng hợp run-log + bug thành đề xuất sửa rule, có người duyệt | Chưa làm |
 | 5 | 3.0.0 | Pack thật thứ hai (BE hoặc QA), mỗi pack một plugin | Chưa làm |
 
@@ -62,6 +62,18 @@ Trạng thái ở 2.2.0: **giữ `warn`**. Bộ eval chưa chạy thật nên ch
   ```bash
   claude plugin eval ./plugins/fe --eval-dir evals --case cook-refuses-when-blocked --scaffold --runs 1 ...
   ```
+
+## Phase 3 — đã làm và còn lại
+
+Đã làm: engine (`packages/engine`), pack FE với `pack.yaml` (`packages/pack-fe`), golden test, pack mẫu `docs` và test chạy toàn bộ engine trên nó, generator đọc identity từ manifest, `kit.yaml` sinh từ manifest.
+
+Pack mẫu bắt được hai giả định FE trong engine và đã sửa: tiền tố lệnh (`/fe:` trùng `FE `) và đường dẫn run-log gắn cứng `tracking/`.
+
+Chuyển sang Phase 5 vì cần pack thật thứ hai mới có ý nghĩa:
+
+- `generatePack(pack)`: generator sinh plugin cho pack bất kỳ (hiện generator vẫn chỉ sinh plugin `fe` từ `core/`).
+- CLI chọn pack theo registry (hiện `bin/fe-kit.mjs` vẫn là CLI của FE).
+- `standard.yaml` sinh từ manifest (hiện vẫn viết tay, có test giữ khớp danh sách file).
 
 ## Lệch đã biết, cần quyết định
 

@@ -28,6 +28,22 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
 
 `/fe:quick` và `/fe:new-task` chạy inline ở main thread.
 
+## Engine và domain pack
+
+Từ v2.4.0 kit tách làm hai tầng:
+
+| Tầng | Package | Chứa |
+|---|---|---|
+| Engine | `packages/engine` | State machine của mode, gate kết thúc mode, nội dung mở mode, scope diff, run-log, report, project config, scaffold, hook runtime, tool MCP, schema manifest |
+| Domain pack | `packages/pack-fe` | `pack.yaml` (mode, agent, artifact, rule, đường dẫn, chuỗi MCP), schema `workflow-status.md`, gate workflow/PR, parser bảng câu hỏi/bug/evidence, luật vào mode |
+
+- **Manifest:** `build/compile-packs.mjs` kiểm `pack.yaml` theo `PackManifestSchema` rồi sinh `src/manifest.gen.mjs` (và `kit.yaml` từ pack FE). Gate phức tạp vẫn là JS trong pack.
+- **Object pack:** engine nhận một object (`fePack` trong `packages/pack-fe/src/pack.mjs`) gồm dữ liệu manifest, nhãn lệnh (`FE <mode>`), và hàm của pack (`entryRules`, `entryInputs`, `validateWorkflow`…). `createStateMachine`, `createModeCompletion`, `createModeBriefing`, `runHook`, `createMcpTools` đều dựng từ object này.
+- **Plugin FE:** `core/hooks/fe-hook.mjs` gọi `runHook(fePack)`; `core/mcp/server.mjs` nối `createMcpTools(fePack)` vào MCP SDK; generator lấy tên plugin, thư mục skill, bảng agent và tên tool từ manifest.
+- **Tương thích:** `@frontend-delivery-kit/validators` re-export `pack-fe` với đúng tên và đường dẫn module cũ. Plugin `fe`, lệnh `/fe:*`, tool `fe_*`, `docs/frontend-tasks`, field của `workflow-status.md` và biến `FE_KIT_*` không đổi.
+- **Chứng minh dùng chung:** `packages/pack-sample-docs` là pack mẫu chỉ dùng trong test, khác FE ở mọi chỗ; `tests/engine-genericity.test.mjs` chạy toàn bộ engine (cả hook như một process) trên pack này.
+- **Không đổi hành vi:** `tests/golden.test.mjs` so output của validators, hook, MCP và CLI với `tests/golden/golden.json` chụp trước khi tách.
+
 ## Các lớp và nơi thực thi
 
 | Lớp | Thành phần | Nguồn | Thực thi bởi |
@@ -35,11 +51,11 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
 | Hướng dẫn | Skill `frontend-delivery-standard`, rule, template | `core/SKILL.md`, `core/rules/`, `core/templates/` | Prompt (mềm) |
 | Điều phối | 11 slash command | `core/commands/` + đoạn delegation do generator chèn | Prompt (mềm) |
 | Vai trò | 6 subagent | `core/agents/` + `_protocol.md` | `disallowedTools` (cứng) + prompt |
-| Gate khi bắt đầu mode | `fe_begin_mode`, `fe-kit mode begin` | `modeBriefing` → `evaluateModeEntry` | MCP tool / CLI trả verdict + nguyên văn rule |
-| Gate khi chạy | Hook | `core/hooks/fe-hook.mjs` | Claude Code hook (cứng ở mức `enforce`) |
-| Gate khi kết thúc mode | `evaluateModeCompletion` | `packages/validators/src/index.mjs` | Hook `SubagentStop`/`Stop`, CLI `fe-kit mode end` |
-| Gate khi kết thúc / CI | Validator | `packages/validators/` | MCP, hook, CLI, CI |
-| Quan sát | Run-log, báo cáo | `packages/validators/src/runlog.mjs`, `report.mjs` | Hook, MCP, CLI ghi; `fe-kit report` đọc |
+| Gate khi bắt đầu mode | `fe_begin_mode`, `fe-kit mode begin` | `createModeBriefing` (engine) → `evaluateModeEntry` (luật FE trong `pack-fe/src/transitions.mjs`) | MCP tool / CLI trả verdict + nguyên văn rule |
+| Gate khi chạy | Hook | `runHook` (engine), gắn pack ở `core/hooks/fe-hook.mjs` | Claude Code hook (cứng ở mức `enforce`) |
+| Gate khi kết thúc mode | `evaluateModeCompletion` | `createModeCompletion` (engine) | Hook `SubagentStop`/`Stop`, CLI `fe-kit mode end` |
+| Gate khi kết thúc / CI | Validator | `packages/pack-fe/src/` (gate FE) | MCP, hook, CLI, CI |
+| Quan sát | Run-log, báo cáo | `packages/engine/src/runlog.mjs`, `report.mjs` | Hook, MCP, CLI ghi; `fe-kit report` đọc |
 
 ## Nguyên tắc thiết kế
 

@@ -1,6 +1,6 @@
 {
   "name": "@frontend-delivery-kit/pack-fe",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "private": true,
   "description": "Domain pack frontend delivery: manifest (pack.yaml), schema workflow-status.md, gate, parser bảng artifact và chuỗi tiếng Việt của FE. Chạy trên engine dùng chung.",
   "type": "module",

@@ -2,7 +2,7 @@
 
 Bộ chuẩn frontend delivery tiếng Việt cho ChatGPT Skill, Claude Code, Codex, Cursor và GitHub Copilot.
 
-Version: 2.3.0
+Version: 2.4.0
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 
@@ -109,21 +109,25 @@ core/                     # NGUỒN DUY NHẤT — sửa ở đây
   rules/ templates/ standards/ docs/ scripts/
   adapters/<agent>/       # payload `fe-kit init` cho claude/codex/cursor/github
 
-packages/validators/       # schema, parser, gate, bảng mode, scope diff, scaffold — dùng chung
+packages/engine/           # engine dùng chung: state machine, gate kết thúc mode, scope, run-log, report, hook, MCP
+packages/pack-fe/          # domain pack FE: pack.yaml (mode, agent, artifact, rule) + schema, gate, parser của FE
+packages/pack-sample-docs/ # pack mẫu chỉ dùng trong test, chứng minh engine không phụ thuộc FE
+packages/validators/       # tên package cũ, re-export pack-fe; test gate FE và fixture
 bin/fe-kit.mjs             # nguồn CLI; bản bundle standalone/fe-kit.mjs được copy vào repo dự án
 evals/                     # eval hành vi plugin (claude plugin eval --eval-dir evals)
-tests/                     # test hook và CLI trên bản bundle
+tests/                     # test hook, MCP, CLI trên bản bundle; golden; engine-genericity
 
+build/compile-packs.mjs      # packages/pack-*/pack.yaml -> src/manifest.gen.mjs (+ kit.yaml)
 build/generate-adapters.mjs  # core/ -> plugins/fe, chatgpt-skill, standalone, rules/templates/docs top-level
 ```
 
-**Quy tắc bắt buộc:** không sửa tay output generate (`plugins/fe/`, `chatgpt-skill/`, `standalone/`, `rules/`, `templates/`, `docs/` top-level). Sửa trong `core/` hoặc `packages/validators/` rồi chạy:
+**Quy tắc bắt buộc:** không sửa tay output generate (`plugins/fe/`, `chatgpt-skill/`, `standalone/`, `rules/`, `templates/`, `docs/` top-level, `kit.yaml`, `manifest.gen.mjs`). Sửa trong `core/`, `packages/engine/` hoặc `packages/pack-fe/` rồi chạy:
 
 ```bash
 npm install          # lần đầu
 npm run build        # sinh lại mọi đích, đồng bộ version từ package.json
 npm run build:check  # CI chặn PR nếu quên build
-npm test             # validators + hook + CLI bundle
+npm test             # mọi workspace + hook, MCP, CLI bundle, golden
 ```
 
 ## Cấu trúc rule/context (khi đã cài vào project của team)

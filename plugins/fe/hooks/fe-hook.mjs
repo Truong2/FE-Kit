@@ -24611,7 +24611,7 @@ fePack.evaluateModeCompletion = evaluateModeCompletion;
 var modeBriefing = createModeBriefing(fePack);
 
 // core/hooks/fe-hook.mjs
-var KIT_VERSION = true ? "2.3.0" : "dev";
+var KIT_VERSION = true ? "2.4.0" : "dev";
 runHook(fePack, { version: KIT_VERSION });
 /*! Bundled license information:
 
