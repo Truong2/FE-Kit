@@ -74,7 +74,7 @@ export function getProfile(name) {
  * Tham số cho `claude plugin eval` ở một mức hook của profile.
  * @returns {string[]}
  */
-export function evalArgs(name, { level, model, json, outputDir, maxCostUsd, keepTemp = false, plugin = './plugins/fe' } = {}) {
+export function evalArgs(name, { level, model, json, outputDir, maxCostUsd, keepTemp = false, plugin = './plugins/fe', onlyCase } = {}) {
   const profile = getProfile(name);
   const leg = profile.levels.find((l) => l.level === level);
   if (!leg) throw new Error(`Profile "${name}" không chạy mức "${level}".`);
@@ -82,8 +82,10 @@ export function evalArgs(name, { level, model, json, outputDir, maxCostUsd, keep
   const args = ['plugin', 'eval', plugin, '--eval-dir', 'evals', '--ablation', 'none', '--scaffold'];
   args.push('--allow-tools', ...ALLOW_TOOLS);
   args.push('--allow-real-servers', '--trust-plugin');
-  if (leg.cases) args.push('--case', leg.cases);
-  if (leg.tag) args.push('--tag', leg.tag);
+  // `onlyCase` (cờ --case của run.mjs) thay bộ lọc của profile: chạy lại một case lẻ.
+  if (onlyCase) args.push('--case', onlyCase);
+  else if (leg.cases) args.push('--case', leg.cases);
+  if (leg.tag && !onlyCase) args.push('--tag', leg.tag);
   args.push('--runs', String(profile.runs));
   args.push('--model', model || profile.model);
   args.push('--judge-model', JUDGE_MODEL);

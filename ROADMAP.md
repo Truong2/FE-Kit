@@ -60,6 +60,11 @@ Trạng thái ở 2.2.0: **giữ `warn`**. Bộ eval chưa chạy thật nên ch
 - Sau `pilot`: xem số turn thật của từng case để hạ `max_turns` (đang 25–40) nếu dư nhiều.
 - Model `claude-opus-5-5` và `claude-sonnet-5-5` cần Claude Code ≥ 2.1.280 (`claude update`). `pilot` ngày 2026-10-08 trên 2.1.270 bị lỗi 400 trước khi model chạy.
 - Đã xong (`pilot` 2026-10-08, Windows): scaffold Node chạy được ngoài Linux; plugin eval nạp đủ 10 case sau khi sửa `--eval-dir` và `case.yaml`.
+- Lần chạy thật đầu tiên (2026-10-08, Claude Code 2.1.294, mỗi case 1 run, chưa phải baseline):
+  - `pilot` Opus 5.5, enforce: `cook-refuses-when-blocked` 1,00; 0,32 USD; 46 giây; main thread 4 turn.
+  - `smoke` Sonnet 5.5, warn: cả 10 case 1,00; 2,75 USD (0,28 USD/run); main thread 4–5 turn mỗi case. `retro-proposes-not-applies` bị timeout vì API lỗi ở câu trả lời cuối (`api_retry`); chạy lại riêng đạt 1,00, 0,18 USD.
+  - Chưa cần hạ `max_turns`: case chạy đúng chỉ dùng 4–5 turn ở main thread.
+  - Chi phí in ra là giá niêm yết; máy dùng gói claude.ai thì tính vào hạn mức 5 giờ của gói.
 
 ## Phase 3 — đã làm và còn lại
 

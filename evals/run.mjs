@@ -3,7 +3,7 @@
  * Chạy eval hành vi theo profile (xem `evals/profiles.mjs`) rồi in điểm và chi phí.
  *
  *   node evals/run.mjs <pilot|smoke|gate|full> [--model <m>] [--level warn|enforce]
- *                      [--max-cost-usd <n>] [--keep-temp] [--dry-run] [--print-levels]
+ *                      [--case <tên>] [--max-cost-usd <n>] [--keep-temp] [--dry-run] [--print-levels]
  *
  * `--keep-temp` giữ workspace của từng run để xem `run-log.jsonl` (mức hook thật
  * sự nhận được) và artifact agent đã viết.
@@ -103,7 +103,8 @@ function main(args) {
   const legs = profile.levels.filter((l) => !only || l.level === only);
   if (!legs.length) throw new Error(`Profile "${name}" không chạy mức "${only}".`);
 
-  const runs = legs.reduce((s, leg) => s + countCasesFor(leg) * profile.runs, 0);
+  const onlyCase = arg(args, '--case');
+  const runs = legs.reduce((s, leg) => s + (onlyCase ? 1 : countCasesFor(leg)) * profile.runs, 0);
   console.log(`Profile ${name}: ${profile.description}`);
   console.log(`Model ${model}. ${runs} lượt chạy (toàn profile: ${plannedRuns(name, (l) => countCasesFor(l))}). Trần ${maxCostUsd ?? profile.maxCostUsd} USD mỗi mức.`);
 
@@ -119,7 +120,7 @@ function main(args) {
   for (const leg of legs) {
     const outDir = path.join(HERE, 'results', `${stamp}-${name}-${leg.level}`);
     const json = path.join(outDir, 'eval-results.json');
-    const evalArgv = evalArgs(name, { level: leg.level, model, json, outputDir: outDir, maxCostUsd, keepTemp, plugin });
+    const evalArgv = evalArgs(name, { level: leg.level, model, json, outputDir: outDir, maxCostUsd, keepTemp, plugin, onlyCase: arg(args, '--case') });
     console.log(`\n$ EVAL_FE_KIT_HOOKS=${leg.level} ${bin} ${evalArgv.join(' ')}`);
     if (dryRun) continue;
 

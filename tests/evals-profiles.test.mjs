@@ -83,6 +83,10 @@ describe('profile eval', () => {
     expect(flag(args, '--model')).toBe('x');
     expect(flag(args, '--max-cost-usd')).toBe('0.5');
     expect(args).not.toContain('--keep-temp');
+    // --case của run.mjs thay bộ lọc của profile (case hoặc tag).
+    const one = evalArgs('gate', { level: 'warn', onlyCase: 'x' });
+    expect(flag(one, '--case')).toBe('x');
+    expect(one).not.toContain('--tag');
     expect(evalArgs('pilot', { level: 'enforce', keepTemp: true })).toContain('--keep-temp');
   });
 
