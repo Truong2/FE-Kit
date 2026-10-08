@@ -161,7 +161,7 @@ node bin/fe-kit.mjs doctor --strict
 node bin/fe-kit.mjs new-task FE-123-ten-task
 ```
 
-`standalone/fe-kit.mjs` là bản bundle, không cần `npm install`. `init` copy bản này vào `bin/fe-kit.mjs` của repo dự án; bản copy chạy `new-task`, `status`, `next`, `validate-*`, `doctor` nhưng không chạy `init` (init luôn chạy từ repo kit).
+`standalone/fe-kit.mjs` là bản bundle, không cần `npm install`. `init` copy bản này vào `bin/fe-kit.mjs` của repo dự án; bản copy chạy `new-task`, `status`, `next`, `validate-*`, `mode begin|end`, `report`, `doctor` nhưng không chạy `init` (init luôn chạy từ repo kit). `mode begin|end` là gate mở/kết thúc mode cho Codex, Cursor, Copilot; `report` tổng hợp `tracking/run-log.jsonl` của các task.
 
 Với adapter Claude, `init` chỉ ghi cấu hình marketplace/plugin vào `.claude/settings.json`, không tải plugin. Trên mỗi máy chưa cài, thực hiện cách 1. Sau init, điền thông tin thật vào `docs/frontend-context/*.md` trước khi lập plan.
 

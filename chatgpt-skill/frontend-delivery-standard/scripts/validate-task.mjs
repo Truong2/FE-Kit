@@ -3,7 +3,7 @@ import { createRequire as __fdkCreateRequire } from 'node:module';
 const require = __fdkCreateRequire(import.meta.url);
 import {
   REQUIRED_TASK_FILES
-} from "./chunks/chunk-IK736FQT.mjs";
+} from "./chunks/chunk-IT6L37J7.mjs";
 
 // core/scripts/validate-task.mjs
 import fs from "node:fs";

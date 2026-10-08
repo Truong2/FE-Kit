@@ -19,7 +19,9 @@ Use `FE quick <task>` only for small, low-risk localized changes with clear requ
 
 Copilot không có MCP hay hook của kit: không có gì tự chặn sai gate lúc agent chạy. Gate được kiểm bằng CLI của kit (`bin/fe-kit.mjs`, do `fe-kit init` copy vào repo) và workflow CI `frontend-delivery-standard.yml`:
 
-- Trước khi kết thúc mỗi mode: `node bin/fe-kit.mjs validate-workflow <task-folder>`. Task ở review/test/pr thì lệnh này đối chiếu file đã sửa (git) với plan.
+- Khi bắt đầu mỗi mode: `node bin/fe-kit.mjs mode begin <task-folder> <mode> --actor copilot`. Lệnh in verdict của gate, artifact bắt buộc và nguyên văn rule của mode. Exit 1 là mode bị chặn: chỉ cập nhật `workflow-status.md` theo prompt được in ra rồi dừng, không sửa source.
+- Trước khi kết thúc mỗi mode: `node bin/fe-kit.mjs mode end <task-folder> <mode> --actor copilot`. Cùng gate kết thúc mode với hook của Claude Code: `workflow-status.md` đã cập nhật, `current_mode` đúng, đủ artifact, qua validator; task ở review/test/pr thì đối chiếu file đã sửa (git) với plan.
+- Hai lệnh trên và `validate-*` ghi sự kiện vào `tracking/run-log.jsonl` của task; commit file này cùng task. `node bin/fe-kit.mjs report` tổng hợp lại.
 - Trước khi mở PR: `node bin/fe-kit.mjs validate-pr <task-folder> --base <nhánh-đích>`.
 - Chưa chạy, hoặc lệnh báo lỗi, thì không ghi gate là passed trong `workflow-status.md`; ghi lại lệnh đã chạy và kết quả.
 

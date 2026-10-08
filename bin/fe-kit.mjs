@@ -15,6 +15,16 @@ import {
   scaffoldTask,
   REQUIRED_TASK_FILES,
   allRuleFiles,
+  normalizeCommand,
+  relativePosix,
+  COMMANDS,
+  modeBriefing,
+  evaluateModeCompletion,
+  appendRunLog,
+  readRunLog,
+  codesOf,
+  buildReport,
+  renderReport,
 } from '@frontend-delivery-kit/validators';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -233,6 +243,18 @@ function upsertManagedBlock(dest, content) {
 
 function adapterPath(agent, ...rel) {
   return path.join(kitRoot, 'core', 'adapters', agent, ...rel);
+}
+
+const RUNLOG_GITATTRIBUTES = 'docs/frontend-tasks/**/tracking/run-log.jsonl merge=union';
+
+/** Run-log chỉ nối thêm dòng: gộp nhánh bằng union để hai nhánh cùng ghi không conflict. */
+function ensureRunLogMergeUnion(target) {
+  const file = path.join(target, '.gitattributes');
+  const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  if (current.split(/\r?\n/).some((line) => line.trim() === RUNLOG_GITATTRIBUTES)) return false;
+  const prefix = current ? current.replace(/\s*$/, '\n') : '';
+  fs.writeFileSync(file, `${prefix}# fe-kit: run-log chỉ nối thêm dòng, gộp nhánh không conflict\n${RUNLOG_GITATTRIBUTES}\n`);
+  return true;
 }
 
 /** Tên lịch sử của prompt Codex khác tên lệnh ở 2 chỗ. */
@@ -580,6 +602,7 @@ async function init() {
   const oldRuleContext = path.join(target, 'docs', 'frontend-context', 'frontend-rule-context.md');
   if (fs.existsSync(oldRuleContext)) fs.unlinkSync(oldRuleContext);
   copyFileIfMissing(path.join(kitRoot, 'standard.yaml'), path.join(target, '.frontend-delivery', 'standard.yaml'));
+  ensureRunLogMergeUnion(target);
 
   if (agents.includes('codex')) {
     upsertManagedBlock(path.join(target, 'AGENTS.md'), read(adapterPath('codex', 'AGENTS.md')));
@@ -962,11 +985,16 @@ function validateWorkflowLean() {
   }
   printWarnings(result);
   const errors = [...new Set(result.errors)];
+  const codes = codesOf(result);
   const md = walk(taskDir).filter(p => p.endsWith('.md'));
   for (const f of md) {
     const rel = path.relative(taskDir, f).replaceAll('\\','/');
-    if (rel !== 'tracking/workflow-status.md' && /^##\s+Prompt bước tiếp theo/im.test(read(f))) errors.push('Prompt bước tiếp theo không được nằm trong: ' + rel);
+    if (rel !== 'tracking/workflow-status.md' && /^##\s+Prompt bước tiếp theo/im.test(read(f))) {
+      errors.push('Prompt bước tiếp theo không được nằm trong: ' + rel);
+      codes.push('NEXT_PROMPT_OUTSIDE_STATUS');
+    }
   }
+  logValidate(taskDir, 'validate-workflow', errors.length === 0, codes);
   if (errors.length) { for (const e of errors) console.error(e); process.exit(1); }
   console.log('validate-workflow passed.');
   console.log(nextStepHint(taskDir));
@@ -981,9 +1009,11 @@ function validateTaskLean() {
     console.log(`${present ? 'OK' : 'MISSING'} ${rel}`);
     if (!present) ok = false;
   }
+  const filesOk = ok;
   const result = validateWorkflow(taskDir);
   printWarnings(result);
   if (!result.ok) { ok = false; for (const e of result.errors) console.error(e); }
+  logValidate(taskDir, 'validate-task', ok, [...(filesOk ? [] : ['TASK_FILE_MISSING']), ...codesOf(result)]);
   if (!ok) process.exit(1);
   console.log('validate-task passed.');
   console.log(nextStepHint(taskDir));
@@ -998,13 +1028,120 @@ function validatePrLean() {
   if (!scope) console.warn('Cảnh báo: không tính được scope diff từ git; dùng scope_diff_status tự khai.');
   const result = validatePr(taskDir, { scope });
   printWarnings(result);
+  logValidate(taskDir, 'validate-pr', result.ok, codesOf(result));
   if (!result.ok) { for (const e of [...new Set(result.errors)]) console.error(e); process.exit(1); }
   console.log('validate-pr passed.');
   console.log(nextStepHint(taskDir));
 }
 
+// --- Run-log, mode begin/end cho adapter không có hook (Codex, Cursor, Copilot) ---
+
+function cliActor() {
+  return argValueFlexible('--actor', '') || process.env.FE_KIT_ACTOR || 'cli';
+}
+
+/** Ghi run-log từ CLI. Bỏ qua khi có --no-log, hoặc trên CI vì checkout bị bỏ đi sau job. */
+function logCli(taskDir, record) {
+  if (args.includes('--no-log') || String(process.env.CI || '').toLowerCase() === 'true') return;
+  appendRunLog(taskDir, { source: 'cli', actor: cliActor(), kit: readKitVersion(), ...record });
+}
+
+function logValidate(taskDir, check, ok, codes) {
+  logCli(taskDir, { event: 'validate', check, outcome: ok ? 'ok' : 'failed', codes: [...new Set(codes)] });
+}
+
+/** Lần `mode begin` gần nhất của mode này và số lần `mode end` không đạt sau đó. */
+function lastModeRun(taskDir, command) {
+  const { records } = readRunLog(taskDir);
+  let start = -1;
+  records.forEach((r, i) => {
+    if (r.event === 'mode_start' && r.mode === command) start = i;
+  });
+  if (start < 0) return { startedAt: undefined, failedEnds: 0 };
+  const failedEnds = records
+    .slice(start + 1)
+    .filter((r) => r.event === 'mode_end' && r.mode === command && r.outcome === 'failed').length;
+  return { startedAt: Date.parse(records[start].ts), failedEnds };
+}
+
+function rulesDirFor(target) {
+  const project = path.join(target, '.frontend-delivery', 'rules');
+  if (fs.existsSync(project)) return { dir: project, label: '.frontend-delivery/rules của repo' };
+  return { dir: path.join(kitRoot, 'rules'), label: 'kit' };
+}
+
+function modeCommand() {
+  const target = path.resolve(argValue('--target', process.cwd()));
+  const [, action, taskInput, modeInput] = args;
+  const command = normalizeCommand(modeInput || '');
+  if (!['begin', 'end'].includes(action) || !taskInput || !command) {
+    console.error(`Dùng: fe-kit mode begin|end <task> <mode> [--target repo] [--actor codex|cursor|copilot] [--no-log]\nMode hợp lệ: ${COMMANDS.join(', ')}.`);
+    process.exit(1);
+  }
+  const taskDir = resolveTask(taskInput, target);
+  const taskRef = relativePosix(target, taskDir) || taskInput;
+  if (action === 'begin') modeBegin({ target, taskDir, taskRef, command });
+  else modeEnd({ target, taskDir, taskRef, command });
+}
+
+/** Như MCP fe_begin_mode: verdict gate, artifact bắt buộc, nguyên văn rule của mode. */
+function modeBegin({ target, taskDir, taskRef, command }) {
+  const rules = rulesDirFor(target);
+  const briefing = modeBriefing({
+    taskDir,
+    taskRef,
+    command,
+    rulesDir: rules.dir,
+    rulesLabel: rules.label,
+    newTaskHint: `Chạy node bin/fe-kit.mjs new-task ${path.basename(taskDir)} để tạo task từ template, rồi chạy lại: node bin/fe-kit.mjs mode begin ${taskRef} ${command}`,
+    finishHint: `Trước khi kết thúc: cập nhật tracking/workflow-status.md rồi chạy node bin/fe-kit.mjs mode end ${taskRef} ${command}.`,
+  });
+  console.log(briefing.text);
+  if (briefing.entry) {
+    logCli(taskDir, { event: 'mode_start', mode: command });
+    if (!briefing.ok) logCli(taskDir, { event: 'entry_blocked', mode: command, codes: briefing.entry.reasonCodes });
+  }
+  process.exit(briefing.ok ? 0 : 1);
+}
+
+/** Cùng gate kết thúc mode với hook của Claude Code (`evaluateModeCompletion`). */
+function modeEnd({ target, taskDir, taskRef, command }) {
+  const { startedAt, failedEnds } = lastModeRun(taskDir, command);
+  const result = evaluateModeCompletion({
+    taskDir,
+    taskRef,
+    command,
+    startedAt,
+    repoRoot: target,
+    base: argValueFlexible('--base', '') || undefined,
+  });
+  logCli(taskDir, {
+    event: 'mode_end',
+    mode: command,
+    outcome: result.ok ? 'pass' : 'failed',
+    attempt: failedEnds + 1,
+    duration_ms: startedAt ? Math.max(0, Date.now() - startedAt) : undefined,
+    codes: codesOf(result),
+  });
+  if (!result.ok) {
+    console.error(`mode end: FE ${command} cho ${taskRef} chưa đạt gate kết thúc mode:`);
+    for (const e of result.errors) console.error('- ' + e);
+    process.exit(1);
+  }
+  console.log(`mode end: PASSED (FE ${command}${result.refused ? ', mode bị gate từ chối và đã route đúng' : ''}).`);
+  console.log(nextStepHint(taskDir));
+}
+
+function report() {
+  const target = path.resolve(argValue('--target', process.cwd()));
+  const task = args[1] && !args[1].startsWith('--') ? resolveTask(args[1], target) : undefined;
+  const result = buildReport({ repoRoot: target, task, since: argValueFlexible('--since', '') || undefined });
+  if (args.includes('--json')) console.log(JSON.stringify(result, null, 2));
+  else process.stdout.write(renderReport(result));
+}
+
 function help() {
-  console.log(`Frontend Delivery Agent Kit CLI v${readKitVersion()}\nRules folder + plan input ledger + blocking question input-sync gate + scope diff tính từ git + command evidence trước PR.\n\nCommands:\n  # Agent prompt mode: FE quick <task> is available for small, low-risk localized changes. FE figma-review <task> is available for UI/Figma visual review.\n  init [--target repo] [--agents all|codex,claude,cursor,github]\n                                      Install selected agent adapters into repo. In a TTY, prompts for agent selection.\n  doctor [--target repo] [--strict] [--agents ...]\n                                      Check kit installation for selected/installed agents\n  new-task <slug> [--target repo]       Create standard FE task folder\n  status <task> [--target repo]         Show current step, blockers, checklist summary\n  next <task> [--target repo]           Print Prompt bước tiếp theo from workflow-status.md\n  validate-task <task> [--target repo]  Validate standard task structure and workflow rules\n  validate-pr <task> [--target repo] [--base ref] [--no-scope]\n                                      Validate PR readiness; so git diff với bảng file trong plan\n  validate-workflow <task> [--target] [--base <ref>] [--scope|--no-scope]\n                                      Validate SRS/questions/plan/checklist/Figma gates\n                                      (review/test/pr-ready: scope from git by default)\n  check-srs-reference <task> [--target] Validate task.md SRS/API maps\n  check-questions-routing <task> [--target] Validate questions.md routing sections/owners\n  check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections\n  check-plan-checklist-sync <task> [--target] Validate checklist mirrors plan file/hook/store decisions\n  check-input-sync-report <task> [--target] Validate tracking/input-sync-report.md when input sync is active\n  check-figma-evidence <task> [--target] Validate Figma summary, screenshots, and MCP/API evidence\n  check-asset-gate <task> [--target]     Validate embedded Asset Extraction Log\n`);
+  console.log(`Frontend Delivery Agent Kit CLI v${readKitVersion()}\nRules folder + plan input ledger + blocking question input-sync gate + scope diff tính từ git + command evidence trước PR.\n\nCommands:\n  # Agent prompt mode: FE quick <task> is available for small, low-risk localized changes. FE figma-review <task> is available for UI/Figma visual review.\n  init [--target repo] [--agents all|codex,claude,cursor,github]\n                                      Install selected agent adapters into repo. In a TTY, prompts for agent selection.\n  doctor [--target repo] [--strict] [--agents ...]\n                                      Check kit installation for selected/installed agents\n  new-task <slug> [--target repo]       Create standard FE task folder\n  status <task> [--target repo]         Show current step, blockers, checklist summary\n  next <task> [--target repo]           Print Prompt bước tiếp theo from workflow-status.md\n  validate-task <task> [--target repo]  Validate standard task structure and workflow rules\n  validate-pr <task> [--target repo] [--base ref] [--no-scope]\n                                      Validate PR readiness; so git diff với bảng file trong plan\n  validate-workflow <task> [--target] [--base <ref>] [--scope|--no-scope]\n                                      Validate SRS/questions/plan/checklist/Figma gates\n                                      (review/test/pr-ready: scope from git by default)\n  mode begin <task> <mode> [--target] [--actor <tool>]\n                                      Gate lúc vào mode + rule của mode (cho Codex/Cursor/Copilot)\n  mode end <task> <mode> [--target] [--base <ref>] [--actor <tool>]\n                                      Gate kết thúc mode, giống hook của Claude Code\n  report [<task>] [--target] [--since YYYY-MM-DD] [--json]\n                                      Tổng hợp tracking/run-log.jsonl của các task\n                                      (validate-*/mode ghi run-log; tắt bằng --no-log, CI=true tự tắt)\n  check-srs-reference <task> [--target] Validate task.md SRS/API maps\n  check-questions-routing <task> [--target] Validate questions.md routing sections/owners\n  check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections\n  check-plan-checklist-sync <task> [--target] Validate checklist mirrors plan file/hook/store decisions\n  check-input-sync-report <task> [--target] Validate tracking/input-sync-report.md when input sync is active\n  check-figma-evidence <task> [--target] Validate Figma summary, screenshots, and MCP/API evidence\n  check-asset-gate <task> [--target]     Validate embedded Asset Extraction Log\n`);
 }
 
 
@@ -1016,6 +1153,8 @@ else if (command === 'next') next();
 else if (command === 'validate-task') validateTaskLean();
 else if (command === 'validate-pr') validatePrLean();
 else if (command === 'validate-workflow') validateWorkflowLean();
+else if (command === 'mode') modeCommand();
+else if (command === 'report') report();
 else if (command === 'check-figma-evidence') checkFigmaEvidenceCommand();
 else if (command === 'check-asset-gate') checkAssetGateCommand();
 else if (command === 'check-srs-reference') checkSrsReferenceCommand();

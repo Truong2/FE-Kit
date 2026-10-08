@@ -22,6 +22,7 @@ Conditional files:
 ```text
 tracking/input-sync-report.md          # after FE input-sync
 tracking/cr-impact-report.md           # complex post-PR CR triage
+tracking/run-log.jsonl                 # hook/CLI tự ghi sự kiện của mode; commit cùng task, không sửa tay
 output/figma-extraction-summary.md     # after FE figma
 output/review-report.md                # after FE review if needed
 output/test-summary.md                 # after FE test if needed

@@ -22840,16 +22840,17 @@ var MD_FILES_WITHOUT_NEXT_PROMPT = [
   "tracking/review-bugs.md"
 ];
 function evaluateWorkflowGates({ data, body, exists, read, scope }) {
-  const errors = [];
+  const issues = [];
   const warnings = [];
+  const fail = (code, message) => issues.push({ code, message });
   for (const rel of REQUIRED_TASK_DOCS) {
-    if (!exists(rel)) errors.push(`Thi\u1EBFu ${rel}`);
+    if (!exists(rel)) fail("TASK_FILE_MISSING", `Thi\u1EBFu ${rel}`);
   }
   if (!/^##\s+Prompt bước tiếp theo/im.test(body)) {
-    errors.push("workflow-status.md thi\u1EBFu m\u1EE5c Prompt b\u01B0\u1EDBc ti\u1EBFp theo.");
+    fail("STATUS_NEXT_PROMPT_SECTION_MISSING", "workflow-status.md thi\u1EBFu m\u1EE5c Prompt b\u01B0\u1EDBc ti\u1EBFp theo.");
   }
   if (!/^##\s+Input ledger bắt buộc cho FE plan/im.test(body)) {
-    errors.push("workflow-status.md thi\u1EBFu m\u1EE5c Input ledger b\u1EAFt bu\u1ED9c cho FE plan.");
+    fail("STATUS_INPUT_LEDGER_SECTION_MISSING", "workflow-status.md thi\u1EBFu m\u1EE5c Input ledger b\u1EAFt bu\u1ED9c cho FE plan.");
   }
   const planDone = bool(data.build_ready) || norm2(data.next_mode) === "cook" || /FE\s+cook/i.test(String(data.next_prompt || ""));
   const questionsText = read("planning/questions.md");
@@ -22862,38 +22863,38 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   const questionBlocked = openBlockingQuestions > 0 || ["open", "blocked", "pending", "needs_answer", "needs_answers"].includes(questionStatus) || ["open", "blocked", "pending", "needs_input_sync"].includes(questionGate) || bool(data.input_sync_required) || bool(data.plan_recheck_required_after_input_sync);
   if (planDone) {
     if (!["completed", "documented", "passed"].includes(norm2(data.input_inventory_status))) {
-      errors.push("Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng input_inventory_status ch\u01B0a completed/documented/passed.");
+      fail("PLAN_INPUT_INVENTORY_INCOMPLETE", "Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng input_inventory_status ch\u01B0a completed/documented/passed.");
     }
     if (!["completed", "documented", "passed"].includes(norm2(data.plan_input_ledger_status))) {
-      errors.push("Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng plan_input_ledger_status ch\u01B0a completed/documented/passed.");
+      fail("PLAN_INPUT_LEDGER_INCOMPLETE", "Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng plan_input_ledger_status ch\u01B0a completed/documented/passed.");
     }
     if (Number(data.missing_input_count || 0) > 0) {
-      errors.push("Plan input ledger c\xF2n missing_input_count > 0. C\u1EA7n h\u1ECFi/input-sync tr\u01B0\u1EDBc khi cook.");
+      fail("PLAN_INPUTS_MISSING", "Plan input ledger c\xF2n missing_input_count > 0. C\u1EA7n h\u1ECFi/input-sync tr\u01B0\u1EDBc khi cook.");
     }
     if (!["passed", "not_required"].includes(questionGate)) {
-      errors.push("Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng questions_resolution_gate_status ch\u01B0a passed/not_required.");
+      fail("PLAN_QUESTION_GATE_OPEN", "Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng questions_resolution_gate_status ch\u01B0a passed/not_required.");
     }
   }
   if (questionBlocked) {
     if (bool(data.build_ready)) {
-      errors.push("Kh\xF4ng \u0111\u01B0\u1EE3c build_ready=true khi c\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required.");
+      fail("QUESTIONS_BUILD_READY_CONFLICT", "Kh\xF4ng \u0111\u01B0\u1EE3c build_ready=true khi c\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required.");
     }
     if (norm2(data.next_mode) !== "input-sync") {
-      errors.push("C\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required th\xEC next_mode ph\u1EA3i l\xE0 input-sync.");
+      fail("QUESTIONS_NEXT_MODE_NOT_INPUT_SYNC", "C\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required th\xEC next_mode ph\u1EA3i l\xE0 input-sync.");
     }
     if (!/FE\s+input-sync/i.test(String(data.next_prompt || ""))) {
-      errors.push("C\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required th\xEC next_prompt ph\u1EA3i l\xE0 FE input-sync <task-folder> <answer-or-cr>.");
+      fail("QUESTIONS_NEXT_PROMPT_NOT_INPUT_SYNC", "C\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required th\xEC next_prompt ph\u1EA3i l\xE0 FE input-sync <task-folder> <answer-or-cr>.");
     }
     if (!bool(data.input_sync_required)) {
-      errors.push("C\xF2n c\xE2u h\u1ECFi blocking/open th\xEC input_sync_required ph\u1EA3i true.");
+      fail("QUESTIONS_INPUT_SYNC_FLAG_MISSING", "C\xF2n c\xE2u h\u1ECFi blocking/open th\xEC input_sync_required ph\u1EA3i true.");
     }
     if (openBlockingQuestions > 0 && !bool(data.plan_recheck_required_after_input_sync)) {
-      errors.push("C\xF2n c\xE2u h\u1ECFi blocking/open th\xEC plan_recheck_required_after_input_sync ph\u1EA3i true.");
+      fail("QUESTIONS_PLAN_RECHECK_FLAG_MISSING", "C\xF2n c\xE2u h\u1ECFi blocking/open th\xEC plan_recheck_required_after_input_sync ph\u1EA3i true.");
     }
   }
   for (const rel of MD_FILES_WITHOUT_NEXT_PROMPT) {
     if (exists(rel) && /^##\s+Prompt bước tiếp theo/im.test(read(rel))) {
-      errors.push(`${rel} kh\xF4ng \u0111\u01B0\u1EE3c ch\u1EE9a Prompt b\u01B0\u1EDBc ti\u1EBFp theo.`);
+      fail("NEXT_PROMPT_OUTSIDE_STATUS", `${rel} kh\xF4ng \u0111\u01B0\u1EE3c ch\u1EE9a Prompt b\u01B0\u1EDBc ti\u1EBFp theo.`);
     }
   }
   const mode = norm2(data.current_mode);
@@ -22904,69 +22905,71 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   const playwrightDiff = norm2(data.playwright_screenshot_diff_status);
   const reviewRun = exists("output/review-report.md") || mode === "review-mode" || ["passed", "needs_bugfix", "blocked", "insufficient_evidence"].includes(norm2(data.review_status));
   if (mode === "input-sync-mode" && !exists("tracking/input-sync-report.md")) {
-    errors.push("FE input-sync ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt tracking/input-sync-report.md.");
+    fail("ARTIFACT_INPUT_SYNC_REPORT_MISSING", "FE input-sync ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt tracking/input-sync-report.md.");
   }
   if (mode === "figma-extraction-mode" || bool(data.figma_required) && ["passed", "completed"].includes(norm2(data.figma_gate_status))) {
     if (!exists("output/figma-extraction-summary.md")) {
-      errors.push("FE figma/Figma required ph\u1EA3i c\xF3 output/figma-extraction-summary.md.");
+      fail("ARTIFACT_FIGMA_SUMMARY_MISSING", "FE figma/Figma required ph\u1EA3i c\xF3 output/figma-extraction-summary.md.");
     }
   }
   if (reviewRun) {
     if (!exists("output/review-report.md")) {
-      errors.push("FE review ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/review-report.md.");
+      fail("ARTIFACT_REVIEW_REPORT_MISSING", "FE review ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/review-report.md.");
     }
     const needBug = bool(data.bugfix_required) || Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0 || ["open", "blocked"].includes(norm2(data.review_bug_status));
     if (needBug && !exists("tracking/review-bugs.md")) {
-      errors.push("Review c\xF3 bug/Critical/High ph\u1EA3i c\xF3 tracking/review-bugs.md.");
+      fail("ARTIFACT_REVIEW_BUGS_MISSING", "Review c\xF3 bug/Critical/High ph\u1EA3i c\xF3 tracking/review-bugs.md.");
     }
   }
   if (mode === "testing-mode" && !exists("output/test-summary.md")) {
-    errors.push("FE test ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/test-summary.md.");
+    fail("ARTIFACT_TEST_SUMMARY_MISSING", "FE test ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/test-summary.md.");
   }
   if ((mode === "figma-review-mode" || norm2(data.ui_match_review_status) === "passed") && bool(data.figma_required) && !exists("output/ui-figma-review-report.md")) {
-    errors.push("FE figma-review/UI passed ph\u1EA3i c\xF3 output/ui-figma-review-report.md.");
+    fail("ARTIFACT_UI_REVIEW_REPORT_MISSING", "FE figma-review/UI passed ph\u1EA3i c\xF3 output/ui-figma-review-report.md.");
   }
   if (mode === "pr-ready-mode" && !exists("output/pr-summary.md")) {
-    errors.push("FE pr ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/pr-summary.md.");
+    fail("ARTIFACT_PR_SUMMARY_MISSING", "FE pr ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/pr-summary.md.");
   }
   if (bool(data.build_ready)) {
     if (openBlockingQuestions > 0) {
-      errors.push("build_ready=true nh\u01B0ng c\xF2n blocking question.");
+      fail("BUILD_READY_OPEN_QUESTIONS", "build_ready=true nh\u01B0ng c\xF2n blocking question.");
     }
     if (["failed", "blocked"].includes(tokenBudget) || ["failed", "blocked"].includes(requiredRead)) {
-      errors.push("build_ready=true nh\u01B0ng token_budget_status/required_files_read_status \u0111ang failed/blocked.");
+      fail("BUILD_READY_BUDGET_FAILED", "build_ready=true nh\u01B0ng token_budget_status/required_files_read_status \u0111ang failed/blocked.");
     }
     if (bool(data.srs_required) && !["completed", "passed", "not_required"].includes(norm2(data.srs_trace_matrix_status))) {
-      errors.push("build_ready=true y\xEAu c\u1EA7u SRS trace completed/passed/not_required.");
+      fail("BUILD_READY_SRS_TRACE_INCOMPLETE", "build_ready=true y\xEAu c\u1EA7u SRS trace completed/passed/not_required.");
     }
     if (bool(data.figma_required) && !["passed", "not_required", "waived", "substituted"].includes(norm2(data.figma_gate_status))) {
-      errors.push("build_ready=true y\xEAu c\u1EA7u Figma gate passed/waived/not_required/substituted.");
+      fail("BUILD_READY_FIGMA_GATE_OPEN", "build_ready=true y\xEAu c\u1EA7u Figma gate passed/waived/not_required/substituted.");
     }
   }
   if (["failed", "blocked"].includes(scopeDiff)) {
-    errors.push("scope_diff_status=failed/blocked. C\u1EA7n update plan/input-sync ho\u1EB7c s\u1EEDa diff.");
+    fail("SCOPE_DIFF_DECLARED_FAILED", "scope_diff_status=failed/blocked. C\u1EA7n update plan/input-sync ho\u1EB7c s\u1EEDa diff.");
   }
   if (["failed", "blocked"].includes(commandEvidence)) {
-    errors.push("command_evidence_status=failed/blocked. Kh\xF4ng \u0111\u01B0\u1EE3c claim pass khi thi\u1EBFu evidence.");
+    fail("COMMAND_EVIDENCE_DECLARED_FAILED", "command_evidence_status=failed/blocked. Kh\xF4ng \u0111\u01B0\u1EE3c claim pass khi thi\u1EBFu evidence.");
   }
   if (bool(data.figma_required) && ["failed", "blocked"].includes(playwrightDiff)) {
-    errors.push("playwright_screenshot_diff_status=failed/blocked cho task Figma/UI.");
+    fail("PLAYWRIGHT_DIFF_FAILED", "playwright_screenshot_diff_status=failed/blocked cho task Figma/UI.");
   }
   if (scope && !scope.plannedEmpty && scope.outOfPlan?.length) {
-    errors.push(
+    fail(
+      "SCOPE_OUT_OF_PLAN",
       `Scope diff: c\xF3 file s\u1EEDa ngo\xE0i b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" c\u1EE7a plan: ${scope.outOfPlan.join(", ")}. C\u1EADp nh\u1EADt plan/input-sync ho\u1EB7c ho\xE0n t\xE1c.`
     );
   }
   if (["passed", "completed"].includes(commandEvidence) && exists("output/test-summary.md") && !hasCommandEvidence(read("output/test-summary.md"))) {
-    errors.push("command_evidence_status=passed/completed nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.");
+    fail("COMMAND_EVIDENCE_UNPROVEN", "command_evidence_status=passed/completed nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.");
   }
   if (exists("output/test-summary.md")) warnings.push(...commandEvidenceWarnings(read("output/test-summary.md")));
   const criticalOrHigh = Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0;
   if (criticalOrHigh && ["test", "pr"].includes(normalizeCommand(data.next_mode))) {
-    errors.push("C\xF2n issue Critical/High th\xEC next_mode kh\xF4ng \u0111\u01B0\u1EE3c l\xE0 test/pr; route sang bugfix, input-sync ho\u1EB7c figma-review.");
+    fail("NEXT_MODE_WITH_CRITICAL_HIGH", "C\xF2n issue Critical/High th\xEC next_mode kh\xF4ng \u0111\u01B0\u1EE3c l\xE0 test/pr; route sang bugfix, input-sync ho\u1EB7c figma-review.");
   }
   warnings.push(...checkRecordedNextMode({ currentMode: data.current_mode, nextMode: data.next_mode }).warnings);
-  return { ok: errors.length === 0, errors, warnings };
+  const errors = issues.map((i) => i.message);
+  return { ok: errors.length === 0, errors, warnings, issues };
 }
 var PR_REQUIRED_FILES = [
   "output/review-report.md",
@@ -22975,16 +22978,17 @@ var PR_REQUIRED_FILES = [
   "tracking/workflow-status.md"
 ];
 function evaluatePrGates({ data, exists, read, scope }) {
-  const errors = [];
+  const issues = [];
   const warnings = [];
+  const fail = (code, message) => issues.push({ code, message });
   for (const rel of PR_REQUIRED_FILES) {
-    if (!exists(rel)) errors.push(`Thi\u1EBFu ${rel}`);
+    if (!exists(rel)) fail("PR_FILE_MISSING", `Thi\u1EBFu ${rel}`);
   }
   if (!["passed", "not_required"].includes(norm2(data.review_status))) {
-    errors.push("review_status ph\u1EA3i passed/not_required tr\u01B0\u1EDBc PR.");
+    fail("PR_REVIEW_NOT_PASSED", "review_status ph\u1EA3i passed/not_required tr\u01B0\u1EDBc PR.");
   }
   if (bool(data.bugfix_required) || Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0 || ["open", "blocked"].includes(norm2(data.review_bug_status))) {
-    errors.push("C\xF2n review bug/Critical/High tr\u01B0\u1EDBc PR.");
+    fail("PR_OPEN_BUGS", "C\xF2n review bug/Critical/High tr\u01B0\u1EDBc PR.");
   }
   const scopeStatus = norm2(data.scope_diff_status);
   if (scope && scope.plannedEmpty) {
@@ -22992,11 +22996,11 @@ function evaluatePrGates({ data, exists, read, scope }) {
   }
   if (scope && !scope.plannedEmpty) {
     if (scope.outOfPlan?.length) {
-      errors.push(`Scope diff: file s\u1EEDa ngo\xE0i plan: ${scope.outOfPlan.join(", ")}.`);
+      fail("SCOPE_OUT_OF_PLAN", `Scope diff: file s\u1EEDa ngo\xE0i plan: ${scope.outOfPlan.join(", ")}.`);
     }
-    if (["failed", "blocked"].includes(scopeStatus)) errors.push("scope_diff_status=failed/blocked.");
+    if (["failed", "blocked"].includes(scopeStatus)) fail("SCOPE_DIFF_DECLARED_FAILED", "scope_diff_status=failed/blocked.");
   } else if (!["passed", "not_required"].includes(scopeStatus)) {
-    errors.push("scope_diff_status ph\u1EA3i passed/not_required tr\u01B0\u1EDBc PR (kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff t\u1EEB git).");
+    fail("PR_SCOPE_NOT_DECLARED", "scope_diff_status ph\u1EA3i passed/not_required tr\u01B0\u1EDBc PR (kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff t\u1EEB git).");
   }
   const evidenceOk = hasCommandEvidence(read("output/test-summary.md"));
   if (exists("output/test-summary.md")) warnings.push(...commandEvidenceWarnings(read("output/test-summary.md")));
@@ -23005,31 +23009,61 @@ function evaluatePrGates({ data, exists, read, scope }) {
     if (value === "not_required") continue;
     if (!value) {
       if (!evidenceOk) {
-        errors.push(`Thi\u1EBFu command evidence: output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt (${key} kh\xF4ng khai).`);
+        fail("PR_COMMAND_EVIDENCE_MISSING", `Thi\u1EBFu command evidence: output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt (${key} kh\xF4ng khai).`);
       }
     } else if (!["completed", "passed"].includes(value)) {
-      errors.push(`${key} ph\u1EA3i completed/passed/not_required tr\u01B0\u1EDBc PR.`);
+      fail("PR_COMMAND_STATUS_INCOMPLETE", `${key} ph\u1EA3i completed/passed/not_required tr\u01B0\u1EDBc PR.`);
     } else if (!evidenceOk) {
-      errors.push(`${key}=${value} nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.`);
+      fail("COMMAND_EVIDENCE_UNPROVEN", `${key}=${value} nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.`);
     }
   }
   if (bool(data.figma_required)) {
     if (!["passed", "waived", "not_required"].includes(norm2(data.ui_match_review_status))) {
-      errors.push("Task UI/Figma c\u1EA7n ui_match_review_status=passed/waived/not_required tr\u01B0\u1EDBc PR.");
+      fail("PR_UI_MATCH_NOT_PASSED", "Task UI/Figma c\u1EA7n ui_match_review_status=passed/waived/not_required tr\u01B0\u1EDBc PR.");
     }
     if (["critical", "high", "blocked"].includes(norm2(data.ui_match_severity_status))) {
-      errors.push("C\xF2n UI mismatch Critical/High/Blocked tr\u01B0\u1EDBc PR.");
+      fail("PR_UI_MISMATCH_OPEN", "C\xF2n UI mismatch Critical/High/Blocked tr\u01B0\u1EDBc PR.");
     }
     const playwright = norm2(data.playwright_screenshot_diff_status);
     if (playwright && !["passed", "manual_review", "not_required", "waived"].includes(playwright)) {
-      errors.push("Task UI/Figma c\u1EA7n playwright_screenshot_diff_status=passed/manual_review/not_required/waived tr\u01B0\u1EDBc PR.");
+      fail("PR_PLAYWRIGHT_NOT_PASSED", "Task UI/Figma c\u1EA7n playwright_screenshot_diff_status=passed/manual_review/not_required/waived tr\u01B0\u1EDBc PR.");
     }
   }
   if (!["ready", "opened", "merged"].includes(norm2(data.pr_status))) {
-    errors.push("pr_status ph\u1EA3i ready/opened/merged tr\u01B0\u1EDBc PR validation.");
+    fail("PR_STATUS_NOT_READY", "pr_status ph\u1EA3i ready/opened/merged tr\u01B0\u1EDBc PR validation.");
   }
-  return { ok: errors.length === 0, errors, warnings };
+  const errors = issues.map((i) => i.message);
+  return { ok: errors.length === 0, errors, warnings, issues };
 }
+
+// packages/validators/src/runlog.mjs
+var RUNLOG_VERSION = 1;
+var RUNLOG_MAX_BYTES = 5 * 1024 * 1024;
+var RUNLOG_EVENTS = [
+  "mode_start",
+  "mode_end",
+  "entry_blocked",
+  "edit_denied",
+  "edit_warned",
+  "override_requested",
+  "mode_abandoned",
+  "validate"
+];
+var RunLogRecordSchema = external_exports.object({
+  v: external_exports.literal(RUNLOG_VERSION),
+  ts: external_exports.string(),
+  pack: external_exports.string(),
+  task: external_exports.string(),
+  event: external_exports.enum(RUNLOG_EVENTS),
+  mode: external_exports.string().optional(),
+  source: external_exports.enum(["hook", "mcp", "cli"]),
+  actor: external_exports.string().optional(),
+  level: external_exports.string().optional(),
+  outcome: external_exports.string().optional(),
+  codes: external_exports.array(external_exports.string()).optional(),
+  attempt: external_exports.number().int().positive().optional(),
+  duration_ms: external_exports.number().nonnegative().optional()
+}).passthrough();
 
 // packages/validators/src/index.mjs
 function taskIo(taskDir) {
@@ -23043,9 +23077,12 @@ function taskIo(taskDir) {
 function loadWorkflow(taskDir) {
   const workflowPath = path.join(taskDir, "tracking", "workflow-status.md");
   if (!fs.existsSync(workflowPath)) {
-    return { ok: false, errors: ["Thi\u1EBFu tracking/workflow-status.md"] };
+    const errors = ["Thi\u1EBFu tracking/workflow-status.md"];
+    return { ok: false, errors, issues: [{ code: "STATUS_MISSING", message: errors[0] }] };
   }
-  return parseWorkflowStatus(fs.readFileSync(workflowPath, "utf8"));
+  const parsed = parseWorkflowStatus(fs.readFileSync(workflowPath, "utf8"));
+  if (parsed.ok) return parsed;
+  return { ...parsed, issues: parsed.errors.map((message) => ({ code: "STATUS_SCHEMA_INVALID", message })) };
 }
 function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   let files = changedFiles;
@@ -23081,7 +23118,7 @@ function plannedFilesOfSiblingTasks(taskDir) {
 var SCOPE_CHECKED_MODES = ["review-mode", "testing-mode", "pr-ready-mode"];
 function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
   const parsed = loadWorkflow(taskDir);
-  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: [], scopeSource: "not_checked", base: "" };
+  if (!parsed.ok) return { ok: false, errors: parsed.errors, issues: parsed.issues, warnings: [], scopeSource: "not_checked", base: "" };
   const warnings = [];
   let scope;
   let scopeSource = "not_checked";
@@ -23105,12 +23142,13 @@ function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
 }
 function validatePr(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
-  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: [] };
+  if (!parsed.ok) return { ok: false, errors: parsed.errors, issues: parsed.issues, warnings: [] };
   const io = taskIo(taskDir);
   const workflow = evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...io });
   const pr = evaluatePrGates({ data: parsed.data, ...io, scope });
   const errors = [...workflow.errors, ...pr.errors];
-  return { ok: errors.length === 0, errors, warnings: [...workflow.warnings, ...pr.warnings] };
+  const issues = [...workflow.issues, ...pr.issues];
+  return { ok: errors.length === 0, errors, issues, warnings: [...workflow.warnings, ...pr.warnings] };
 }
 
 export {

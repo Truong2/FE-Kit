@@ -105,15 +105,20 @@ export function checkRecordedNextMode({ currentMode, nextMode }) {
  * @param {object} params.data frontmatter của workflow-status.md (đã parse)
  * @param {number} params.openBlockingQuestions số câu hỏi blocking mở đếm từ questions.md
  * @param {string} [params.taskRef] task folder để dựng prompt thay thế
- * @returns {{ allowed: boolean, command: string, mode: string, reasons: string[], warnings: string[], redirect: string }}
+ * @returns {{ allowed: boolean, command: string, mode: string, reasons: string[], reasonCodes: string[], warnings: string[], redirect: string }}
+ *   `reasonCodes[i]` là reason code ổn định của `reasons[i]` (dùng cho run-log).
  */
 export function evaluateModeEntry({ requested, data = {}, openBlockingQuestions = 0, taskRef = '<task-folder>' }) {
   const command = normalizeCommand(requested);
-  const result = { allowed: true, command, mode: COMMAND_TO_MODE[command] || '', reasons: [], warnings: [], redirect: '' };
+  const result = { allowed: true, command, mode: COMMAND_TO_MODE[command] || '', reasons: [], reasonCodes: [], warnings: [], redirect: '' };
+  const block = (code, reason) => {
+    result.reasons.push(reason);
+    result.reasonCodes.push(code);
+  };
 
   if (!command) {
     result.allowed = false;
-    result.reasons.push(`Không nhận ra mode "${requested}". Mode hợp lệ: ${COMMANDS.join(', ')}.`);
+    block('ENTRY_UNKNOWN_MODE', `Không nhận ra mode "${requested}". Mode hợp lệ: ${COMMANDS.join(', ')}.`);
     return result;
   }
 
@@ -126,7 +131,8 @@ export function evaluateModeEntry({ requested, data = {}, openBlockingQuestions 
     bool(data.plan_recheck_required_after_input_sync);
 
   if (questionBlocked && !ALWAYS_ALLOWED.includes(command)) {
-    result.reasons.push(
+    block(
+      blocking > 0 ? 'ENTRY_QUESTIONS_BLOCKING' : 'ENTRY_INPUT_SYNC_REQUIRED',
       blocking > 0
         ? `Còn ${blocking} câu hỏi blocking đang mở trong planning/questions.md.`
         : 'workflow-status.md đang yêu cầu input-sync (questions/input_sync_required/plan_recheck chưa đóng).'
@@ -136,23 +142,23 @@ export function evaluateModeEntry({ requested, data = {}, openBlockingQuestions 
 
   if (command === 'cook') {
     if (!bool(data.build_ready)) {
-      result.reasons.push('build_ready chưa true: plan chưa sẵn sàng để cook.');
+      block('ENTRY_NOT_BUILD_READY', 'build_ready chưa true: plan chưa sẵn sàng để cook.');
       result.redirect ||= `FE plan ${taskRef}`;
     }
     const figmaGate = norm(data.figma_gate_status);
     if (bool(data.figma_required) && !['passed', 'waived', 'substituted', 'not_required'].includes(figmaGate)) {
-      result.reasons.push(`Task cần Figma nhưng figma_gate_status="${figmaGate || '(trống)'}".`);
+      block('ENTRY_FIGMA_GATE_OPEN', `Task cần Figma nhưng figma_gate_status="${figmaGate || '(trống)'}".`);
       result.redirect ||= `FE figma ${taskRef}`;
     }
   }
 
   if (command === 'pr') {
     if (Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0 || bool(data.bugfix_required)) {
-      result.reasons.push('Còn bug Critical/High hoặc bugfix_required=true.');
+      block('ENTRY_OPEN_BUGS', 'Còn bug Critical/High hoặc bugfix_required=true.');
       result.redirect ||= `FE bugfix ${taskRef}`;
     }
     if (!['passed', 'not_required'].includes(norm(data.review_status))) {
-      result.reasons.push(`review_status="${norm(data.review_status) || '(trống)'}" — cần review passed trước PR.`);
+      block('ENTRY_REVIEW_NOT_PASSED', `review_status="${norm(data.review_status) || '(trống)'}" — cần review passed trước PR.`);
       result.redirect ||= `FE review ${taskRef}`;
     }
   }
@@ -168,6 +174,7 @@ export function evaluateModeEntry({ requested, data = {}, openBlockingQuestions 
     if (bool(data.human_override)) {
       result.warnings.push(...result.reasons.map((r) => `[human_override] ${r}`));
       result.reasons = [];
+      result.reasonCodes = [];
       result.redirect = '';
     } else {
       result.allowed = false;

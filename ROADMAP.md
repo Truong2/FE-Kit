@@ -34,8 +34,8 @@ Mặc định đổi được khi review từng phase:
 
 | Phase | Version | Nội dung | Trạng thái |
 |---|---|---|---|
-| 0 | 2.1.1 | Eval chạy được, có baseline; khôi phục lộ trình; gom danh sách file/rule về một nguồn | Đang làm: code xong, chờ chạy eval thật |
-| 1 | 2.2.0 | Run-log `tracking/run-log.jsonl`, reason code, `fe-kit report`, `fe-kit mode begin/end` cho adapter không có hook, quyết định `enforce` | Chưa làm |
+| 0 | 2.1.1 | Eval chạy được, có baseline; khôi phục lộ trình; gom danh sách file/rule về một nguồn | Code xong; chờ chạy eval thật để có baseline |
+| 1 | 2.2.0 | Run-log `tracking/run-log.jsonl`, reason code, `fe-kit report`, `fe-kit mode begin/end` cho adapter không có hook, quyết định `enforce` | Code xong; `enforce` chưa bật vì chưa có baseline (xem bên dưới) |
 | 2 | 2.3.0 | Đếm issue từ `review-bugs.md`, taxonomy bug (nhóm + nguyên nhân gốc), deprecate field không gate nào đọc, chuyển gate `check-*` ra khỏi CLI, rule input không tin cậy, kiểm ghi qua shell | Chưa làm |
 | 3 | 2.4.0 | Tách `packages/engine` + `packages/pack-fe` theo kiểu strangler, có golden test; pack mẫu thứ hai chỉ dùng trong test | Chưa làm |
 | 4 | 2.5.0 | `retro`: tổng hợp run-log + bug thành đề xuất sửa rule, có người duyệt | Chưa làm |
@@ -52,6 +52,8 @@ Mặc định đổi được khi review từng phase:
 
 Không đạt thì giữ `warn` và ghi lý do vào bảng phase ở trên.
 
+Trạng thái ở 2.2.0: **giữ `warn`**. Bộ eval chưa chạy thật nên chưa có baseline để áp luật. Chạy `plugin-evals.yml` (`hooks_level: both`), commit baseline, rồi đổi `DEFAULT_LEVEL` trong `core/hooks/fe-hook.mjs` trong một bản riêng nếu đạt.
+
 ## Phase 0 — việc còn lại
 
 - Chạy workflow `plugin-evals.yml` với `hooks_level: both`, `runs: 5`. Tải artifact `eval-baselines` về `evals/baselines/` rồi commit.
@@ -63,6 +65,6 @@ Không đạt thì giữ `warn` và ghi lý do vào bảng phase ở trên.
 
 ## Rủi ro đang theo dõi
 
-- **Hook chưa chắc thấy được mức đã đặt.** `plugin eval` chỉ chuyển `EVAL_*` vào phiên, nên hook đọc `EVAL_FE_KIT_HOOKS`. Chưa xác minh hook thật sự nhận được biến này trong phiên eval. Grader trên run-log của Phase 1 sẽ chứng minh.
+- **Hook chưa chắc thấy được mức đã đặt.** `plugin eval` chỉ chuyển `EVAL_*` vào phiên, nên hook đọc `EVAL_FE_KIT_HOOKS`. Chưa xác minh hook thật sự nhận được biến này trong phiên eval. Từ 2.2.0, grader `hook-logged-entry-block` chứng minh hook có chạy, và field `level` trong `run-log.jsonl` của workspace eval (`--keep-temp`) cho biết hook chạy ở mức nào.
 - **Chưa rõ `tool_used` có thấy tool call bên trong subagent không.** Tài liệu không nói. Vì vậy grader cấm sửa source luôn đi kèm grader theo trạng thái file (`source-unchanged`, `file_exists`).
 - **Eval dao động giữa các lần chạy.** Dùng 5 run mỗi case. Mỗi lượt baseline tốn tối đa khoảng 2 × 30 USD.

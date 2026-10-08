@@ -392,6 +392,110 @@ describe('hành vi biên của marker', () => {
   });
 });
 
+/** Sự kiện run-log của task trong workspace tạm. */
+function runLog(taskRel) {
+  const file = path.join(workspace, taskRel, 'tracking', 'run-log.jsonl');
+  if (!fs.existsSync(file)) return [];
+  return fs.readFileSync(file, 'utf8').trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
+}
+
+const stale = (taskRel) => {
+  const file = path.join(workspace, taskRel, 'tracking', 'workflow-status.md');
+  const past = new Date(Date.now() - 60_000);
+  fs.utimesSync(file, past, past);
+};
+
+describe('run-log', () => {
+  it('mở mode và bị chặn khi kết thúc: chặn → chặn → thả ra, attempt tăng dần', () => {
+    const task = addTask('task-ready-to-cook');
+    begin(`/fe:plan ${task}`);
+    stale(task);
+    expect(runHook({ hook_event_name: 'Stop', stop_hook_active: false }).decision).toBe('block');
+    expect(runHook({ hook_event_name: 'Stop', stop_hook_active: false }).decision).toBe('block');
+    expect(runHook({ hook_event_name: 'Stop', stop_hook_active: true }).systemMessage).toMatch(/chưa đạt gate/);
+
+    const events = runLog(task);
+    expect(events.map((e) => [e.event, e.outcome, e.attempt])).toEqual([
+      ['mode_start', undefined, undefined],
+      ['mode_end', 'blocked', 1],
+      ['mode_end', 'blocked', 2],
+      ['mode_end', 'released', 3],
+    ]);
+    for (const e of events) {
+      expect(e).toMatchObject({ v: 1, pack: 'fe', task: 'FE-1', mode: 'plan', source: 'hook', actor: 'claude', level: 'enforce' });
+      expect(e.session).toMatch(/^[0-9a-f]{12}$/);
+    }
+    expect(events[1].codes).toContain('END_STATUS_NOT_UPDATED');
+    expect(events[3].duration_ms).toBeGreaterThanOrEqual(0);
+  });
+
+  it('kết thúc hợp lệ ghi mode_end pass; SubagentStop ghi tên agent', () => {
+    const task = addTask('task-ready-to-cook');
+    begin(`/fe:plan ${task}`);
+    runHook({ hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { subagent_type: 'fe:frontend-planner' } });
+    updateStatus(task, { current_mode: 'planning-mode' });
+    expect(runHook({ hook_event_name: 'SubagentStop', agent_type: 'fe:frontend-planner', stop_hook_active: false })).toBeNull();
+
+    const end = runLog(task).at(-1);
+    expect(end).toMatchObject({ event: 'mode_end', outcome: 'pass', attempt: 1, agent: 'frontend-planner' });
+    expect(end).not.toHaveProperty('codes');
+  });
+
+  it('gate chặn lúc vào mode và khi sửa source đều được ghi kèm reason code', () => {
+    const task = addTask('task-blocked-question');
+    begin(`/fe:cook ${task}`);
+    edit('src/App.tsx', { agent_type: 'fe:frontend-developer' });
+    edit('src/App.tsx', { agent_type: 'fe:frontend-developer' }, { level: 'warn' });
+
+    const [start, blocked, denied, warned] = runLog(task);
+    expect(start.event).toBe('mode_start');
+    expect(blocked).toMatchObject({ event: 'entry_blocked', mode: 'cook' });
+    expect(blocked.codes).toContain('ENTRY_QUESTIONS_BLOCKING');
+    expect(denied).toMatchObject({ event: 'edit_denied', file: 'src/App.tsx', agent: 'frontend-developer' });
+    expect(denied.codes).toEqual(expect.arrayContaining(['EDIT_GATE_CLOSED', 'ENTRY_QUESTIONS_BLOCKING']));
+    expect(warned).toMatchObject({ event: 'edit_warned', level: 'warn' });
+  });
+
+  it('agent sai vai sửa source trong mode đang chạy: ghi EDIT_ROLE_FORBIDDEN', () => {
+    const task = addTask('task-ready-to-cook');
+    begin(`/fe:review ${task}`);
+    edit('src/App.tsx', { agent_type: 'fe:frontend-reviewer' });
+    expect(runLog(task).at(-1)).toMatchObject({ event: 'edit_denied', mode: 'review', codes: ['EDIT_ROLE_FORBIDDEN'] });
+  });
+
+  it('bật human_override và chuyển lệnh khi mode trước chưa xong đều được ghi', () => {
+    const task = addTask('task-ready-to-cook');
+    begin(`/fe:plan ${task}`);
+    begin(`/fe:review ${task}`);
+    runHook({
+      hook_event_name: 'PreToolUse',
+      tool_name: 'Edit',
+      tool_input: { file_path: path.join(workspace, task, 'tracking', 'workflow-status.md'), old_string: 'human_override: false', new_string: 'human_override: true' },
+    });
+    const events = runLog(task).map((e) => [e.event, e.mode]);
+    expect(events).toEqual([
+      ['mode_start', 'plan'],
+      ['mode_start', 'review'],
+      ['mode_abandoned', 'plan'],
+      ['override_requested', 'review'],
+    ]);
+  });
+
+  it('không ghi được run-log thì hook vẫn thoát 0 và vẫn chặn', () => {
+    const task = addTask('task-ready-to-cook');
+    fs.mkdirSync(path.join(workspace, task, 'tracking', 'run-log.jsonl'));
+    begin(`/fe:plan ${task}`);
+    stale(task);
+    expect(runHook({ hook_event_name: 'Stop', stop_hook_active: false }).decision).toBe('block');
+  });
+
+  it('FE_KIT_RUNLOG=off thì không ghi gì', () => {
+    const task = addTask('task-blocked-question');
+    begin(`/fe:cook ${task}`, { env: { FE_KIT_RUNLOG: 'off' } });
+    expect(runLog(task)).toEqual([]);
+  });
+});
+
 describe('an toàn', () => {
   it('payload hỏng hoặc sự kiện lạ không làm hook lỗi', () => {
     const r = spawnSync(process.execPath, [HOOK, 'Stop'], { input: 'không phải json', encoding: 'utf8', env: { ...process.env, CLAUDE_PLUGIN_DATA: dataDir } });

@@ -5,6 +5,43 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.2.0] — 2026-10-08
+
+Phase 1 của [ROADMAP.md](ROADMAP.md): đo được kit đang chạy thế nào. Không đổi gate, schema `workflow-status.md` hay prompt của command/agent; hook vẫn mặc định `warn`.
+
+### Có thể ảnh hưởng repo dự án
+
+- **Task folder có thêm `tracking/run-log.jsonl`.** Hook, MCP và CLI tự ghi sự kiện của mode vào đây. Commit file này cùng task. Không muốn ghi thì đặt `FE_KIT_RUNLOG=off`. CLI không ghi khi `CI=true` hoặc có `--no-log`.
+- `fe-kit init` thêm một dòng `merge=union` cho run-log vào `.gitattributes`.
+
+### Run-log và báo cáo
+
+- `packages/validators/src/runlog.mjs`: `appendRunLog` (không bao giờ throw, không tạo thư mục, ngừng ghi khi file quá 5 MB), `readRunLog` (bỏ qua dòng hỏng), schema bản ghi v1. Không ghi prompt hay nội dung file; session id được hash.
+- Hook ghi `mode_start`, `entry_blocked`, `edit_denied`/`edit_warned`, `override_requested`, `mode_abandoned` và `mode_end` (`pass`/`blocked`/`released`, kèm `attempt` và `duration_ms`). MCP `fe_validate_workflow` và CLI `validate-*` ghi `validate`.
+- `fe-kit report [<task>] [--since] [--json]`: tỉ lệ pass ngay lần đầu theo mode, số vòng bị chặn, lý do bị chặn nhiều nhất, thời gian mỗi mode, phân bổ theo actor.
+
+### Reason code
+
+- `evaluateWorkflowGates`, `evaluatePrGates`, `validateWorkflow`, `validateWorkflowAtGate`, `validatePr` trả thêm `issues: [{ code, message }]`; `errors` giữ nguyên. `evaluateModeEntry` trả thêm `reasonCodes`.
+
+### Codex, Cursor, Copilot có gate mở/kết thúc mode
+
+- `fe-kit mode begin <task> <mode>`: verdict gate, artifact bắt buộc và nguyên văn rule của mode, như MCP `fe_begin_mode`; exit 1 khi bị chặn.
+- `fe-kit mode end <task> <mode>`: cùng gate kết thúc mode với hook của Claude Code.
+- Hướng dẫn của ba adapter đổi sang dùng hai lệnh này (`--actor codex|cursor|copilot`).
+
+### Nguồn duy nhất
+
+- `modeBriefing` (nội dung của `fe_begin_mode`) và `evaluateModeCompletion` (gate kết thúc mode) chuyển vào validators; MCP, hook và CLI dùng chung. Output của `fe_begin_mode` giữ nguyên từng byte (đã so 21 trường hợp trước/sau).
+
+### Eval
+
+- `cook-refuses-when-blocked` thêm grader `hook-logged-entry-block`: run-log có `entry_blocked`, chứng minh hook thật sự chạy trong phiên eval.
+
+### Chưa làm
+
+- Chưa bật `enforce` mặc định: chưa có baseline eval để áp luật trong ROADMAP.
+
 ## [2.1.1] — 2026-10-08
 
 Phase 0 của [ROADMAP.md](ROADMAP.md): bộ eval chạy được và đo đúng mức hook, danh sách file/rule về một nguồn. Không đổi gate, schema hay prompt.

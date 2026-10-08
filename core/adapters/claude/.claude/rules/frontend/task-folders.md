@@ -19,6 +19,7 @@ docs/frontend-tasks/<task-folder>/
     input-sync-report.md      # conditional, chỉ tạo khi có CR/clarification
     review-bugs.md            # conditional
     cr-impact-report.md       # conditional
+    run-log.jsonl             # hook/CLI tự ghi; commit cùng task, không sửa tay
   output/
     figma-reference-screenshots/
     figma-extraction-summary.md    # conditional

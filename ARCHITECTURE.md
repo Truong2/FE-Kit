@@ -35,9 +35,11 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
 | Hướng dẫn | Skill `frontend-delivery-standard`, rule, template | `core/SKILL.md`, `core/rules/`, `core/templates/` | Prompt (mềm) |
 | Điều phối | 11 slash command | `core/commands/` + đoạn delegation do generator chèn | Prompt (mềm) |
 | Vai trò | 6 subagent | `core/agents/` + `_protocol.md` | `disallowedTools` (cứng) + prompt |
-| Gate khi bắt đầu mode | `fe_begin_mode` | `core/mcp/server.mjs` → `evaluateModeEntry` | MCP tool trả verdict + nguyên văn rule |
+| Gate khi bắt đầu mode | `fe_begin_mode`, `fe-kit mode begin` | `modeBriefing` → `evaluateModeEntry` | MCP tool / CLI trả verdict + nguyên văn rule |
 | Gate khi chạy | Hook | `core/hooks/fe-hook.mjs` | Claude Code hook (cứng ở mức `enforce`) |
+| Gate khi kết thúc mode | `evaluateModeCompletion` | `packages/validators/src/index.mjs` | Hook `SubagentStop`/`Stop`, CLI `fe-kit mode end` |
 | Gate khi kết thúc / CI | Validator | `packages/validators/` | MCP, hook, CLI, CI |
+| Quan sát | Run-log, báo cáo | `packages/validators/src/runlog.mjs`, `report.mjs` | Hook, MCP, CLI ghi; `fe-kit report` đọc |
 
 ## Nguyên tắc thiết kế
 
@@ -85,6 +87,8 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
 | `SubagentStop` | Kiểm tra gate kết thúc khi đúng subagent của mode dừng. |
 | `Stop` | Kiểm tra gate kết thúc cho mode inline. |
 
+Mọi sự kiện trên đều ghi run-log của task khi có kết quả đáng đếm (mở mode, bị chặn, bị từ chối sửa, kết thúc mode); xem mục Run-log.
+
 - Mức thực thi: `FE_KIT_HOOKS=off|warn|enforce`, mặc định `warn`. Trong phiên `claude plugin eval` hook đọc `EVAL_FE_KIT_HOOKS`, vì runner chỉ chuyển biến `EVAL_*` vào phiên; `FE_KIT_HOOKS` vẫn thắng nếu có. Chuyển mặc định sang `enforce` theo luật trong [ROADMAP.md](ROADMAP.md).
 - Chặn tối đa một lần mỗi lần dừng (`stop_hook_active`), sau đó thả kèm cảnh báo để không lặp vô hạn.
 - Mode bị gate từ chối chỉ cần `workflow-status.md` route đúng, không đòi artifact của mode.
@@ -102,10 +106,29 @@ Giới hạn đã biết (đều có test trong `tests/hook.test.mjs`):
 | Adapter | Kiểm tra lúc agent chạy | Cách kiểm thủ công |
 |---|---|---|
 | Claude Code (plugin `fe`) | MCP `fe_begin_mode`/`fe_validate_workflow`/`fe_scope_diff`, hook, `disallowedTools` | Như cột bên dưới, khi cần |
-| Codex, Cursor, Copilot | Không có: chỉ hướng dẫn trong prompt | `node bin/fe-kit.mjs validate-workflow <task>` trước khi kết thúc mode; `node bin/fe-kit.mjs validate-pr <task> --base <nhánh>` trước PR. Copilot có thêm workflow CI `frontend-delivery-standard.yml` |
+| Codex, Cursor, Copilot | Không có: chỉ hướng dẫn trong prompt | `node bin/fe-kit.mjs mode begin <task> <mode>` khi mở mode và `mode end` trước khi kết thúc (cùng gate với hook); `node bin/fe-kit.mjs validate-pr <task> --base <nhánh>` trước PR. Copilot có thêm workflow CI `frontend-delivery-standard.yml` |
 | ChatGPT skill | Không có | `node scripts/validate-workflow.mjs <task>`, `node scripts/validate-pr.mjs <task> --base <nhánh>` trong gói skill |
 
 `bin/fe-kit.mjs` là bản CLI standalone mà `fe-kit init` copy vào repo dự án. Hướng dẫn của từng adapter (`core/adapters/*`, `core/SKILL.md`) ghi rõ: chưa chạy lệnh, hoặc lệnh báo lỗi, thì không được ghi gate là passed.
+
+## Run-log
+
+Mỗi task có `tracking/run-log.jsonl`: mỗi sự kiện một dòng JSON, commit cùng task. `fe-kit init` thêm `merge=union` cho file này vào `.gitattributes` để hai nhánh cùng ghi không conflict.
+
+| Sự kiện | Ai ghi | Field chính |
+|---|---|---|
+| `mode_start` | Hook (prompt `/fe:<mode>` hoặc `fe_begin_mode`), `fe-kit mode begin` | `mode` |
+| `entry_blocked` | Hook, `fe-kit mode begin` | `codes` (`ENTRY_*`) |
+| `edit_denied` / `edit_warned` | Hook `PreToolUse` | `codes` (`EDIT_ROLE_FORBIDDEN`, `EDIT_GATE_CLOSED` + `ENTRY_*`), `file` |
+| `override_requested` | Hook | — |
+| `mode_abandoned` | Hook, khi lệnh FE mới thay mode chưa qua gate kết thúc | `replaced_by` |
+| `mode_end` | Hook `SubagentStop`/`Stop`, `fe-kit mode end` | `outcome` (`pass`, `blocked`, `released`, `failed`), `attempt`, `duration_ms`, `codes` |
+| `validate` | MCP `fe_validate_workflow`, CLI `validate-*` | `outcome`, `codes` |
+
+- **Không ghi nội dung:** không có prompt, nội dung file hay input của người dùng; session id được hash.
+- **Reason code:** mọi lỗi của gate có code ổn định (`issues[].code` của validator, `reasonCodes` của `evaluateModeEntry`), nên báo cáo đếm được lý do bị chặn.
+- **Không làm hỏng việc chính:** ghi log không bao giờ throw; task chưa có `tracking/` thì bỏ qua; file quá 5 MB thì ngừng ghi. Tắt bằng `FE_KIT_RUNLOG=off`. CLI không ghi khi `CI=true` hoặc có `--no-log`.
+- **Báo cáo:** `fe-kit report [<task>] [--since YYYY-MM-DD] [--json]` tính tỉ lệ pass ngay lần đầu, số vòng bị chặn, lý do bị chặn nhiều nhất và thời gian mỗi mode, chỉ từ sự kiện đã ghi.
 
 ## Ngân sách context theo mode
 

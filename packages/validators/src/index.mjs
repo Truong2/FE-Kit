@@ -11,6 +11,8 @@ import {
 } from './gates.mjs';
 import { WorkflowStatusSchema, GateStatus, CoreMode } from './schema.mjs';
 import { computeScopeDiff, parsePlannedFiles, listChangedFiles, detectBaseRef } from './scope.mjs';
+import { evaluateModeEntry, COMMAND_TO_MODE } from './transitions.mjs';
+import { MODE_REQUIRED_ARTIFACTS } from './modes.mjs';
 
 function taskIo(taskDir) {
   const exists = (rel) => fs.existsSync(path.join(taskDir, rel));
@@ -24,9 +26,12 @@ function taskIo(taskDir) {
 function loadWorkflow(taskDir) {
   const workflowPath = path.join(taskDir, 'tracking', 'workflow-status.md');
   if (!fs.existsSync(workflowPath)) {
-    return { ok: false, errors: ['Thiếu tracking/workflow-status.md'] };
+    const errors = ['Thiếu tracking/workflow-status.md'];
+    return { ok: false, errors, issues: [{ code: 'STATUS_MISSING', message: errors[0] }] };
   }
-  return parseWorkflowStatus(fs.readFileSync(workflowPath, 'utf8'));
+  const parsed = parseWorkflowStatus(fs.readFileSync(workflowPath, 'utf8'));
+  if (parsed.ok) return parsed;
+  return { ...parsed, issues: parsed.errors.map((message) => ({ code: 'STATUS_SCHEMA_INVALID', message })) };
 }
 
 /**
@@ -79,12 +84,110 @@ function plannedFilesOfSiblingTasks(taskDir) {
  *
  * @param {string} taskDir đường dẫn tuyệt đối tới task folder
  * @param {{ scope?: object }} [opts] truyền `scope` (từ `scopeDiffForTask`) để kiểm tra file sửa ngoài plan
- * @returns {{ ok: boolean, errors: string[], warnings?: string[] }}
+ * @returns {{ ok: boolean, errors: string[], issues: { code: string, message: string }[], warnings?: string[] }}
  */
 export function validateWorkflow(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
   if (!parsed.ok) return parsed;
   return evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...taskIo(taskDir), scope });
+}
+
+/**
+ * Gate kết thúc mode: bản DUY NHẤT cho hook (`SubagentStop`/`Stop`) và CLI
+ * `fe-kit mode end`.
+ *
+ * - Mode bị gate từ chối lúc vào: không đòi artifact; chỉ cần workflow-status.md
+ *   hiện có route đúng (`refused: true`).
+ * - Mode được chạy: workflow-status.md phải được sửa sau `startedAt` (nếu biết),
+ *   `current_mode` đúng mode, đủ artifact bắt buộc, rồi qua validator.
+ *
+ * @param {object} p
+ * @param {string} p.taskDir đường dẫn tuyệt đối tới task folder
+ * @param {string} p.taskRef path task để in ra
+ * @param {string} p.command lệnh đã chuẩn hoá
+ * @param {number} [p.startedAt] thời điểm mở mode (ms)
+ * @param {object} [p.scope] scope diff caller đã tính, truyền cho validator
+ * @param {string} [p.repoRoot] có (và không truyền `scope`) thì validator tự tính scope như `validateWorkflowAtGate`
+ * @param {string} [p.base] base ref cho `repoRoot`
+ * @param {{ code: string, message: string }[]} [p.extraIssues] lỗi riêng của caller, xếp trước lỗi của validator
+ * @returns {{ ok: boolean, refused: boolean, issues: { code: string, message: string }[], errors: string[] }}
+ */
+export function evaluateModeCompletion({ taskDir, taskRef, command, startedAt, scope, repoRoot, base, extraIssues = [] }) {
+  const done = (issues, refused = false) => ({
+    ok: issues.length === 0,
+    refused,
+    issues,
+    errors: issues.map((i) => i.message),
+  });
+  const { read } = taskIo(taskDir);
+  const workflowPath = path.join(taskDir, 'tracking', 'workflow-status.md');
+  const raw = read('tracking/workflow-status.md');
+  if (!raw) return done([{ code: 'END_STATUS_MISSING', message: `Chưa có ${taskRef}/tracking/workflow-status.md.` }]);
+  const loose = parseFrontMatterLoose(raw);
+  if (!loose.hasFrontMatter || loose.error) {
+    return done([
+      {
+        code: 'END_STATUS_UNPARSEABLE',
+        message: `tracking/workflow-status.md không parse được YAML frontmatter${loose.error ? `: ${loose.error}` : '.'}`,
+      },
+    ]);
+  }
+  const data = loose.data;
+
+  // Mode bị gate từ chối: không đòi artifact của mode, và không đòi sửa file
+  // nếu workflow-status.md hiện có đã route đúng (ép sửa chỉ sinh thêm lỗi).
+  const entry = evaluateModeEntry({
+    requested: command,
+    data,
+    openBlockingQuestions: countOpenBlockingQuestions(read('planning/questions.md')),
+    taskRef,
+  });
+  if (!entry.allowed) {
+    const refused = validateWorkflow(taskDir);
+    if (refused.ok) return done([], true);
+    return done(
+      [
+        {
+          code: 'END_REFUSED_ROUTE_INVALID',
+          message: `FE ${command} đang bị gate chặn (${entry.reasons.join(' ')}) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: ${entry.redirect}`,
+        },
+        ...refused.issues,
+      ],
+      true
+    );
+  }
+
+  const issues = [];
+  if (startedAt !== undefined) {
+    let mtime = 0;
+    try {
+      mtime = fs.statSync(workflowPath).mtimeMs;
+    } catch { /* đã kiểm tra tồn tại ở trên */ }
+    if (mtime + 1000 < startedAt) {
+      issues.push({
+        code: 'END_STATUS_NOT_UPDATED',
+        message: 'tracking/workflow-status.md chưa được cập nhật trong lượt này (không mode nào được kết thúc chỉ bằng chat).',
+      });
+    }
+  }
+  const expected = COMMAND_TO_MODE[command];
+  if (String(data.current_mode || '') !== expected) {
+    issues.push({
+      code: 'END_CURRENT_MODE_MISMATCH',
+      message: `current_mode trong workflow-status.md phải là ${expected} (đang là "${data.current_mode || ''}").`,
+    });
+  }
+  for (const rel of MODE_REQUIRED_ARTIFACTS[command] || []) {
+    if (!fs.existsSync(path.join(taskDir, rel))) {
+      issues.push({ code: 'END_ARTIFACT_MISSING', message: `Thiếu artifact bắt buộc của FE ${command}: ${rel}` });
+    }
+  }
+  issues.push(...extraIssues);
+
+  const gates = repoRoot && !scope ? validateWorkflowAtGate(taskDir, { repoRoot, base }) : validateWorkflow(taskDir, { scope });
+  if (!gates.ok) issues.push(...gates.issues);
+  const seen = new Set();
+  return done(issues.filter((i) => !seen.has(i.message) && seen.add(i.message)));
 }
 
 /** Mode sau cook: diff đã ổn định nên validate-workflow tự đối chiếu scope với git. */
@@ -99,11 +202,11 @@ export const SCOPE_CHECKED_MODES = ['review-mode', 'testing-mode', 'pr-ready-mod
  *
  * @param {string} taskDir
  * @param {{ repoRoot?: string, base?: string }} [opts] `base` bỏ trống thì tự dò
- * @returns {{ ok: boolean, errors: string[], warnings: string[], scopeSource: 'git' | 'self_reported' | 'not_checked', base: string }}
+ * @returns {{ ok: boolean, errors: string[], issues: { code: string, message: string }[], warnings: string[], scopeSource: 'git' | 'self_reported' | 'not_checked', base: string }}
  */
 export function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
   const parsed = loadWorkflow(taskDir);
-  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: [], scopeSource: 'not_checked', base: '' };
+  if (!parsed.ok) return { ok: false, errors: parsed.errors, issues: parsed.issues, warnings: [], scopeSource: 'not_checked', base: '' };
 
   const warnings = [];
   let scope;
@@ -133,16 +236,17 @@ export function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
  *
  * @param {string} taskDir
  * @param {{ scope?: object }} [opts]
- * @returns {{ ok: boolean, errors: string[], warnings: string[] }}
+ * @returns {{ ok: boolean, errors: string[], issues: { code: string, message: string }[], warnings: string[] }}
  */
 export function validatePr(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
-  if (!parsed.ok) return { ok: false, errors: parsed.errors, warnings: [] };
+  if (!parsed.ok) return { ok: false, errors: parsed.errors, issues: parsed.issues, warnings: [] };
   const io = taskIo(taskDir);
   const workflow = evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...io });
   const pr = evaluatePrGates({ data: parsed.data, ...io, scope });
   const errors = [...workflow.errors, ...pr.errors];
-  return { ok: errors.length === 0, errors, warnings: [...workflow.warnings, ...pr.warnings] };
+  const issues = [...workflow.issues, ...pr.issues];
+  return { ok: errors.length === 0, errors, issues, warnings: [...workflow.warnings, ...pr.warnings] };
 }
 
 export {
@@ -163,6 +267,17 @@ export {
   CoreMode,
 };
 export { snapshotFiles, filesTouchedSince, fingerprintFile } from './scope.mjs';
+export {
+  appendRunLog,
+  readRunLog,
+  codesOf,
+  hashSession,
+  RunLogRecordSchema,
+  RUNLOG_FILE,
+  RUNLOG_EVENTS,
+} from './runlog.mjs';
+export { summarizeRunLog, buildReport, renderReport } from './report.mjs';
+export { modeBriefing } from './briefing.mjs';
 export { resolveTaskDir, isPathInside, relativePosix, toPosix, TASKS_ROOT } from './resolve.mjs';
 export { scaffoldTask, isValidTaskName, TASK_TEMPLATE_FILES } from './scaffold.mjs';
 export {

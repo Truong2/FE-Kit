@@ -7,7 +7,8 @@
  *   - chặn agent không phải developer sửa source (luật theo vai, không cần marker);
  *   - chặn cook/bugfix/quick sửa source khi gate của task chưa mở;
  *   - hỏi xác nhận người dùng khi agent tự bật `human_override: true`;
- *   - không cho mode kết thúc khi workflow-status.md chưa được cập nhật hợp lệ.
+ *   - không cho mode kết thúc khi workflow-status.md chưa được cập nhật hợp lệ;
+ *   - ghi sự kiện (mở/kết thúc mode, bị chặn, bị từ chối sửa) vào tracking/run-log.jsonl của task.
  *
  * Mức thực thi qua biến môi trường FE_KIT_HOOKS: `off` | `warn` | `enforce`
  * (khi chạy `claude plugin eval`: EVAL_FE_KIT_HOOKS, xem `level()`).
@@ -25,7 +26,7 @@ import {
   countOpenBlockingQuestions,
   evaluateModeEntry,
   normalizeCommand,
-  validateWorkflow,
+  evaluateModeCompletion,
   scopeDiffForTask,
   listChangedFiles,
   snapshotFiles,
@@ -33,14 +34,17 @@ import {
   resolveTaskDir,
   relativePosix,
   isPathInside,
-  COMMAND_TO_MODE,
   COMMANDS,
   SOURCE_EDIT_COMMANDS,
-  MODE_REQUIRED_ARTIFACTS,
   AGENT_FOR_COMMAND,
   SOURCE_EDIT_AGENT,
   KIT_WRITABLE_PREFIXES,
+  appendRunLog,
+  hashSession,
 } from '@frontend-delivery-kit/validators';
+
+// esbuild `define` thay hằng này khi bundle; chạy trực tiếp từ source thì là 'dev'.
+const KIT_VERSION = typeof __FE_KIT_VERSION__ !== 'undefined' ? __FE_KIT_VERSION__ : 'dev';
 
 /** Mặc định khi không set FE_KIT_HOOKS. Đổi sang 'enforce' sau khi eval hành vi đạt ngưỡng. */
 const DEFAULT_LEVEL = 'warn';
@@ -106,6 +110,23 @@ function readFileSafe(p) {
   }
 }
 
+/** Ghi một sự kiện vào run-log của task. Lỗi ghi log không bao giờ đổi quyết định của hook. */
+function logEvent(payload, taskDir, event, fields = {}) {
+  try {
+    appendRunLog(taskDir, {
+      event,
+      source: 'hook',
+      actor: 'claude',
+      kit: KIT_VERSION,
+      level: level(),
+      session: hashSession(payload.session_id),
+      ...fields,
+    });
+  } catch {
+    // appendRunLog đã tự nuốt lỗi; lớp này chỉ để chắc chắn.
+  }
+}
+
 function loadTask(taskDir) {
   const workflowPath = path.join(taskDir, 'tracking', 'workflow-status.md');
   const raw = readFileSafe(workflowPath);
@@ -165,6 +186,8 @@ function beginMode(payload, { command, taskArg, workspace }) {
     if (changed.ok) marker.baseline = snapshotFiles(workspace, changed.files);
   }
   writeMarker(payload.session_id, marker);
+  logEvent(payload, taskDir, 'mode_start', { mode: command });
+  if (replaced) logEvent(payload, replaced.task, 'mode_abandoned', { mode: replaced.command, replaced_by: command });
   return { marker, replaced };
 }
 
@@ -190,6 +213,7 @@ function onPrompt(payload) {
     ? evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, taskRef: marker.taskRef })
     : { allowed: true };
   if (!entry.allowed) {
+    logEvent(payload, marker.task, 'entry_blocked', { mode: marker.command, codes: entry.reasonCodes });
     out.hookSpecificOutput = {
       hookEventName: payload.hook_event_name,
       additionalContext:
@@ -223,8 +247,20 @@ function decide(payload, decision, reason) {
   });
 }
 
-function denyOrWarn(payload, reason) {
-  if (level() === 'enforce') decide(payload, 'deny', reason);
+/**
+ * @param {object} [log] ghi run-log khi biết task: `{ taskDir, mode, codes, file }`
+ */
+function denyOrWarn(payload, reason, log) {
+  const enforce = level() === 'enforce';
+  if (log?.taskDir) {
+    logEvent(payload, log.taskDir, enforce ? 'edit_denied' : 'edit_warned', {
+      mode: log.mode,
+      agent: kitAgentName(payload.agent_type) || undefined,
+      codes: log.codes,
+      file: log.file,
+    });
+  }
+  if (enforce) decide(payload, 'deny', reason);
   else warn(reason);
 }
 
@@ -258,6 +294,10 @@ function onPreEdit(payload) {
   if (!isPathInside(workspace, filePath)) return; // file ngoài repo (plan, memory, scratch) không thuộc phạm vi kit
 
   if (turnsOnHumanOverride(filePath, toolInput)) {
+    // filePath = <task>/tracking/workflow-status.md
+    logEvent(payload, path.dirname(path.dirname(filePath)), 'override_requested', {
+      mode: marker?.status === 'pending' ? marker.command : undefined,
+    });
     decide(
       payload,
       'ask',
@@ -272,9 +312,11 @@ function onPreEdit(payload) {
   // Luật theo vai — không cần marker, nên vẫn đúng khi agent được delegate chủ động.
   const agent = kitAgentName(payload.agent_type);
   if (agent && agent !== SOURCE_EDIT_AGENT) {
+    const active = marker?.status === 'pending' ? marker : null;
     denyOrWarn(
       payload,
-      `Agent ${agent} không được sửa source (${rel}). Chỉ ${SOURCE_EDIT_AGENT} trong FE cook/bugfix/quick được sửa code; hãy ghi phát hiện vào artifact của task trong docs/frontend-tasks/.`
+      `Agent ${agent} không được sửa source (${rel}). Chỉ ${SOURCE_EDIT_AGENT} trong FE cook/bugfix/quick được sửa code; hãy ghi phát hiện vào artifact của task trong docs/frontend-tasks/.`,
+      { taskDir: active?.task, mode: active?.command, codes: ['EDIT_ROLE_FORBIDDEN'], file: rel }
     );
     return;
   }
@@ -290,7 +332,8 @@ function onPreEdit(payload) {
   denyOrWarn(
     payload,
     `FE ${marker.command} chưa được sửa source cho ${marker.taskRef}: ${entry.reasons.join(' ')} Prompt đúng: ${entry.redirect}. ` +
-      '(Nếu mode này đã bị huỷ, chạy lệnh FE khác hoặc đặt FE_KIT_HOOKS=off.)'
+      '(Nếu mode này đã bị huỷ, chạy lệnh FE khác hoặc đặt FE_KIT_HOOKS=off.)',
+    { taskDir: marker.task, mode: marker.command, codes: ['EDIT_GATE_CLOSED', ...entry.reasonCodes], file: rel }
   );
 }
 
@@ -304,45 +347,15 @@ function baselineOf(marker) {
   return Object.fromEntries((marker.baselineChanged || []).map((f) => [f, 'skipped']));
 }
 
-/** Trả về danh sách lý do mode chưa được coi là xong (rỗng = đạt). */
+/**
+ * Lý do mode chưa được coi là xong (rỗng = đạt), mỗi lý do kèm reason code.
+ * Gate chung nằm ở `evaluateModeCompletion`; hook chỉ thêm phần chỉ hook biết:
+ * file đã dirty từ trước khi mở mode mà bị sửa thêm ngoài plan.
+ * @returns {{ code: string, message: string }[]}
+ */
 function completionProblems(marker) {
-  const problems = [];
-  const { workflowPath, raw, loose, data, openBlockingQuestions } = loadTask(marker.task);
-
-  if (!raw) return [`Chưa có ${marker.taskRef}/tracking/workflow-status.md.`];
-  if (!loose.hasFrontMatter || loose.error) {
-    return [`tracking/workflow-status.md không parse được YAML frontmatter${loose.error ? `: ${loose.error}` : '.'}`];
-  }
-
-  // Mode bị gate từ chối: không đòi artifact của mode, và không đòi sửa file
-  // nếu workflow-status.md hiện có đã route đúng (ép sửa chỉ sinh thêm lỗi).
-  const entry = evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, taskRef: marker.taskRef });
-  if (!entry.allowed) {
-    const refused = validateWorkflow(marker.task);
-    if (refused.ok) return [];
-    return [
-      `FE ${marker.command} đang bị gate chặn (${entry.reasons.join(' ')}) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: ${entry.redirect}`,
-      ...refused.errors,
-    ];
-  }
-
-  let mtime = 0;
-  try {
-    mtime = fs.statSync(workflowPath).mtimeMs;
-  } catch { /* đã kiểm tra tồn tại ở trên */ }
-  if (mtime + 1000 < marker.startedAt) {
-    problems.push('tracking/workflow-status.md chưa được cập nhật trong lượt này (không mode nào được kết thúc chỉ bằng chat).');
-  }
-
-  const expected = COMMAND_TO_MODE[marker.command];
-  if (String(data.current_mode || '') !== expected) {
-    problems.push(`current_mode trong workflow-status.md phải là ${expected} (đang là "${data.current_mode || ''}").`);
-  }
-  for (const rel of MODE_REQUIRED_ARTIFACTS[marker.command] || []) {
-    if (!fs.existsSync(path.join(marker.task, rel))) problems.push(`Thiếu artifact bắt buộc của FE ${marker.command}: ${rel}`);
-  }
-
   let scope;
+  const extraIssues = [];
   if (SOURCE_EDIT_COMMANDS.includes(marker.command)) {
     const changed = listChangedFiles({ cwd: marker.workspace });
     if (changed.ok) {
@@ -352,37 +365,60 @@ function completionProblems(marker) {
         scope = diff;
         const userFiles = diff.outOfPlan.filter((f) => preDirtyTouched.includes(f));
         if (userFiles.length) {
-          problems.push(
-            `Các file sau đã có thay đổi chưa commit của người dùng từ trước FE ${marker.command} và bị sửa thêm trong mode này, ngoài plan: ${userFiles.join(', ')}. ` +
-              'Không hoàn tác thay đổi gốc của người dùng; chỉ gỡ phần mode này đã sửa, hoặc cập nhật plan qua input-sync.'
-          );
+          extraIssues.push({
+            code: 'END_PREDIRTY_OUT_OF_PLAN',
+            message:
+              `Các file sau đã có thay đổi chưa commit của người dùng từ trước FE ${marker.command} và bị sửa thêm trong mode này, ngoài plan: ${userFiles.join(', ')}. ` +
+              'Không hoàn tác thay đổi gốc của người dùng; chỉ gỡ phần mode này đã sửa, hoặc cập nhật plan qua input-sync.',
+          });
         }
       }
     }
   }
-
-  const gates = validateWorkflow(marker.task, { scope });
-  if (!gates.ok) problems.push(...gates.errors);
-  return [...new Set(problems)];
+  return evaluateModeCompletion({
+    taskDir: marker.task,
+    taskRef: marker.taskRef,
+    command: marker.command,
+    startedAt: Number(marker.startedAt || 0),
+    scope,
+    extraIssues,
+  }).issues;
 }
 
 function finishMode(payload, marker) {
   const problems = completionProblems(marker);
+  // Lần kiểm thứ mấy của mode này: tăng mỗi lần hook chặn kết thúc.
+  const attempt = (marker.blocks || 0) + 1;
+  const logEnd = (outcome) =>
+    logEvent(payload, marker.task, 'mode_end', {
+      mode: marker.command,
+      agent: kitAgentName(payload.agent_type) || undefined,
+      outcome,
+      attempt,
+      duration_ms: Math.max(0, Date.now() - Number(marker.startedAt || 0)),
+      codes: [...new Set(problems.map((p) => p.code))],
+    });
+
   if (!problems.length) {
     writeMarker(payload.session_id, { ...marker, status: 'done' });
+    logEnd('pass');
     return;
   }
 
+  const messages = problems.map((p) => p.message);
   const reason =
-    `FE ${marker.command} cho ${marker.taskRef} chưa đạt gate kết thúc mode:\n- ${problems.join('\n- ')}\n` +
+    `FE ${marker.command} cho ${marker.taskRef} chưa đạt gate kết thúc mode:\n- ${messages.join('\n- ')}\n` +
     'Sửa các điểm trên (cập nhật artifact và tracking/workflow-status.md) rồi mới kết thúc.';
 
   // Đã bị chặn một lần mà vẫn chưa đạt: thả ra để tránh vòng lặp, nhưng báo cho người dùng.
   if (level() !== 'enforce' || payload.stop_hook_active) {
-    writeMarker(payload.session_id, { ...marker, status: 'done', unresolved: problems });
+    writeMarker(payload.session_id, { ...marker, status: 'done', unresolved: messages });
+    logEnd('released');
     warn(reason);
     return;
   }
+  writeMarker(payload.session_id, { ...marker, blocks: attempt });
+  logEnd('blocked');
   emit({ decision: 'block', reason });
 }
 

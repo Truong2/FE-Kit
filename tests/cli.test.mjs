@@ -15,13 +15,17 @@ const KIT_CLI = path.join(ROOT, 'standalone', 'fe-kit.mjs');
 
 let target;
 
-function run(cli, args, cwd = target) {
-  const r = spawnSync(process.execPath, [cli, ...args], { cwd, encoding: 'utf8' });
+/** GitHub Actions đặt CI=true, mà CLI không ghi run-log trên CI: test tự quyết biến này. */
+function run(cli, args, cwd = target, env = {}) {
+  const base = { ...process.env };
+  delete base.CI;
+  const r = spawnSync(process.execPath, [cli, ...args], { cwd, encoding: 'utf8', env: { ...base, ...env } });
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') };
 }
 
 const kit = (...args) => run(KIT_CLI, args, ROOT);
 const project = (...args) => run(path.join(target, 'bin', 'fe-kit.mjs'), args);
+const projectEnv = (env, ...args) => run(path.join(target, 'bin', 'fe-kit.mjs'), args, target, env);
 const exists = (rel) => fs.existsSync(path.join(target, rel));
 const read = (rel) => fs.readFileSync(path.join(target, rel), 'utf8');
 
@@ -211,6 +215,120 @@ describe('CLI bundle trong repo dự án (không có node_modules)', () => {
       const r = project('validate-pr', 'FE-6-ev');
       expect(r.status).toBe(1);
       expect(r.out).toMatch(/chưa có dòng command đã chạy thật/);
+    });
+  });
+
+  describe('run-log, mode begin/end, report', () => {
+    const TASK = 'docs/frontend-tasks/FE-7-log';
+    const runLog = () => {
+      const file = path.join(target, TASK, 'tracking', 'run-log.jsonl');
+      return fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim().split('\n').map((l) => JSON.parse(l)) : [];
+    };
+    const blockTask = () =>
+      fs.copyFileSync(
+        path.join(ROOT, 'packages', 'validators', 'test', 'fixtures', 'task-blocked-question', 'planning', 'questions.md'),
+        path.join(target, TASK, 'planning', 'questions.md')
+      );
+    const touchStatus = () => {
+      const file = path.join(target, TASK, 'tracking', 'workflow-status.md');
+      const future = new Date(Date.now() + 5000);
+      fs.utimesSync(file, future, future);
+    };
+
+    beforeEach(() => {
+      project('new-task', 'FE-7-log');
+    });
+
+    it('init thêm merge=union cho run-log vào .gitattributes đúng một lần', () => {
+      kit('init', '--target', target, '--agents', 'codex', '--yes');
+      expect(read('.gitattributes').match(/run-log\.jsonl merge=union/g)).toHaveLength(1);
+    });
+
+    it('mode begin bị gate chặn: exit 1, in lý do và ghi mode_start + entry_blocked', () => {
+      blockTask();
+      const r = project('mode', 'begin', TASK, 'cook', '--actor', 'codex');
+      expect(r.status).toBe(1);
+      expect(r.out).toMatch(/GATE: BỊ CHẶN/);
+      expect(r.out).toMatch(/FE input-sync docs\/frontend-tasks\/FE-7-log/);
+      expect(runLog().map((e) => [e.event, e.mode, e.source, e.actor])).toEqual([
+        ['mode_start', 'cook', 'cli', 'codex'],
+        ['entry_blocked', 'cook', 'cli', 'codex'],
+      ]);
+      expect(runLog()[1].codes).toEqual(['ENTRY_QUESTIONS_BLOCKING', 'ENTRY_NOT_BUILD_READY']);
+    });
+
+    it('mode begin được chạy: in nguyên văn rule của mode và lệnh kết thúc', () => {
+      const r = project('mode', 'begin', 'FE-7-log', 'plan');
+      expect(r.status).toBe(0);
+      expect(r.out).toMatch(/GATE: ĐƯỢC CHẠY FE plan/);
+      expect(r.out).toMatch(/--- core\.md ---/);
+      expect(r.out).toMatch(/mode end docs\/frontend-tasks\/FE-7-log plan/);
+    });
+
+    it('mode end: chưa sửa workflow-status.md thì fail, sửa rồi thì pass, attempt tăng', () => {
+      const status = path.join(target, TASK, 'tracking', 'workflow-status.md');
+      const past = new Date(Date.now() - 60_000);
+      fs.utimesSync(status, past, past);
+      project('mode', 'begin', TASK, 'plan');
+      const first = project('mode', 'end', TASK, 'plan');
+      expect(first.status).toBe(1);
+      expect(first.out).toMatch(/chưa được cập nhật trong lượt này/);
+
+      touchStatus();
+      const second = project('mode', 'end', TASK, 'plan');
+      expect(second.status).toBe(0);
+      expect(second.out).toMatch(/mode end: PASSED/);
+
+      const ends = runLog().filter((e) => e.event === 'mode_end');
+      expect(ends.map((e) => [e.outcome, e.attempt])).toEqual([['failed', 1], ['pass', 2]]);
+      expect(ends[0].codes).toContain('END_STATUS_NOT_UPDATED');
+      expect(ends[1].duration_ms).toBeGreaterThanOrEqual(0);
+    });
+
+    it('mode end của mode bị chặn: status đã route đúng thì pass mà không cần artifact', () => {
+      fs.cpSync(path.join(ROOT, 'packages', 'validators', 'test', 'fixtures', 'task-blocked-question'), path.join(target, TASK), { recursive: true });
+      const r = project('mode', 'end', TASK, 'cook');
+      expect(r.status).toBe(0);
+      expect(r.out).toMatch(/mode bị gate từ chối và đã route đúng/);
+    });
+
+    it('mode sai cú pháp thì in hướng dẫn', () => {
+      const r = project('mode', 'start', TASK, 'cook');
+      expect(r.status).toBe(1);
+      expect(r.out).toMatch(/fe-kit mode begin\|end/);
+    });
+
+    it('validate-* ghi sự kiện validate; CI=true hoặc --no-log thì không ghi', () => {
+      project('validate-task', 'FE-7-log');
+      blockTask();
+      project('validate-workflow', TASK, '--actor', 'cursor');
+      expect(runLog().map((e) => [e.event, e.check, e.outcome, e.actor])).toEqual([
+        ['validate', 'validate-task', 'ok', 'cli'],
+        ['validate', 'validate-workflow', 'failed', 'cursor'],
+      ]);
+      expect(runLog()[1].codes).toContain('QUESTIONS_NEXT_MODE_NOT_INPUT_SYNC');
+
+      projectEnv({ CI: 'true' }, 'validate-task', 'FE-7-log');
+      project('validate-task', 'FE-7-log', '--no-log');
+      expect(runLog()).toHaveLength(2);
+    });
+
+    it('report: Markdown và JSON', () => {
+      blockTask();
+      project('mode', 'begin', TASK, 'cook');
+      const md = project('report');
+      expect(md.status).toBe(0);
+      expect(md.out).toMatch(/# Báo cáo run-log FE-Kit/);
+      expect(md.out).toMatch(/`ENTRY_QUESTIONS_BLOCKING`/);
+
+      const json = JSON.parse(project('report', TASK, '--json').out);
+      expect(json.tasks[0].task).toBe('FE-7-log');
+      expect(json.total.entryBlocked.ENTRY_QUESTIONS_BLOCKING).toBe(1);
+    });
+
+    it('report khi chưa có run-log', () => {
+      fs.rmSync(path.join(target, 'docs', 'frontend-tasks'), { recursive: true, force: true });
+      expect(project('report').out).toMatch(/Chưa có run-log nào/);
     });
   });
 

@@ -21,19 +21,17 @@ import {
 import {
   validateWorkflowAtGate,
   parseWorkflowStatus,
-  parseFrontMatterLoose,
   countOpenBlockingQuestions,
-  evaluateModeEntry,
   normalizeCommand,
-  rulesForMode,
+  modeBriefing,
+  appendRunLog,
+  codesOf,
   scopeDiffForTask,
   scaffoldTask,
   detectBaseRef,
   resolveTaskDir,
   relativePosix,
   toPosix,
-  MODE_REQUIRED_ARTIFACTS,
-  AGENT_FOR_COMMAND,
   COMMANDS,
   TASKS_ROOT,
   REQUIRED_TASK_FILES,
@@ -189,54 +187,16 @@ const handlers = {
     const taskDir = resolveTaskDir(workspace_root, task_folder);
     const taskRef = relativePosix(workspace_root, taskDir) || toPosix(task_folder);
     const rules = kitDir(workspace_root, 'rules');
-    const lines = [];
-
-    const workflowPath = path.join(taskDir, 'tracking', 'workflow-status.md');
-    if (!fs.existsSync(workflowPath)) {
-      lines.push(`GATE: CHƯA CÓ TASK FOLDER HỢP LỆ (${taskRef}/tracking/workflow-status.md không tồn tại).`);
-      lines.push(`Gọi MCP tool fe_new_task (hoặc /fe:new-task ${path.basename(taskDir)}) để tạo task từ template, rồi chạy lại FE ${command} ${taskRef}.`);
-      return textResult(lines.join('\n'), true);
-    }
-
-    const raw = fs.readFileSync(workflowPath, 'utf8');
-    const strict = parseWorkflowStatus(raw);
-    const data = strict.ok ? strict.data : parseFrontMatterLoose(raw).data;
-    const openBlockingQuestions = countOpenBlockingQuestions(
-      readIfExists(path.join(taskDir, 'planning', 'questions.md'))
-    );
-    const entry = evaluateModeEntry({ requested: command, data, openBlockingQuestions, taskRef });
-
-    if (entry.allowed) {
-      lines.push(`GATE: ĐƯỢC CHẠY FE ${command} (${entry.mode}) cho ${taskRef}.`);
-    } else {
-      lines.push(`GATE: BỊ CHẶN — không được chạy FE ${command} cho ${taskRef}.`);
-      for (const r of entry.reasons) lines.push(`- ${r}`);
-      lines.push(`Việc phải làm: cập nhật tracking/workflow-status.md (next_mode, next_prompt) và dừng. Prompt đúng: ${entry.redirect}`);
-      lines.push('Không sửa source code trong lượt này.');
-    }
-    for (const w of entry.warnings) lines.push(`Cảnh báo: ${w}`);
-    if (!strict.ok) {
-      lines.push('', 'workflow-status.md chưa hợp lệ schema (sửa trong lượt này):');
-      for (const e of strict.errors.slice(0, 10)) lines.push(`- ${e}`);
-    }
-
-    if (entry.allowed) {
-      const agent = AGENT_FOR_COMMAND[command];
-      lines.push('', `Agent đảm nhận: ${agent ? agent : 'main thread (inline)'}`);
-      lines.push('', 'Artifact bắt buộc khi kết thúc mode (tương đối task folder):');
-      for (const rel of MODE_REQUIRED_ARTIFACTS[command]) lines.push(`- ${rel}`);
-      lines.push('Input cần đọc: mục "Input ledger bắt buộc cho FE plan" trong tracking/workflow-status.md.');
-      lines.push('Trước khi kết thúc: cập nhật tracking/workflow-status.md rồi gọi fe_validate_workflow.');
-
-      // Trả nguyên văn rule thay vì đường dẫn: rule của plugin nằm trong cache
-      // ngoài workspace, agent Read sẽ bị hỏi quyền (hoặc bị từ chối khi chạy headless).
-      lines.push('', `=== RULE ÁP DỤNG CHO FE ${command} (nguồn: ${rules.source === 'project' ? '.frontend-delivery/rules của repo' : 'plugin'}) — không cần đọc lại file rule ===`);
-      for (const file of rulesForMode(command, { figmaRequired: data.figma_required === true })) {
-        const body = readIfExists(path.join(rules.dir, file)).trim();
-        if (body) lines.push('', `--- ${file} ---`, body);
-      }
-    }
-    return textResult(lines.join('\n'), !entry.allowed);
+    const briefing = modeBriefing({
+      taskDir,
+      taskRef,
+      command,
+      rulesDir: rules.dir,
+      rulesLabel: rules.source === 'project' ? '.frontend-delivery/rules của repo' : 'plugin',
+      newTaskHint: `Gọi MCP tool fe_new_task (hoặc /fe:new-task ${path.basename(taskDir)}) để tạo task từ template, rồi chạy lại FE ${command} ${taskRef}.`,
+      finishHint: 'Trước khi kết thúc: cập nhật tracking/workflow-status.md rồi gọi fe_validate_workflow.',
+    });
+    return textResult(briefing.text, !briefing.ok);
   },
 
   fe_new_task({ workspace_root, task_name }) {
@@ -278,6 +238,14 @@ const handlers = {
     if (!fs.existsSync(taskDir)) return textResult(`Không tìm thấy task folder: ${taskDir}`, true);
 
     const res = validateWorkflowAtGate(taskDir, { repoRoot: workspace_root, base: base_ref });
+    appendRunLog(taskDir, {
+      event: 'validate',
+      source: 'mcp',
+      actor: 'claude',
+      kit: KIT_VERSION,
+      outcome: res.ok ? 'ok' : 'failed',
+      codes: codesOf(res),
+    });
     const warnings = (res.warnings || []).map((w) => '- Cảnh báo: ' + w);
     const scopeLine = {
       git: `Scope: tính từ git (base: ${res.base || 'chỉ thay đổi chưa commit'}).`,
