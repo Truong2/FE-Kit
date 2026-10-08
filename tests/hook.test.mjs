@@ -456,6 +456,25 @@ describe('run-log', () => {
     expect(warned).toMatchObject({ event: 'edit_warned', level: 'warn' });
   });
 
+  it('lệnh slash chạy cả UserPromptExpansion và UserPromptSubmit: chỉ ghi một entry_blocked, gõ lại sau đó vẫn ghi', () => {
+    const task = addTask('task-blocked-question');
+    const prompt = `/fe:cook ${task}`;
+    const first = runHook({ hook_event_name: 'UserPromptExpansion', prompt });
+    const second = runHook({ hook_event_name: 'UserPromptSubmit', prompt });
+    // Cả hai lần vẫn đưa verdict BỊ CHẶN vào ngữ cảnh.
+    expect(first.hookSpecificOutput.additionalContext).toMatch(/BỊ CHẶN/);
+    expect(second.hookSpecificOutput.additionalContext).toMatch(/BỊ CHẶN/);
+    expect(runLog(task).filter((e) => e.event === 'entry_blocked')).toHaveLength(1);
+
+    // Lần gõ lại thật (cách xa hơn cửa sổ chống trùng) được ghi thêm.
+    const file = path.join(dataDir, 'sessions', 'test-session.json');
+    const m = marker();
+    m.entryBlocked.at = Date.now() - 60_000;
+    fs.writeFileSync(file, JSON.stringify(m));
+    begin(prompt);
+    expect(runLog(task).filter((e) => e.event === 'entry_blocked')).toHaveLength(2);
+  });
+
   it('agent sai vai sửa source trong mode đang chạy: ghi EDIT_ROLE_FORBIDDEN', () => {
     const task = addTask('task-ready-to-cook');
     begin(`/fe:review ${task}`);

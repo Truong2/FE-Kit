@@ -23065,6 +23065,7 @@ import os from "node:os";
 import path8 from "node:path";
 var DEFAULT_LEVEL = "warn";
 var MARKER_TTL_MS = 4 * 60 * 60 * 1e3;
+var ENTRY_BLOCKED_DEDUPE_MS = 5e3;
 var SHELL_WRITE = /(^|[;&|(]\s*)(rm|mv|cp|tee|touch|truncate|dd)\s|(^|[^0-9&>=-])>>?\s*(?!\/dev\/null|&|nul\b)[^\s&|;=]|\bsed\s+(-[a-z]*i|--in-place)|\bgit\s+(checkout|restore|reset|apply|stash|clean)\b|\b(Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|New-Item)\b/i;
 var escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
@@ -23188,7 +23189,14 @@ function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
     const { data, inputs, raw } = loadTask(marker.task);
     const entry = raw ? pack.evaluateModeEntry({ requested: marker.command, data, ...inputs, taskRef: marker.taskRef }) : { allowed: true };
     if (!entry.allowed) {
-      logEvent(payload, marker.task, "entry_blocked", { mode: marker.command, codes: entry.reasonCodes });
+      const key = `${marker.command}|${marker.taskRef}`;
+      const now = Date.now();
+      const last = marker.entryBlocked;
+      if (!(last && last.key === key && now - Number(last.at || 0) < ENTRY_BLOCKED_DEDUPE_MS)) {
+        logEvent(payload, marker.task, "entry_blocked", { mode: marker.command, codes: entry.reasonCodes });
+      }
+      marker.entryBlocked = { key, at: now };
+      writeMarker(payload.session_id, marker);
       out.hookSpecificOutput = {
         hookEventName: payload.hook_event_name,
         additionalContext: `[${pack.displayName} gate] ${pack.label(marker.command)} \u0111ang B\u1ECA CH\u1EB6N cho ${marker.taskRef}: ${entry.reasons.join(" ")} Kh\xF4ng s\u1EEDa source. C\u1EADp nh\u1EADt ${pack.statusFile} v\xE0 route sang: ${entry.redirect}`

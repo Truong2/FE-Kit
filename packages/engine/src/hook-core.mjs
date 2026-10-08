@@ -30,6 +30,8 @@ const DEFAULT_LEVEL = 'warn';
 
 /** Marker cũ hơn ngưỡng này coi như mode đã bị bỏ dở, không còn hiệu lực. */
 const MARKER_TTL_MS = 4 * 60 * 60 * 1000;
+/** Hai hook của cùng một lần gõ lệnh đến cách nhau vài trăm ms; lần gõ lại thật thì cách xa hơn. */
+const ENTRY_BLOCKED_DEDUPE_MS = 5000;
 
 /** Lệnh shell trông như ghi/xoá/khôi phục file. Chỉ dùng để cảnh báo sớm; kiểm chính là so nội dung file khi kết thúc mode. */
 const SHELL_WRITE =
@@ -205,7 +207,16 @@ export function createHookHandlers(pack, { version = 'dev' } = {}) {
     const { data, inputs, raw } = loadTask(marker.task);
     const entry = raw ? pack.evaluateModeEntry({ requested: marker.command, data, ...inputs, taskRef: marker.taskRef }) : { allowed: true };
     if (!entry.allowed) {
-      logEvent(payload, marker.task, 'entry_blocked', { mode: marker.command, codes: entry.reasonCodes });
+      // Lệnh slash chạy cả UserPromptExpansion lẫn UserPromptSubmit cho cùng một lần gõ:
+      // chỉ ghi một bản, để report không đếm số lần bị chặn gấp đôi. Gõ lại lệnh sau đó vẫn được ghi.
+      const key = `${marker.command}|${marker.taskRef}`;
+      const now = Date.now();
+      const last = marker.entryBlocked;
+      if (!(last && last.key === key && now - Number(last.at || 0) < ENTRY_BLOCKED_DEDUPE_MS)) {
+        logEvent(payload, marker.task, 'entry_blocked', { mode: marker.command, codes: entry.reasonCodes });
+      }
+      marker.entryBlocked = { key, at: now };
+      writeMarker(payload.session_id, marker);
       out.hookSpecificOutput = {
         hookEventName: payload.hook_event_name,
         additionalContext:
