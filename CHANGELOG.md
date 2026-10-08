@@ -7,6 +7,10 @@ Nhật ký phát triển nội bộ trước bản phát hành đầu tiên đư
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- `check-input-sync-report` kiểm theo template hiện tại (4 mục: Nguồn input, Kết quả phân tích impact, File đã cập nhật, Kết luận sync). Trước đây gate vẫn đòi 11 mục của template cũ nên report viết đúng template luôn bị báo lỗi. Gate mới còn kiểm ba dòng đã được chọn giá trị, không để trống hay để nguyên chuỗi lựa chọn: `Loại input`, `UI/Figma`, `Impact`. Report viết theo template cũ (`# Báo cáo đồng bộ input`) vẫn được kiểm như trước, nên repo dự án không phải viết lại report cũ.
+
 ### Eval rẻ hơn
 
 - Profile chạy eval trong `evals/profiles.mjs`, dùng chung cho máy và CI: `pilot` (1 lượt, trần 1 USD) và `smoke` (mọi case 1 lần, trần 5 USD) chạy Sonnet; `gate` (case gate × 3 × warn/enforce, trần 10 USD/mức) và `full` (mọi case × 5 ở warn, case gate × 5 ở enforce) chạy Opus bản cao nhất. Không dùng Haiku nữa: grader `llm` chấm bằng Sonnet. Trước đây mỗi lượt baseline là 10 case × 5 × 2 mức = 100 phiên; `full` còn 80, `gate` 36.

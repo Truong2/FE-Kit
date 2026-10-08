@@ -25034,14 +25034,48 @@ function validateInputSyncReport(taskDir) {
   if (!requiresReport) return { ok: true, errors: [], skipped: true };
   if (!exists(reportPath)) return { ok: false, errors: ["Thi\u1EBFu tracking/input-sync-report.md khi input_sync_status/current_mode cho th\u1EA5y \u0111\xE3 ch\u1EA1y ho\u1EB7c \u0111ang ch\u1EA1y input-sync."] };
   const report2 = read(reportPath);
-  for (const phrase of ["# B\xE1o c\xE1o \u0111\u1ED3ng b\u1ED9 input", "## B\u01B0\u1EDBc hi\u1EC7n t\u1EA1i", "## 1. Ngu\u1ED3n CR/file tr\u1EA3 l\u1EDDi", "## 2. Quy \u01B0\u1EDBc version SRS", "## 3. K\u1EBFt qu\u1EA3 \u0111\u1ED3ng b\u1ED9 c\xE2u h\u1ECFi", "## 5. Ki\u1EC3m tra l\u1EA1i Figma gate", "## 6. Ph\xE2n lo\u1EA1i impact CR sau PR", "## 7. Ph\u1EA1m vi b\u1ECB \u1EA3nh h\u01B0\u1EDFng", "## 8. H\xE0nh \u0111\u1ED9ng b\u1EAFt bu\u1ED9c", "## 9. File \u0111\xE3 c\u1EADp nh\u1EADt", "## C\u1EADp nh\u1EADt workflow-status.md"]) {
+  const legacy = /^#\s+Báo cáo đồng bộ input/im.test(report2);
+  const sections = legacy ? LEGACY_INPUT_SYNC_SECTIONS : INPUT_SYNC_SECTIONS;
+  for (const phrase of sections) {
     if (!report2.toLowerCase().includes(phrase.toLowerCase())) errors.push(`input-sync-report.md thi\u1EBFu section: ${phrase}`);
   }
   if (/^##\s+(Prompt bước tiếp theo|Prompt bước tiếp theo)/im.test(report2)) errors.push("input-sync-report.md kh\xF4ng \u0111\u01B0\u1EE3c ch\u1EE9a Prompt b\u01B0\u1EDBc ti\u1EBFp theo; ch\u1EC9 workflow-status.md \u0111\u01B0\u1EE3c ch\u1EE9a prompt b\u01B0\u1EDBc ti\u1EBFp theo.");
-  if (!/SRS update status/i.test(report2)) errors.push("input-sync-report.md ph\u1EA3i ghi SRS update status \u0111\u1EC3 ph\xE2n bi\u1EC7t SRS m\u1EDBi th\u1EADt v\u1EDBi CR/clarification.");
-  if (!/Figma gate status sau sync/i.test(report2)) errors.push("input-sync-report.md ph\u1EA3i re-check Figma gate sau sync.");
+  if (legacy) {
+    if (!/SRS update status/i.test(report2)) errors.push("input-sync-report.md ph\u1EA3i ghi SRS update status \u0111\u1EC3 ph\xE2n bi\u1EC7t SRS m\u1EDBi th\u1EADt v\u1EDBi CR/clarification.");
+    if (!/Figma gate status sau sync/i.test(report2)) errors.push("input-sync-report.md ph\u1EA3i re-check Figma gate sau sync.");
+  } else {
+    for (const [label, { choices, message }] of Object.entries(INPUT_SYNC_REQUIRED_ROWS)) {
+      if (!chosenCell(report2, label, choices)) errors.push(message);
+    }
+  }
   if (!/tracking\/workflow-status\.md/i.test(report2)) errors.push("input-sync-report.md ph\u1EA3i ghi workflow-status.md l\xE0 file c\u1EADp nh\u1EADt next prompt/build_ready.");
   return { ok: errors.length === 0, errors };
+}
+var INPUT_SYNC_SECTIONS = ["## 1. Ngu\u1ED3n input", "## 2. K\u1EBFt qu\u1EA3 ph\xE2n t\xEDch impact", "## 3. File \u0111\xE3 c\u1EADp nh\u1EADt", "## 4. K\u1EBFt lu\u1EADn sync"];
+var LEGACY_INPUT_SYNC_SECTIONS = ["# B\xE1o c\xE1o \u0111\u1ED3ng b\u1ED9 input", "## B\u01B0\u1EDBc hi\u1EC7n t\u1EA1i", "## 1. Ngu\u1ED3n CR/file tr\u1EA3 l\u1EDDi", "## 2. Quy \u01B0\u1EDBc version SRS", "## 3. K\u1EBFt qu\u1EA3 \u0111\u1ED3ng b\u1ED9 c\xE2u h\u1ECFi", "## 5. Ki\u1EC3m tra l\u1EA1i Figma gate", "## 6. Ph\xE2n lo\u1EA1i impact CR sau PR", "## 7. Ph\u1EA1m vi b\u1ECB \u1EA3nh h\u01B0\u1EDFng", "## 8. H\xE0nh \u0111\u1ED9ng b\u1EAFt bu\u1ED9c", "## 9. File \u0111\xE3 c\u1EADp nh\u1EADt", "## C\u1EADp nh\u1EADt workflow-status.md"];
+var INPUT_SYNC_REQUIRED_ROWS = {
+  "Lo\u1EA1i input": {
+    choices: "CR / c\xE2u tr\u1EA3 l\u1EDDi / SRS update / Figma update",
+    message: "input-sync-report.md ph\u1EA3i ch\u1ECDn Lo\u1EA1i input (CR / c\xE2u tr\u1EA3 l\u1EDDi / SRS update / Figma update) \u0111\u1EC3 ph\xE2n bi\u1EC7t SRS m\u1EDBi th\u1EADt v\u1EDBi CR/clarification."
+  },
+  "UI/Figma": {
+    choices: "Kh\xF4ng \u1EA3nh h\u01B0\u1EDFng / C\u1EA7n Figma l\u1EA1i",
+    message: "input-sync-report.md ph\u1EA3i ghi impact UI/Figma sau sync (Kh\xF4ng \u1EA3nh h\u01B0\u1EDFng / C\u1EA7n Figma l\u1EA1i)."
+  },
+  Impact: {
+    choices: "Kh\xF4ng c\xF3 / C\xF3 / B\u1ECB ch\u1EB7n / C\u1EA7n task m\u1EDBi",
+    message: "input-sync-report.md ph\u1EA3i ghi k\u1EBFt lu\u1EADn Impact (Kh\xF4ng c\xF3 / C\xF3 / B\u1ECB ch\u1EB7n / C\u1EA7n task m\u1EDBi)."
+  }
+};
+function chosenCell(markdown, label, choices) {
+  const norm3 = (s) => s.replace(/\s+/g, " ").trim().toLowerCase();
+  for (const line of markdown.split(/\r?\n/)) {
+    const cells = line.split("|").map((c) => c.trim());
+    if (cells.length < 4 || norm3(cells[1]) !== norm3(label)) continue;
+    const value = norm3(cells[2].replace(/[`*]/g, ""));
+    if (value && value !== norm3(choices)) return true;
+  }
+  return false;
 }
 
 // bin/fe-kit.mjs

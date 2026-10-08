@@ -264,12 +264,54 @@ export function validateInputSyncReport(taskDir) {
   if (!requiresReport) return { ok: true, errors: [], skipped: true };
   if (!exists(reportPath)) return { ok: false, errors: ['Thiếu tracking/input-sync-report.md khi input_sync_status/current_mode cho thấy đã chạy hoặc đang chạy input-sync.'] };
   const report = read(reportPath);
-  for (const phrase of ['# Báo cáo đồng bộ input','## Bước hiện tại','## 1. Nguồn CR/file trả lời','## 2. Quy ước version SRS','## 3. Kết quả đồng bộ câu hỏi','## 5. Kiểm tra lại Figma gate','## 6. Phân loại impact CR sau PR','## 7. Phạm vi bị ảnh hưởng','## 8. Hành động bắt buộc','## 9. File đã cập nhật','## Cập nhật workflow-status.md']) {
+  const legacy = /^#\s+Báo cáo đồng bộ input/im.test(report);
+  const sections = legacy ? LEGACY_INPUT_SYNC_SECTIONS : INPUT_SYNC_SECTIONS;
+  for (const phrase of sections) {
     if (!report.toLowerCase().includes(phrase.toLowerCase())) errors.push(`input-sync-report.md thiếu section: ${phrase}`);
   }
   if (/^##\s+(Prompt bước tiếp theo|Prompt bước tiếp theo)/im.test(report)) errors.push('input-sync-report.md không được chứa Prompt bước tiếp theo; chỉ workflow-status.md được chứa prompt bước tiếp theo.');
-  if (!/SRS update status/i.test(report)) errors.push('input-sync-report.md phải ghi SRS update status để phân biệt SRS mới thật với CR/clarification.');
-  if (!/Figma gate status sau sync/i.test(report)) errors.push('input-sync-report.md phải re-check Figma gate sau sync.');
+  if (legacy) {
+    if (!/SRS update status/i.test(report)) errors.push('input-sync-report.md phải ghi SRS update status để phân biệt SRS mới thật với CR/clarification.');
+    if (!/Figma gate status sau sync/i.test(report)) errors.push('input-sync-report.md phải re-check Figma gate sau sync.');
+  } else {
+    for (const [label, { choices, message }] of Object.entries(INPUT_SYNC_REQUIRED_ROWS)) {
+      if (!chosenCell(report, label, choices)) errors.push(message);
+    }
+  }
   if (!/tracking\/workflow-status\.md/i.test(report)) errors.push('input-sync-report.md phải ghi workflow-status.md là file cập nhật next prompt/build_ready.');
   return { ok: errors.length === 0, errors };
+}
+
+/** Mục của template `tracking/input-sync-report.md` hiện tại (từ v2.1.0). */
+const INPUT_SYNC_SECTIONS = ['## 1. Nguồn input', '## 2. Kết quả phân tích impact', '## 3. File đã cập nhật', '## 4. Kết luận sync'];
+
+/** Mục của template cũ (`# Báo cáo đồng bộ input`): repo dự án có thể còn report viết theo mẫu này. */
+const LEGACY_INPUT_SYNC_SECTIONS = ['# Báo cáo đồng bộ input','## Bước hiện tại','## 1. Nguồn CR/file trả lời','## 2. Quy ước version SRS','## 3. Kết quả đồng bộ câu hỏi','## 5. Kiểm tra lại Figma gate','## 6. Phân loại impact CR sau PR','## 7. Phạm vi bị ảnh hưởng','## 8. Hành động bắt buộc','## 9. File đã cập nhật','## Cập nhật workflow-status.md'];
+
+/** Dòng bảng phải được chọn giá trị, không để trống hay để nguyên chuỗi lựa chọn của template. */
+const INPUT_SYNC_REQUIRED_ROWS = {
+  'Loại input': {
+    choices: 'CR / câu trả lời / SRS update / Figma update',
+    message: 'input-sync-report.md phải chọn Loại input (CR / câu trả lời / SRS update / Figma update) để phân biệt SRS mới thật với CR/clarification.',
+  },
+  'UI/Figma': {
+    choices: 'Không ảnh hưởng / Cần Figma lại',
+    message: 'input-sync-report.md phải ghi impact UI/Figma sau sync (Không ảnh hưởng / Cần Figma lại).',
+  },
+  Impact: {
+    choices: 'Không có / Có / Bị chặn / Cần task mới',
+    message: 'input-sync-report.md phải ghi kết luận Impact (Không có / Có / Bị chặn / Cần task mới).',
+  },
+};
+
+/** Ô thứ hai của dòng bảng `| <label> | ... |` đã được điền (khác rỗng và khác chuỗi lựa chọn của template). */
+function chosenCell(markdown, label, choices) {
+  const norm = (s) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+  for (const line of markdown.split(/\r?\n/)) {
+    const cells = line.split('|').map((c) => c.trim());
+    if (cells.length < 4 || norm(cells[1]) !== norm(label)) continue;
+    const value = norm(cells[2].replace(/[`*]/g, ''));
+    if (value && value !== norm(choices)) return true;
+  }
+  return false;
 }

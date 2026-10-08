@@ -101,18 +101,57 @@ describe('validateInputSyncReport', () => {
     expect(validateInputSyncReport(task)).toMatchObject({ ok: true, skipped: true });
   });
 
-  it('report đủ section đạt khi đang input-sync', () => {
-    // Template hiện tại (4 mục) chưa thoả gate này (11 mục): xem ROADMAP, mục "Lệch đã biết".
+  const TEMPLATE = 'tracking/input-sync-report.md';
+  const filledTemplate = () =>
+    fs
+      .readFileSync(path.join(TEMPLATES, TEMPLATE), 'utf8')
+      .replace('| Loại input | CR / câu trả lời / SRS update / Figma update |', '| Loại input | câu trả lời |')
+      .replace('| UI/Figma | Không ảnh hưởng / Cần Figma lại |', '| UI/Figma | Không ảnh hưởng |')
+      .replace('| Impact | Không có / Có / Bị chặn / Cần task mới |', '| Impact | Có |');
+
+  it('report theo template hiện tại, đã chọn giá trị, đạt', () => {
     status({ current_mode: 'input-sync-mode' });
-    write(
-      'tracking/input-sync-report.md',
-      [
-        '# Báo cáo đồng bộ input', '## Bước hiện tại', '## 1. Nguồn CR/file trả lời', '## 2. Quy ước version SRS', 'SRS update status: không đổi',
-        '## 3. Kết quả đồng bộ câu hỏi', '## 5. Kiểm tra lại Figma gate', 'Figma gate status sau sync: not_required', '## 6. Phân loại impact CR sau PR',
-        '## 7. Phạm vi bị ảnh hưởng', '## 8. Hành động bắt buộc', '## 9. File đã cập nhật', '- tracking/workflow-status.md', '## Cập nhật workflow-status.md',
-      ].join('\n')
-    );
+    write(TEMPLATE, filledTemplate());
     expect(validateInputSyncReport(task)).toEqual({ ok: true, errors: [] });
+  });
+
+  it('template chưa điền (còn nguyên chuỗi lựa chọn) không đạt', () => {
+    status({ current_mode: 'input-sync-mode' });
+    fromTemplate(TEMPLATE);
+    const errors = validateInputSyncReport(task).errors;
+    expect(errors).toHaveLength(3);
+    expect(errors.join('\n')).toMatch(/phải chọn Loại input/);
+    expect(errors.join('\n')).toMatch(/impact UI\/Figma/);
+    expect(errors.join('\n')).toMatch(/kết luận Impact/);
+  });
+
+  it('template hiện tại thiếu mục hoặc chứa Prompt bước tiếp theo thì không đạt', () => {
+    status({ input_sync_status: 'synced' });
+    write(TEMPLATE, filledTemplate().replace('## 4. Kết luận sync', '## 4. Ghi chú') + '\n## Prompt bước tiếp theo\nFE cook x\n');
+    expect(validateInputSyncReport(task).errors).toEqual([
+      'input-sync-report.md thiếu section: ## 4. Kết luận sync',
+      'input-sync-report.md không được chứa Prompt bước tiếp theo; chỉ workflow-status.md được chứa prompt bước tiếp theo.',
+    ]);
+  });
+
+  const LEGACY = [
+    '# Báo cáo đồng bộ input', '## Bước hiện tại', '## 1. Nguồn CR/file trả lời', '## 2. Quy ước version SRS', 'SRS update status: không đổi',
+    '## 3. Kết quả đồng bộ câu hỏi', '## 5. Kiểm tra lại Figma gate', 'Figma gate status sau sync: not_required', '## 6. Phân loại impact CR sau PR',
+    '## 7. Phạm vi bị ảnh hưởng', '## 8. Hành động bắt buộc', '## 9. File đã cập nhật', '- tracking/workflow-status.md', '## Cập nhật workflow-status.md',
+  ];
+
+  it('report theo template cũ đủ section vẫn đạt (tương thích repo dự án cũ)', () => {
+    status({ current_mode: 'input-sync-mode' });
+    write(TEMPLATE, LEGACY.join('\n'));
+    expect(validateInputSyncReport(task)).toEqual({ ok: true, errors: [] });
+  });
+
+  it('report theo template cũ vẫn bị kiểm như cũ: thiếu SRS update status thì không đạt', () => {
+    status({ current_mode: 'input-sync-mode' });
+    write(TEMPLATE, LEGACY.filter((l) => !l.startsWith('SRS update status')).join('\n'));
+    expect(validateInputSyncReport(task).errors).toEqual([
+      'input-sync-report.md phải ghi SRS update status để phân biệt SRS mới thật với CR/clarification.',
+    ]);
   });
 
   it('không đạt khi đang input-sync mà thiếu report', () => {

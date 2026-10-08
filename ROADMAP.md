@@ -79,9 +79,8 @@ Pack mẫu `docs` và test `engine-genericity` vẫn giữ để engine không b
 
 Có thể làm riêng nếu thấy cần: sinh `standard.yaml` từ manifest. File này vẫn viết tay, có test giữ khớp danh sách file.
 
-## Lệch đã biết, cần quyết định
+## Lệch đã biết, đã chấp nhận
 
-- **Template `input-sync-report.md` không qua `check-input-sync-report`.** Template đã rút gọn còn 4 mục, gate vẫn đòi cấu trúc 11 mục cũ (SRS update status, re-check Figma gate…). Gate chỉ chạy qua CLI `check-*`, không nằm trong `validateWorkflow`. Cần chọn: sửa gate theo template, hay bổ sung template.
 - **Không có eval cho ghi qua shell.** `plugin eval` chỉ cấp Write, Edit và MCP của kit, không cấp Bash, nên case `review-no-shell-write` trong plan không chạy được. Cơ chế được test tất định trong `tests/hook.test.mjs`.
 - **Chưa làm `wrapUntrusted`.** Không tool nào của kit trả lại nội dung SRS/CR cho agent, nên helper này chưa có chỗ dùng.
 
