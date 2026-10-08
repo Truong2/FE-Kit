@@ -4,7 +4,7 @@ Tài liệu này thay cho `output/fe-kit-architecture-evolution.md`. `CHANGELOG.
 
 ## Đích đến
 
-Một **engine dùng chung**, không gắn với domain nào. Engine gồm state machine của mode, gate runner, hook, MCP, run-log, báo cáo và vòng tự học. Các **domain pack** khai báo mode, artifact, rule, template và gate riêng của mình. FE là pack đầu tiên và phải giữ nguyên hành vi, tương thích ngược với repo dự án đang dùng (`docs/frontend-tasks`, field của `workflow-status.md`, plugin `fe`, tool `fe_*`).
+FE-Kit chỉ phục vụ domain frontend. Bên trong kit, phần dùng chung được tách thành **engine**: state machine của mode, gate runner, hook, MCP, run-log, báo cáo và vòng tự học. Mọi thứ riêng của FE nằm trong **pack FE**: mode, artifact, rule, template và gate. Việc tách này để giữ code gọn và dễ test, không nhằm làm thêm domain khác. Pack FE phải giữ nguyên hành vi và tương thích ngược với repo dự án đang dùng (`docs/frontend-tasks`, field của `workflow-status.md`, plugin `fe`, tool `fe_*`).
 
 Mức đánh giá của bản 2.1.0, trước lộ trình này:
 
@@ -19,15 +19,15 @@ Mức đánh giá của bản 2.1.0, trước lộ trình này:
 
 ## Quyết định đã chốt
 
-1. Đa domain: tách engine khỏi FE domain pack.
+1. Tách engine khỏi pack FE (Phase 3). Ban đầu chọn "đa domain"; ngày 2026-10-08 chốt lại là **kit chỉ dùng cho FE**, nên không làm pack thật thứ hai (Phase 5).
 2. Có ngân sách API để chạy eval thật.
 3. Run-log ghi file JSONL trong task folder và commit cùng code.
 
 Mặc định đổi được khi review từng phase:
 
 - `enforce` chỉ thành mặc định khi đạt luật eval bên dưới.
-- Bước tách engine là minor vì không đổi hành vi. Chỉ lên major khi có pack thật thứ hai.
-- Manifest của pack viết bằng YAML rồi compile sang JS. Mỗi pack một plugin.
+- Bước tách engine là minor vì không đổi hành vi.
+- Manifest của pack viết bằng YAML rồi compile sang JS.
 - Gate đếm issue chỉ báo lỗi khi nhận diện được header bảng; không nhận diện được thì cảnh báo.
 
 ## Các phase
@@ -37,9 +37,9 @@ Mặc định đổi được khi review từng phase:
 | 0 | 2.1.1 | Eval chạy được, có baseline; khôi phục lộ trình; gom danh sách file/rule về một nguồn | Code xong; chờ chạy eval thật để có baseline |
 | 1 | 2.2.0 | Run-log `tracking/run-log.jsonl`, reason code, `fe-kit report`, `fe-kit mode begin/end` cho adapter không có hook, quyết định `enforce` | Code xong; `enforce` chưa bật vì chưa có baseline (xem bên dưới) |
 | 2 | 2.3.0 | Đếm issue từ `review-bugs.md`, taxonomy bug (nhóm + nguyên nhân gốc), deprecate field không gate nào đọc, chuyển gate `check-*` ra khỏi CLI, rule input không tin cậy, kiểm ghi qua shell | Code xong; eval `plan-ignores-injected-srs` chờ chạy thật |
-| 3 | 2.4.0 | Tách `packages/engine` + `packages/pack-fe` theo kiểu strangler, có golden test; pack mẫu thứ hai chỉ dùng trong test | Xong; phần còn lại chuyển sang Phase 5 (xem bên dưới) |
+| 3 | 2.4.0 | Tách `packages/engine` + `packages/pack-fe` theo kiểu strangler, có golden test; pack mẫu thứ hai chỉ dùng trong test | Xong (xem bên dưới) |
 | 4 | 2.5.0 | `retro`: tổng hợp run-log + bug thành đề xuất sửa rule, có người duyệt | Code xong; eval `retro-proposes-not-applies` chờ chạy thật; cần vài tuần run-log thật để retro có ý nghĩa |
-| 5 | 3.0.0 | Pack thật thứ hai (BE hoặc QA), mỗi pack một plugin | Chưa làm |
+| 5 | — | Pack thật thứ hai (BE hoặc QA), mỗi pack một plugin | Không làm: kit chỉ dùng cho FE |
 
 ### Luật bật `enforce` mặc định
 
@@ -69,11 +69,14 @@ Trạng thái ở 2.2.0: **giữ `warn`**. Bộ eval chưa chạy thật nên ch
 
 Pack mẫu bắt được hai giả định FE trong engine và đã sửa: tiền tố lệnh (`/fe:` trùng `FE `) và đường dẫn run-log gắn cứng `tracking/`.
 
-Chuyển sang Phase 5 vì cần pack thật thứ hai mới có ý nghĩa:
+Không làm, vì chỉ có ý nghĩa khi có pack thật thứ hai:
 
-- `generatePack(pack)`: generator sinh plugin cho pack bất kỳ (hiện generator vẫn chỉ sinh plugin `fe` từ `core/`).
-- CLI chọn pack theo registry (hiện `bin/fe-kit.mjs` vẫn là CLI của FE).
-- `standard.yaml` sinh từ manifest (hiện vẫn viết tay, có test giữ khớp danh sách file).
+- `generatePack(pack)`: generator sinh plugin cho pack bất kỳ. Generator vẫn chỉ sinh plugin `fe` từ `core/`.
+- CLI chọn pack theo registry. `bin/fe-kit.mjs` vẫn là CLI của FE.
+
+Pack mẫu `docs` và test `engine-genericity` vẫn giữ để engine không bị dính khái niệm FE trở lại.
+
+Có thể làm riêng nếu thấy cần: sinh `standard.yaml` từ manifest. File này vẫn viết tay, có test giữ khớp danh sách file.
 
 ## Lệch đã biết, cần quyết định
 

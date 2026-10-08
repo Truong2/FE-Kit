@@ -1,6 +1,6 @@
 # Kiến trúc Agent / Multi-Agent
 
-Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi nguyên tắc đều chỉ ra nơi nó được thực thi; nguyên tắc nào chỉ nằm trong prompt thì ghi rõ như vậy. Hướng phát triển tiếp theo (engine + domain pack): [ROADMAP.md](ROADMAP.md).
+Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi nguyên tắc đều chỉ ra nơi nó được thực thi; nguyên tắc nào chỉ nằm trong prompt thì ghi rõ như vậy. Lộ trình và các quyết định: [ROADMAP.md](ROADMAP.md).
 
 ## Mô hình: Orchestrator–Worker qua state file
 
@@ -30,7 +30,7 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
 
 ## Engine và domain pack
 
-Từ v2.4.0 kit tách làm hai tầng:
+Kit chỉ dùng cho domain frontend. Từ v2.4.0 code tách làm hai tầng để phần điều phối dùng chung không lẫn với luật riêng của FE, chứ không nhằm hỗ trợ domain khác:
 
 | Tầng | Package | Chứa |
 |---|---|---|
