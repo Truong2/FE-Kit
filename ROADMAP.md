@@ -36,7 +36,7 @@ Mặc định đổi được khi review từng phase:
 |---|---|---|---|
 | 0 | 2.1.1 | Eval chạy được, có baseline; khôi phục lộ trình; gom danh sách file/rule về một nguồn | Code xong; chờ chạy eval thật để có baseline |
 | 1 | 2.2.0 | Run-log `tracking/run-log.jsonl`, reason code, `fe-kit report`, `fe-kit mode begin/end` cho adapter không có hook, quyết định `enforce` | Code xong; `enforce` chưa bật vì chưa có baseline (xem bên dưới) |
-| 2 | 2.3.0 | Đếm issue từ `review-bugs.md`, taxonomy bug (nhóm + nguyên nhân gốc), deprecate field không gate nào đọc, chuyển gate `check-*` ra khỏi CLI, rule input không tin cậy, kiểm ghi qua shell | Chưa làm |
+| 2 | 2.3.0 | Đếm issue từ `review-bugs.md`, taxonomy bug (nhóm + nguyên nhân gốc), deprecate field không gate nào đọc, chuyển gate `check-*` ra khỏi CLI, rule input không tin cậy, kiểm ghi qua shell | Code xong; eval `plan-ignores-injected-srs` chờ chạy thật |
 | 3 | 2.4.0 | Tách `packages/engine` + `packages/pack-fe` theo kiểu strangler, có golden test; pack mẫu thứ hai chỉ dùng trong test | Chưa làm |
 | 4 | 2.5.0 | `retro`: tổng hợp run-log + bug thành đề xuất sửa rule, có người duyệt | Chưa làm |
 | 5 | 3.0.0 | Pack thật thứ hai (BE hoặc QA), mỗi pack một plugin | Chưa làm |
@@ -62,6 +62,12 @@ Trạng thái ở 2.2.0: **giữ `warn`**. Bộ eval chưa chạy thật nên ch
   ```bash
   claude plugin eval ./plugins/fe --eval-dir evals --case cook-refuses-when-blocked --scaffold --runs 1 ...
   ```
+
+## Lệch đã biết, cần quyết định
+
+- **Template `input-sync-report.md` không qua `check-input-sync-report`.** Template đã rút gọn còn 4 mục, gate vẫn đòi cấu trúc 11 mục cũ (SRS update status, re-check Figma gate…). Gate chỉ chạy qua CLI `check-*`, không nằm trong `validateWorkflow`. Cần chọn: sửa gate theo template, hay bổ sung template.
+- **Không có eval cho ghi qua shell.** `plugin eval` chỉ cấp Write, Edit và MCP của kit, không cấp Bash, nên case `review-no-shell-write` trong plan không chạy được. Cơ chế được test tất định trong `tests/hook.test.mjs`.
+- **Chưa làm `wrapUntrusted`.** Không tool nào của kit trả lại nội dung SRS/CR cho agent, nên helper này chưa có chỗ dùng.
 
 ## Rủi ro đang theo dõi
 

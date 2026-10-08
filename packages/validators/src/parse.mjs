@@ -54,3 +54,15 @@ export function parseWorkflowStatus(raw) {
 
   return { ok: true, data: result.data, body };
 }
+
+/**
+ * Một ô trong bảng questions.md được coi là "có nội dung thật" nếu
+ * không phải placeholder (N/A, dấu gạch ngang, chỗ trống, <...>).
+ */
+export function realQuestionCell(v) {
+  const t = String(v ?? '').trim();
+  if (!t) return false;
+  if (/^(n\/a|na|không áp dụng|khong ap dung|none|-|—|\.\.\.)$/i.test(t)) return false;
+  if (/^<.*>$/.test(t)) return false;
+  return true;
+}

@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseWorkflowStatus, parseFrontMatterLoose } from './parse.mjs';
-import { countOpenBlockingQuestions } from './gates.mjs';
+import { countOpenBlockingQuestions, effectiveOpenIssues } from './gates.mjs';
+import { countOpenIssuesInTask } from './review-bugs.mjs';
 import { evaluateModeEntry } from './transitions.mjs';
 import { AGENT_FOR_COMMAND, MODE_REQUIRED_ARTIFACTS, rulesForMode } from './modes.mjs';
 
@@ -38,7 +39,8 @@ export function modeBriefing({ taskDir, taskRef, command, rulesDir, rulesLabel, 
   const strict = parseWorkflowStatus(raw);
   const data = strict.ok ? strict.data : parseFrontMatterLoose(raw).data;
   const openBlockingQuestions = countOpenBlockingQuestions(readIfExists(path.join(taskDir, 'planning', 'questions.md')));
-  const entry = evaluateModeEntry({ requested: command, data, openBlockingQuestions, taskRef });
+  const openIssues = effectiveOpenIssues(data, countOpenIssuesInTask((rel) => readIfExists(path.join(taskDir, rel))));
+  const entry = evaluateModeEntry({ requested: command, data, openBlockingQuestions, openIssues, taskRef });
 
   if (entry.allowed) {
     lines.push(`GATE: ĐƯỢC CHẠY FE ${command} (${entry.mode}) cho ${taskRef}.`);

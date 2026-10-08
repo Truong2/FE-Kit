@@ -1,6 +1,6 @@
 /**
  * Đo phần rule mà `fe_begin_mode` trả nguyên văn cho mỗi mode (số ký tự, task
- * có Figma — trường hợp lớn nhất). Trần = số đo lúc đặt (v2.1.0) + ~15%.
+ * có Figma — trường hợp lớn nhất). Trần = số đo lúc đặt (v2.3.0) + ~15%.
  *
  * Test này không nhằm cắt rule: nó chặn rule phình lên mà không ai để ý. Khi
  * cố ý thêm rule, đo lại và nâng trần trong cùng PR, ghi lý do trong CHANGELOG.
@@ -13,19 +13,20 @@ import { rulesForMode, COMMANDS } from '../packages/validators/src/index.mjs';
 
 const RULES = path.join(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), 'core', 'rules');
 
-// Số đo khi đặt trần (v2.1.0): plan 7987, quick 8665, input-sync 7411, figma 7344,
-// figma-review 8664, cook 9985, bugfix 9372, review 10692, test 8088, pr 9371.
+// Số đo khi đặt trần (v2.3.0, thêm untrusted-input-contract.md cho mọi mode): plan 8855,
+// quick 9543, input-sync 8272, figma 8204, figma-review 9524, cook 10863, bugfix 10665,
+// review 11985, test 8941, pr 10646. (v2.1.0: plan 7987 … review 10692.)
 const BUDGET = {
-  plan: 9200,
-  quick: 10000,
-  'input-sync': 8600,
-  figma: 8500,
-  'figma-review': 10000,
-  cook: 11500,
-  bugfix: 10800,
-  review: 12300,
-  test: 9300,
-  pr: 10800,
+  plan: 10200,
+  quick: 11000,
+  'input-sync': 9600,
+  figma: 9500,
+  'figma-review': 11000,
+  cook: 12500,
+  bugfix: 12300,
+  review: 13800,
+  test: 10300,
+  pr: 12300,
 };
 
 /** Kích thước payload rule giống cách `fe_begin_mode` ghép: `--- file ---` + nội dung. */

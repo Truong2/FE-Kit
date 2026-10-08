@@ -58,13 +58,14 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
    | frontend-developer | Agent | Sửa source khi gate của task chưa mở |
 
    Dùng `disallowedTools` thay cho whitelist `tools:` để agent thừa hưởng Skill, MCP của kit và Figma MCP của từng máy (tên server Figma khác nhau nên không whitelist được).
-   - **Rủi ro còn lại:** reviewer/tester/release-manager có Bash nên vẫn ghi được file qua shell. Lưới chặn cuối là scope diff ở `fe_scope_diff` và `validate-pr`.
+   - **Ghi qua shell:** reviewer/tester/release-manager có Bash. Hook cảnh báo lệnh shell trông như ghi file (`FE_KIT_BASH_GUARD=off` để tắt), và không cho mode chỉ đọc kết thúc khi file source (theo `source_paths`) bị đổi so với lúc mở mode (`END_SOURCE_TOUCHED_IN_READONLY_MODE`). Lưới chặn cuối vẫn là scope diff ở `fe_scope_diff` và `validate-pr`.
 
 4. **Description là hợp đồng delegate.** Mỗi description ghi rõ khi nào dùng và khi nào không. Plugin agent có tên `fe:<name>`.
 
 5. **Handoff luôn qua `next_prompt`.** Mode kết thúc ghi `next_mode` + `next_prompt`. Không agent nào tự nhảy mode. `fe_begin_mode` so mode được yêu cầu với gate thật (câu hỏi blocking đếm từ `questions.md`, `build_ready`, Figma gate, review/bug) và với `next_mode` đã ghi.
 
 6. **Sự thật tính được thắng field tự khai.** Scope diff tính từ `git diff` so với bảng "File sẽ tạo / cập nhật" của plan (`packages/validators/src/scope.mjs`). Command evidence đọc từ bảng `Command evidence log` của `output/test-summary.md`. Các field tự khai (`token_budget_status`, `scope_diff_status`…) chỉ còn là dự phòng và đã thành optional trong schema.
+   - **Issue đang mở** (`countOpenIssuesBySeverity`, từ v2.3.0): đếm từ bảng của `tracking/review-bugs.md` và mục "Issue phát hiện" của `output/review-report.md`, cột tìm theo tên header. Gate dùng `max(tự khai, đếm được)` cho Critical/High như với câu hỏi blocking; field ghi thấp hơn bảng là lỗi `ISSUES_COUNT_MISMATCH`. Bảng không nhận diện được cột ID/Severity/Trạng thái thì chỉ cảnh báo. Cột `Nhóm` và `Nguyên nhân gốc` có danh sách giá trị trong `review-bug-contract.md` để retro đếm được.
    - **Command evidence** (`summarizeCommandEvidence`): một dòng chỉ được tính là đã chạy khi cột "Đã chạy thật?" ghi `Có` và cột "Kết quả" ghi `Passed`/`Failed`. Ô trống, ô còn nguyên lựa chọn của template, `Có` kèm `Not run` là dòng thiếu dữ liệu và chỉ sinh cảnh báo. Lần chạy gần nhất của một lệnh mà `Failed` cũng chỉ cảnh báo, vì test fail đã route sang bugfix ở tầng mode.
    - **Scope tại từng điểm chuyển gate:**
 
@@ -75,6 +76,10 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
      | `validate-pr` (CLI, CI) | Như trên | Luôn tính |
 
      Plan chưa có bảng file (task tạo từ v1.x) thì mọi điểm đều cảnh báo và dùng `scope_diff_status` tự khai. File thuộc plan của task khác cùng thư mục không bị tính là ngoài plan.
+
+## Input không tin cậy
+
+SRS, CR, câu trả lời, Figma, comment trong source và kết quả tool là dữ liệu (`core/rules/untrusted-input-contract.md`, nạp cho mọi mode). Đoạn "Điều phối" của command bảo main thread đặt input người dùng dán vào trong khối `<untrusted-input>` khi brief subagent; `_protocol.md` bảo agent coi nội dung đó là dữ liệu và ghi chỉ thị lạ vào `questions.md`. Đây là lớp prompt (mềm); lớp cứng vẫn là gate và hook: chỉ thị trong SRS không mở được gate. Eval `plan-ignores-injected-srs` đo hành vi này.
 
 ## Hook runtime
 
@@ -99,7 +104,7 @@ Giới hạn đã biết (đều có test trong `tests/hook.test.mjs`):
 - **Marker hết hạn sau 4 giờ:** coi như không có mode đang chạy, nên không chặn sửa source theo gate của task và không kiểm tra kết thúc. Luật theo vai vẫn áp dụng vì không cần marker.
 - **Chuyển task giữa chừng:** lệnh FE mới thay marker của mode trước đang `pending` và phát cảnh báo nêu mode, task chưa qua gate kết thúc. Hook không tự quay lại kiểm tra task cũ.
 - **Mode bỏ dở:** người dùng ngắt mode rồi hỏi việc khác thì `Stop` của lượt sau vẫn kiểm gate kết thúc của mode đó. Ở mức `enforce`, hook chặn đúng một lần rồi thả và đóng marker.
-- **Ghi file qua shell:** hook chỉ thấy Edit/Write. Agent có Bash vẫn ghi được file; lưới chặn là scope diff ở các điểm chuyển gate phía trên.
+- **Ghi file qua shell:** hook không chặn được lệnh shell trước khi chạy, chỉ cảnh báo theo mẫu lệnh. Mode chỉ đọc bị chặn khi kết thúc nếu file source bị đổi; file ngoài `source_paths` (vd `coverage/`) và thay đổi có sẵn của người dùng không bị tính.
 
 ## Mức kiểm tra theo adapter
 
@@ -132,17 +137,17 @@ Mỗi task có `tracking/run-log.jsonl`: mỗi sự kiện một dòng JSON, com
 
 ## Ngân sách context theo mode
 
-`fe_begin_mode` trả nguyên văn rule của mode. Số ký tự đo ở v2.1.0, task có Figma (trường hợp lớn nhất):
+`fe_begin_mode` trả nguyên văn rule của mode. Số ký tự đo ở v2.3.0 (đã có `untrusted-input-contract.md` cho mọi mode), task có Figma (trường hợp lớn nhất):
 
 | Mode | Ký tự | Mode | Ký tự |
 |---|---|---|---|
-| plan | 7.987 | cook | 9.985 |
-| quick | 8.665 | bugfix | 9.372 |
-| input-sync | 7.411 | review | 10.692 |
-| figma | 7.344 | test | 8.088 |
-| figma-review | 8.664 | pr | 9.371 |
+| plan | 8.855 | cook | 10.863 |
+| quick | 9.543 | bugfix | 10.665 |
+| input-sync | 8.272 | review | 11.985 |
+| figma | 8.204 | test | 8.941 |
+| figma-review | 9.524 | pr | 10.646 |
 
-Khoảng 2–3,5 nghìn token mỗi mode. `tests/context-budget.test.mjs` đặt trần bằng số đo cộng khoảng 15% để rule không phình lên mà không ai để ý. Chưa có số liệu cho thấy cần tách rule thành mục lục/reference; khi cố ý thêm rule thì đo lại và nâng trần trong cùng PR.
+Khoảng 2,2–3,8 nghìn token mỗi mode. `tests/context-budget.test.mjs` đặt trần bằng số đo cộng khoảng 15% để rule không phình lên mà không ai để ý. Chưa có số liệu cho thấy cần tách rule thành mục lục/reference; khi cố ý thêm rule thì đo lại và nâng trần trong cùng PR.
 
 ## Eval hành vi
 

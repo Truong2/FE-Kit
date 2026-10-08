@@ -2,9 +2,11 @@
 
 ## Bug cần xử lý
 
-| ID | Severity | Nhóm | File/evidence | Expected | Actual | Hướng xử lý | Owner | Trạng thái |
-|---|---|---|---|---|---|---|---|---|
-| BUG-001 | Critical / High / Medium / Low |  |  |  |  |  |  | Open |
+| ID | Severity | Nhóm | File/evidence | Expected | Actual | Hướng xử lý | Nguyên nhân gốc | Owner | Trạng thái |
+|---|---|---|---|---|---|---|---|---|---|
+| BUG-001 | Critical / High / Medium / Low |  |  |  |  |  |  |  | Open |
+
+`Nhóm` và `Nguyên nhân gốc` dùng giá trị trong `review-bug-contract.md` để retro đếm được. `Trạng thái`: Open, Fixed, Closed, Accepted.
 
 ## Quy tắc severity
 

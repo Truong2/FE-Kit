@@ -205,6 +205,47 @@ describe('CLI bundle trong repo dự án (không có node_modules)', () => {
       expect(project('validate-workflow', 'FE-5-wf', '--no-scope').out).toMatch(/validate-workflow passed/);
     });
 
+    describe('validate-pr --orphans', () => {
+      const setConfig = (yaml) => fs.writeFileSync(path.join(target, '.frontend-delivery', 'standard.yaml'), yaml);
+
+      beforeEach(() => {
+        readyTask('FE-8-orphan', ['src/features/order/']);
+        commitBase();
+        writeSource('src/features/order/Cancel.tsx'); // thuộc plan
+        writeSource('src/store/global.ts'); // không task nào khai
+        writeSource('docs/notes.md'); // không phải source
+      });
+
+      it('mặc định chỉ cảnh báo, nêu đúng file source không thuộc plan nào', () => {
+        const r = project('validate-pr', '--orphans');
+        expect(r.status).toBe(0);
+        expect(r.out).toMatch(/1 file source đã đổi nhưng không task nào khai/);
+        expect(r.out).toMatch(/src\/store\/global\.ts/);
+        expect(r.out).not.toMatch(/Cancel\.tsx|docs\/notes\.md/);
+      });
+
+      it('require_task_for_source: error thì chặn; off thì bỏ qua', () => {
+        setConfig('require_task_for_source: error\n');
+        expect(project('validate-pr', '--orphans').status).toBe(1);
+        setConfig('require_task_for_source: off\n');
+        expect(project('validate-pr', '--orphans').out).toMatch(/bỏ qua/);
+      });
+
+      it('source_paths giới hạn phạm vi; giá trị sai kiểu thì cảnh báo và dùng mặc định', () => {
+        setConfig('require_task_for_source: error\nsource_paths: [lib/]\n');
+        expect(project('validate-pr', '--orphans').out).toMatch(/passed/);
+        setConfig('require_task_for_source: always\n');
+        const r = project('validate-pr', '--orphans');
+        expect(r.status).toBe(0);
+        expect(r.out).toMatch(/giá trị require_task_for_source không hợp lệ/);
+      });
+
+      it('mọi file source đều thuộc plan thì pass', () => {
+        fs.rmSync(path.join(target, 'src', 'store'), { recursive: true });
+        expect(project('validate-pr', '--orphans').out).toMatch(/validate-pr --orphans passed/);
+      });
+    });
+
     it('test-summary có dòng evidence trống không qua validate-pr', () => {
       readyTask('FE-6-ev', []);
       fs.writeFileSync(

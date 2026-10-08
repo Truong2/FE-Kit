@@ -8,11 +8,15 @@ import {
   hasCommandEvidence,
   summarizeCommandEvidence,
   realQuestionCell,
+  effectiveOpenIssues,
 } from './gates.mjs';
-import { WorkflowStatusSchema, GateStatus, CoreMode } from './schema.mjs';
+import { countOpenIssuesInTask } from './review-bugs.mjs';
+import { WorkflowStatusSchema, GateStatus, CoreMode, DEPRECATED_FIELDS } from './schema.mjs';
 import { computeScopeDiff, parsePlannedFiles, listChangedFiles, detectBaseRef } from './scope.mjs';
 import { evaluateModeEntry, COMMAND_TO_MODE } from './transitions.mjs';
 import { MODE_REQUIRED_ARTIFACTS } from './modes.mjs';
+import { TASKS_ROOT } from './resolve.mjs';
+import { PROJECT_CONFIG_DEFAULTS } from './project-config.mjs';
 
 function taskIo(taskDir) {
   const exists = (rel) => fs.existsSync(path.join(taskDir, rel));
@@ -63,18 +67,39 @@ export function scopeDiffForTask(taskDir, { repoRoot, base = '', changedFiles } 
   return { ...result, plannedFiles };
 }
 
-/** File/glob khai trong plan của các task folder cùng cấp (docs/frontend-tasks/*). */
-function plannedFilesOfSiblingTasks(taskDir) {
-  const parent = path.dirname(taskDir);
-  if (!fs.existsSync(parent)) return [];
-  const self = path.basename(taskDir);
+/**
+ * File source đã đổi mà không task nào khai trong bảng "File sẽ tạo / cập nhật"
+ * (PR chỉ sửa source, không gắn task). Chỉ xét file nằm dưới `sourcePaths`.
+ * Trả `null` khi không tính được (không có git).
+ *
+ * @param {string} repoRoot
+ * @param {{ base?: string, sourcePaths?: string[] }} [opts]
+ * @returns {{ files: string[], base: string, plannedCount: number } | null}
+ */
+export function findUntrackedSourceChanges(repoRoot, { base = '', sourcePaths = PROJECT_CONFIG_DEFAULTS.source_paths } = {}) {
+  const changed = listChangedFiles({ cwd: repoRoot, base });
+  if (!changed.ok) return null;
+  const planned = plannedFilesOfTasksIn(path.join(repoRoot, TASKS_ROOT));
+  const diff = computeScopeDiff({ plannedFiles: planned, changedFiles: changed.files });
+  const files = diff.outOfPlan.filter((f) => sourcePaths.some((p) => f.startsWith(p)));
+  return { files, base: changed.base, plannedCount: planned.length };
+}
+
+/** File/glob khai trong plan của mọi task folder trực tiếp dưới `tasksRoot`, trừ `exclude`. */
+function plannedFilesOfTasksIn(tasksRoot, exclude = '') {
+  if (!fs.existsSync(tasksRoot)) return [];
   const planned = [];
-  for (const ent of fs.readdirSync(parent, { withFileTypes: true })) {
-    if (!ent.isDirectory() || ent.name === self) continue;
-    const plan = path.join(parent, ent.name, 'planning', 'implementation-plan.md');
+  for (const ent of fs.readdirSync(tasksRoot, { withFileTypes: true })) {
+    if (!ent.isDirectory() || ent.name === exclude) continue;
+    const plan = path.join(tasksRoot, ent.name, 'planning', 'implementation-plan.md');
     if (fs.existsSync(plan)) planned.push(...parsePlannedFiles(fs.readFileSync(plan, 'utf8')));
   }
   return planned;
+}
+
+/** File/glob khai trong plan của các task folder cùng cấp (docs/frontend-tasks/*). */
+function plannedFilesOfSiblingTasks(taskDir) {
+  return plannedFilesOfTasksIn(path.dirname(taskDir), path.basename(taskDir));
 }
 
 /**
@@ -140,6 +165,7 @@ export function evaluateModeCompletion({ taskDir, taskRef, command, startedAt, s
     requested: command,
     data,
     openBlockingQuestions: countOpenBlockingQuestions(read('planning/questions.md')),
+    openIssues: effectiveOpenIssues(data, countOpenIssuesInTask(read)),
     taskRef,
   });
   if (!entry.allowed) {
@@ -255,6 +281,7 @@ export {
   evaluateWorkflowGates,
   evaluatePrGates,
   countOpenBlockingQuestions,
+  effectiveOpenIssues,
   hasCommandEvidence,
   summarizeCommandEvidence,
   realQuestionCell,
@@ -265,6 +292,7 @@ export {
   WorkflowStatusSchema,
   GateStatus,
   CoreMode,
+  DEPRECATED_FIELDS,
 };
 export { snapshotFiles, filesTouchedSince, fingerprintFile } from './scope.mjs';
 export {
@@ -278,6 +306,24 @@ export {
 } from './runlog.mjs';
 export { summarizeRunLog, buildReport, renderReport } from './report.mjs';
 export { modeBriefing } from './briefing.mjs';
+export { loadProjectConfig, PROJECT_CONFIG_DEFAULTS, PROJECT_CONFIG_FILE } from './project-config.mjs';
+export {
+  validateSrsReference,
+  validateQuestionsRouting,
+  validatePlanArchitecture,
+  validatePlanChecklistSync,
+  validateInputSyncReport,
+  validateFigmaEvidence,
+  validateAssetGate,
+} from './fe-checks.mjs';
+export {
+  parseIssueTable,
+  countOpenIssuesBySeverity,
+  countOpenIssuesInTask,
+  ISSUE_CATEGORIES,
+  ISSUE_ROOT_CAUSES,
+  ISSUE_SEVERITIES,
+} from './review-bugs.mjs';
 export { resolveTaskDir, isPathInside, relativePosix, toPosix, TASKS_ROOT } from './resolve.mjs';
 export { scaffoldTask, isValidTaskName, TASK_TEMPLATE_FILES } from './scaffold.mjs';
 export {

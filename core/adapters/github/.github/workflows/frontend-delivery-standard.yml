@@ -50,3 +50,11 @@ jobs:
               node bin/fe-kit.mjs validate-pr "$task"
             fi
           done
+      - name: Source changes without a task
+        run: |
+          if [ ! -f bin/fe-kit.mjs ]; then
+            echo "bin/fe-kit.mjs not installed; skipping"
+            exit 0
+          fi
+          # Mức xử lý: require_task_for_source (off | warn | error) trong .frontend-delivery/standard.yaml.
+          node bin/fe-kit.mjs validate-pr --orphans --base "${{ github.event.pull_request.base.sha }}"

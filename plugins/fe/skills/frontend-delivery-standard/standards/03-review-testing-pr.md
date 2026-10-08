@@ -42,7 +42,6 @@ Sau mỗi review, `tracking/workflow-status.md` phải update:
 
 - `current_mode: review-mode`
 - `review_status: passed | needs_bugfix | blocked | insufficient_evidence`
-- `review_report_status: created | updated`
 - `review_bug_status: none | open | fixed | waived | blocked`
 - `critical_issues_open`
 - `high_issues_open`

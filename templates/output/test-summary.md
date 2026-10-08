@@ -16,7 +16,6 @@
 
 | Mục | Giá trị |
 |---|---|
-| test_summary_status | created / updated |
 | command_evidence_status | completed / partial / not_required |
 | test_command_log_status | completed / partial / not_required |
 | Có blocker | Có / Không |

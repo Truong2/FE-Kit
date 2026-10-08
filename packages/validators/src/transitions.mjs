@@ -105,10 +105,11 @@ export function checkRecordedNextMode({ currentMode, nextMode }) {
  * @param {object} params.data frontmatter của workflow-status.md (đã parse)
  * @param {number} params.openBlockingQuestions số câu hỏi blocking mở đếm từ questions.md
  * @param {string} [params.taskRef] task folder để dựng prompt thay thế
+ * @param {{ critical: number, high: number }} [params.openIssues] issue đang mở đếm từ bảng issue (`countOpenIssuesInTask`)
  * @returns {{ allowed: boolean, command: string, mode: string, reasons: string[], reasonCodes: string[], warnings: string[], redirect: string }}
  *   `reasonCodes[i]` là reason code ổn định của `reasons[i]` (dùng cho run-log).
  */
-export function evaluateModeEntry({ requested, data = {}, openBlockingQuestions = 0, taskRef = '<task-folder>' }) {
+export function evaluateModeEntry({ requested, data = {}, openBlockingQuestions = 0, openIssues, taskRef = '<task-folder>' }) {
   const command = normalizeCommand(requested);
   const result = { allowed: true, command, mode: COMMAND_TO_MODE[command] || '', reasons: [], reasonCodes: [], warnings: [], redirect: '' };
   const block = (code, reason) => {
@@ -153,7 +154,9 @@ export function evaluateModeEntry({ requested, data = {}, openBlockingQuestions 
   }
 
   if (command === 'pr') {
-    if (Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0 || bool(data.bugfix_required)) {
+    const critical = Math.max(Number(data.critical_issues_open || 0), Number(openIssues?.critical || 0));
+    const high = Math.max(Number(data.high_issues_open || 0), Number(openIssues?.high || 0));
+    if (critical > 0 || high > 0 || bool(data.bugfix_required)) {
       block('ENTRY_OPEN_BUGS', 'Còn bug Critical/High hoặc bugfix_required=true.');
       result.redirect ||= `FE bugfix ${taskRef}`;
     }

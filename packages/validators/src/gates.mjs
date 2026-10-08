@@ -13,6 +13,10 @@
  */
 import { checkRecordedNextMode, normalizeCommand } from './transitions.mjs';
 import { REQUIRED_TASK_DOCS } from './modes.mjs';
+import { realQuestionCell } from './parse.mjs';
+import { countOpenIssuesInTask } from './review-bugs.mjs';
+
+export { realQuestionCell };
 
 function norm(v) {
   return String(v ?? '').trim().toLowerCase();
@@ -20,18 +24,6 @@ function norm(v) {
 
 function bool(v) {
   return v === true || norm(v) === 'true';
-}
-
-/**
- * Một ô trong bảng questions.md được coi là "có nội dung thật" nếu
- * không phải placeholder (N/A, dấu gạch ngang, chỗ trống, <...>).
- */
-export function realQuestionCell(v) {
-  const t = String(v ?? '').trim();
-  if (!t) return false;
-  if (/^(n\/a|na|không áp dụng|khong ap dung|none|-|—|\.\.\.)$/i.test(t)) return false;
-  if (/^<.*>$/.test(t)) return false;
-  return true;
 }
 
 /**
@@ -167,6 +159,32 @@ function commandEvidenceWarnings(testSummaryMarkdown) {
   return warnings;
 }
 
+const SEVERITY_LABEL = { critical: 'Critical', high: 'High' };
+
+/**
+ * Số issue Critical/High đang mở dùng cho gate: lấy max giữa field tự khai và
+ * số đếm từ bảng issue (chỉ khi bảng nhận diện được), giống cách đếm câu hỏi
+ * blocking — ghi 0 không che được issue còn mở trong bảng.
+ */
+export function effectiveOpenIssues(data, computed) {
+  const pick = (sev) => Math.max(Number(data[`${sev}_issues_open`] || 0), computed?.confident ? computed[sev] : 0);
+  return { critical: pick('critical'), high: pick('high') };
+}
+
+function issueTableWarnings(computed) {
+  const warnings = [];
+  if (computed.unknownStatusIds.length) {
+    warnings.push(`Issue chưa rõ trạng thái (ghi Open, Fixed, Closed...): ${computed.unknownStatusIds.join(', ')}.`);
+  }
+  if (computed.unknownCategoryIds.length) {
+    warnings.push(`Issue có cột Nhóm ngoài danh sách của review-bug-contract.md: ${computed.unknownCategoryIds.join(', ')}.`);
+  }
+  if (computed.unknownRootCauseIds.length) {
+    warnings.push(`Issue có cột Nguyên nhân gốc ngoài danh sách của review-bug-contract.md: ${computed.unknownRootCauseIds.join(', ')}.`);
+  }
+  return warnings;
+}
+
 const MD_FILES_WITHOUT_NEXT_PROMPT = [
   'task.md',
   'planning/implementation-plan.md',
@@ -218,6 +236,8 @@ export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
     Number(data.blocking_questions_open || 0),
     countOpenBlockingQuestions(questionsText)
   );
+  const computedIssues = countOpenIssuesInTask(read);
+  const openIssues = effectiveOpenIssues(data, computedIssues);
   const questionGate = norm(data.questions_resolution_gate_status);
   const questionStatus = norm(data.questions_status);
   const questionBlocked =
@@ -295,8 +315,8 @@ export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
     }
     const needBug =
       bool(data.bugfix_required) ||
-      Number(data.critical_issues_open || 0) > 0 ||
-      Number(data.high_issues_open || 0) > 0 ||
+      openIssues.critical > 0 ||
+      openIssues.high > 0 ||
       ['open', 'blocked'].includes(norm(data.review_bug_status));
     if (needBug && !exists('tracking/review-bugs.md')) {
       fail('ARTIFACT_REVIEW_BUGS_MISSING', 'Review có bug/Critical/High phải có tracking/review-bugs.md.');
@@ -366,7 +386,27 @@ export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   }
   if (exists('output/test-summary.md')) warnings.push(...commandEvidenceWarnings(read('output/test-summary.md')));
 
-  const criticalOrHigh = Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0;
+  // Issue đang mở đếm từ bảng của review-bugs.md / review-report.md.
+  for (const sev of ['critical', 'high']) {
+    const field = `${sev}_issues_open`;
+    const declared = Number(data[field] || 0);
+    if (computedIssues[sev] <= declared) continue;
+    const message =
+      `Bảng issue (tracking/review-bugs.md, output/review-report.md) còn ${computedIssues[sev]} issue ${SEVERITY_LABEL[sev]} đang mở ` +
+      `(${computedIssues.openIds[sev].join(', ')}) nhưng ${field}=${declared}. Cập nhật ${field} hoặc trạng thái issue.`;
+    if (computedIssues.confident) fail('ISSUES_COUNT_MISMATCH', message);
+    else warnings.push(`${message} Bảng issue thiếu cột ID/Severity/Trạng thái nên chỉ cảnh báo.`);
+  }
+  const openCriticalHigh = computedIssues.confident ? [...computedIssues.openIds.critical, ...computedIssues.openIds.high] : [];
+  if (openCriticalHigh.length && ['none', 'closed', 'resolved', 'fixed', 'waived'].includes(norm(data.review_bug_status))) {
+    fail(
+      'REVIEW_BUG_STATUS_MISMATCH',
+      `review_bug_status=${norm(data.review_bug_status)} nhưng còn issue Critical/High đang mở: ${openCriticalHigh.join(', ')}.`
+    );
+  }
+  warnings.push(...issueTableWarnings(computedIssues));
+
+  const criticalOrHigh = openIssues.critical > 0 || openIssues.high > 0;
   if (criticalOrHigh && ['test', 'pr'].includes(normalizeCommand(data.next_mode))) {
     fail('NEXT_MODE_WITH_CRITICAL_HIGH', 'Còn issue Critical/High thì next_mode không được là test/pr; route sang bugfix, input-sync hoặc figma-review.');
   }
@@ -411,10 +451,11 @@ export function evaluatePrGates({ data, exists, read, scope }) {
   if (!['passed', 'not_required'].includes(norm(data.review_status))) {
     fail('PR_REVIEW_NOT_PASSED', 'review_status phải passed/not_required trước PR.');
   }
+  const openIssues = effectiveOpenIssues(data, countOpenIssuesInTask(read));
   if (
     bool(data.bugfix_required) ||
-    Number(data.critical_issues_open || 0) > 0 ||
-    Number(data.high_issues_open || 0) > 0 ||
+    openIssues.critical > 0 ||
+    openIssues.high > 0 ||
     ['open', 'blocked'].includes(norm(data.review_bug_status))
   ) {
     fail('PR_OPEN_BUGS', 'Còn review bug/Critical/High trước PR.');

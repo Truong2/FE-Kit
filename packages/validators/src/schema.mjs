@@ -11,6 +11,9 @@ import { z } from 'zod';
  * v2.0.0: field mà validator tự tính được từ file/git (trạng thái artifact
  * theo mode, scope diff, command evidence, token budget) trở thành OPTIONAL.
  * Không field nào bị xoá — task folder tạo từ v1.x vẫn hợp lệ.
+ *
+ * v2.3.0: field không gate nào đọc được liệt kê ở `DEPRECATED_FIELDS` và trở
+ * thành optional; số issue Medium/Low tự tính được từ bảng issue nên cũng optional.
  */
 
 const GateStatus = z.enum([
@@ -48,6 +51,36 @@ const TriState = z.union([z.boolean(), z.literal('unknown')]);
 /** Field tự khai: giữ để tương thích, không còn bắt buộc. */
 const SelfReported = GateStatus.optional();
 
+const REF_REASON = 'Mục "Input ledger" trong body của workflow-status.md mới là danh sách input; không gate nào đọc field này.';
+const UNREAD = 'Không gate nào đọc field này.';
+const FROM_FILE = 'Suy ra được từ việc artifact tương ứng có tồn tại.';
+
+/**
+ * Field giữ lại để tương thích nhưng không gate nào đọc. Template vẫn có để
+ * task cũ và task mới cùng dạng; agent không cần cập nhật các field này.
+ * @type {{ field: string, since: string, reason: string }[]}
+ */
+export const DEPRECATED_FIELDS = [
+  ...['srs_input_refs', 'api_input_refs', 'figma_input_refs', 'project_context_refs', 'feature_context_refs', 'design_context_refs', 'source_inspection_refs', 'rule_refs'].map(
+    (field) => ({ field, since: '2.3.0', reason: REF_REASON })
+  ),
+  { field: 'required_input_count', since: '2.3.0', reason: 'Gate chỉ đọc missing_input_count.' },
+  ...['srs_logic_coverage_status', 'api_contract_mapping_status', 'api_error_mapping_status', 'fe_error_display_status'].map((field) => ({
+    field,
+    since: '2.3.0',
+    reason: `${UNREAD} SRS được kiểm qua srs_trace_matrix_status và ma trận trace trong plan.`,
+  })),
+  ...['ui_implementation_contract_status', 'figma_node_matrix_status', 'figma_component_binding_status'].map((field) => ({
+    field,
+    since: '2.3.0',
+    reason: `${UNREAD} Figma được kiểm qua figma_gate_status và ui_match_review_status.`,
+  })),
+  ...['rule_contract_application_status', 'clean_code_gate_status'].map((field) => ({ field, since: '2.3.0', reason: UNREAD })),
+  ...['input_sync_report_status', 'figma_summary_status', 'cook_status', 'review_report_status', 'test_summary_status', 'ui_figma_review_report_status', 'pr_summary_status'].map(
+    (field) => ({ field, since: '2.3.0', reason: FROM_FILE })
+  ),
+];
+
 export const WorkflowStatusSchema = z
   .object({
     // --- Header ---
@@ -67,7 +100,7 @@ export const WorkflowStatusSchema = z
     // --- Plan input ledger gates ---
     input_inventory_status: GateStatus,
     plan_input_ledger_status: GateStatus,
-    required_input_count: z.number().int().min(0),
+    required_input_count: z.number().int().min(0).optional(),
     missing_input_count: z.number().int().min(0),
     srs_input_refs: z.string().default(''),
     api_input_refs: z.string().default(''),
@@ -81,10 +114,10 @@ export const WorkflowStatusSchema = z
     // --- Core gates ---
     srs_required: TriState,
     srs_trace_matrix_status: GateStatus,
-    srs_logic_coverage_status: GateStatus,
-    api_contract_mapping_status: GateStatus,
-    api_error_mapping_status: GateStatus,
-    fe_error_display_status: GateStatus,
+    srs_logic_coverage_status: SelfReported,
+    api_contract_mapping_status: SelfReported,
+    api_error_mapping_status: SelfReported,
+    fe_error_display_status: SelfReported,
     rule_contract_application_status: SelfReported,
     clean_code_gate_status: SelfReported,
     questions_status: z.enum(['none', 'open', 'blocked', 'resolved', 'not_required']),
@@ -104,9 +137,9 @@ export const WorkflowStatusSchema = z
     // --- Figma/UI gates ---
     figma_required: TriState,
     figma_gate_status: GateStatus,
-    ui_implementation_contract_status: GateStatus,
-    figma_node_matrix_status: GateStatus,
-    figma_component_binding_status: GateStatus,
+    ui_implementation_contract_status: SelfReported,
+    figma_node_matrix_status: SelfReported,
+    figma_component_binding_status: SelfReported,
     ui_match_review_status: GateStatus,
     ui_match_severity_status: z.enum(['unknown', 'none', 'low', 'medium', 'high', 'critical']),
 
@@ -123,11 +156,13 @@ export const WorkflowStatusSchema = z
       'not_required',
     ]),
     review_report_status: SelfReported,
-    review_bug_status: z.enum(['none', 'open', 'blocked', 'closed']),
+    // 'resolved', 'fixed', 'waived' có trong template/standard từ v1.x nhưng schema thiếu.
+    review_bug_status: z.enum(['none', 'open', 'blocked', 'closed', 'resolved', 'fixed', 'waived']),
     critical_issues_open: z.number().int().min(0),
     high_issues_open: z.number().int().min(0),
-    medium_issues_open: z.number().int().min(0),
-    low_issues_open: z.number().int().min(0),
+    // Medium/Low tự đếm được từ bảng issue (`countOpenIssuesBySeverity`).
+    medium_issues_open: z.number().int().min(0).optional(),
+    low_issues_open: z.number().int().min(0).optional(),
     bugfix_required: z.boolean(),
     test_summary_status: z
       .enum(['not_started', 'created', 'updated', 'passed', 'failed', 'partial'])

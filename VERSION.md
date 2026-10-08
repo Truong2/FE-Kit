@@ -1,6 +1,6 @@
 # Version
 
-Current version: 2.2.0
+Current version: 2.3.0
 
 Status: stable — plugin là kênh duy nhất cho Claude Code; gate được thực thi bằng MCP tool và hook.
 

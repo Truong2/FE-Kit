@@ -15,26 +15,11 @@ vietnamese_diacritics_cache_marker: vi-diacritics-rules-folder-v1.0.0
 # Plan input ledger gates
 input_inventory_status: not_started
 plan_input_ledger_status: not_started
-required_input_count: 0
 missing_input_count: 0
-srs_input_refs: ""
-api_input_refs: ""
-figma_input_refs: ""
-project_context_refs: ""
-feature_context_refs: ""
-design_context_refs: ""
-source_inspection_refs: ""
-rule_refs: ""
 
 # Core gates
 srs_required: unknown
 srs_trace_matrix_status: not_started
-srs_logic_coverage_status: not_started
-api_contract_mapping_status: not_started
-api_error_mapping_status: not_started
-fe_error_display_status: not_started
-rule_contract_application_status: not_started
-clean_code_gate_status: not_started
 questions_status: none
 blocking_questions_open: 0
 questions_resolution_gate_status: not_started
@@ -52,29 +37,46 @@ playwright_screenshot_diff_status: not_required
 # Figma/UI gates
 figma_required: unknown
 figma_gate_status: unknown
-ui_implementation_contract_status: not_started
-figma_node_matrix_status: not_started
-figma_component_binding_status: not_started
 ui_match_review_status: not_started
 ui_match_severity_status: unknown
 
 # Mode output status
-input_sync_report_status: not_started
-figma_summary_status: not_started
-cook_status: not_started
 review_status: not_started
-review_report_status: not_started
 review_bug_status: none
 critical_issues_open: 0
 high_issues_open: 0
 medium_issues_open: 0
 low_issues_open: 0
 bugfix_required: false
+pr_status: not_started
+build_ready: false
+
+# Deprecated từ v2.3.0: không gate nào đọc, không cần cập nhật (giữ để tương thích)
+required_input_count: 0
+srs_input_refs: ""
+api_input_refs: ""
+figma_input_refs: ""
+project_context_refs: ""
+feature_context_refs: ""
+design_context_refs: ""
+source_inspection_refs: ""
+rule_refs: ""
+srs_logic_coverage_status: not_started
+api_contract_mapping_status: not_started
+api_error_mapping_status: not_started
+fe_error_display_status: not_started
+rule_contract_application_status: not_started
+clean_code_gate_status: not_started
+ui_implementation_contract_status: not_started
+figma_node_matrix_status: not_started
+figma_component_binding_status: not_started
+input_sync_report_status: not_started
+figma_summary_status: not_started
+cook_status: not_started
+review_report_status: not_started
 test_summary_status: not_started
 ui_figma_review_report_status: not_started
 pr_summary_status: not_started
-pr_status: not_started
-build_ready: false
 ---
 
 # Trạng thái workflow

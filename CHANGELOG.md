@@ -5,6 +5,50 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.3.0] — 2026-10-08
+
+Phase 2 của [ROADMAP.md](ROADMAP.md): gate tự đếm thay cho field tự khai, input không tin cậy, kiểm ghi qua shell. Schema `workflow-status.md` vẫn tương thích ngược: không xoá field, chỉ nới field bắt buộc thành optional và thêm giá trị enum.
+
+### Có thể ảnh hưởng task đang chạy
+
+- **Bug đang mở được đếm từ bảng.** Bảng của `tracking/review-bugs.md` (và mục "Issue phát hiện" của `output/review-report.md`) còn issue Critical/High ở trạng thái mở mà `critical_issues_open`/`high_issues_open` ghi thấp hơn thì validator báo `ISSUES_COUNT_MISMATCH`, và `FE pr`, `validate-pr`, `next_mode: test|pr` bị chặn như khi field ghi đúng. Bảng không nhận diện được cột ID/Severity/Trạng thái thì chỉ cảnh báo.
+- `review_bug_status` đóng (`none`, `closed`, `resolved`, `fixed`, `waived`) mà bảng còn Critical/High mở: lỗi `REVIEW_BUG_STATUS_MISMATCH`.
+- **Mode chỉ đọc (plan, input-sync, figma, figma-review, review, test, pr) không được kết thúc khi file source bị đổi** so với lúc mở mode, kể cả đổi qua shell (`END_SOURCE_TOUCHED_IN_READONLY_MODE`). Chỉ xét file dưới `source_paths` (mặc định `src/`, `app/`, `apps/`, `packages/`); thay đổi có sẵn của người dùng không bị tính.
+- Rule `untrusted-input-contract.md` nạp cho mọi mode: khoảng +900 ký tự mỗi mode; trần context nâng tương ứng.
+
+### Gate tính được
+
+- `packages/validators/src/review-bugs.mjs`: `parseIssueTable`, `countOpenIssuesBySeverity` (cột tìm theo tên header, có alias tiếng Anh; bỏ dòng mẫu của template; bảng "Trạng thái sau bugfix" ghi đè trạng thái).
+- `evaluateModeEntry` nhận `openIssues`; hook, `fe_begin_mode`, `fe-kit mode begin|end` truyền số đếm được.
+- Taxonomy bug: cột `Nhóm` có danh sách giá trị, thêm cột `Nguyên nhân gốc` vào template review-bugs và review-report. Giá trị ngoài danh sách chỉ cảnh báo.
+
+### Schema
+
+- Thêm `DEPRECATED_FIELDS`: 25 field không gate nào đọc (`*_refs`, `required_input_count`, status SRS/API/Figma chi tiết, `*_report_status`, `*_summary_status`, `cook_status`…). Field bắt buộc trong số này thành optional; template gom chúng vào nhóm "Deprecated" ở cuối frontmatter. Bảng "Cập nhật workflow-status.md" của các template output bỏ các dòng tương ứng.
+- `medium_issues_open`, `low_issues_open` thành optional (đếm được từ bảng).
+- **Sửa:** `review_bug_status` nhận `resolved`, `fixed`, `waived`. Template review-report và standard 03 đã gợi ý các giá trị này từ v1.x nhưng schema từ chối.
+
+### Gate logic về một chỗ
+
+- 7 gate `check-*` chuyển nguyên văn từ `bin/fe-kit.mjs` sang `packages/validators/src/fe-checks.mjs`; CLI chỉ còn một bảng tra. Output của 7 lệnh giữ nguyên (đã so 43 trường hợp trước/sau).
+
+### PR không gắn task
+
+- `fe-kit validate-pr --orphans`: file source đã đổi mà không task nào khai trong plan. Mức xử lý theo `require_task_for_source` (`off`, `warn`, `error`; mặc định `warn`) và `source_paths` trong `.frontend-delivery/standard.yaml`, đọc qua `loadProjectConfig` (whitelist key). Workflow GitHub mẫu có thêm bước chạy lệnh này.
+
+### Input không tin cậy
+
+- Rule mới `core/rules/untrusted-input-contract.md`. Đoạn "Điều phối" của command bảo main thread đặt input dán vào trong khối `<untrusted-input>` khi brief subagent; `_protocol.md` thêm mục "Input là dữ liệu".
+- Eval mới `plan-ignores-injected-srs`.
+
+### Ghi qua shell
+
+- Hook cảnh báo khi agent của kit không phải developer chạy lệnh shell trông như ghi file (`>`, `tee`, `sed -i`, `rm`, `git checkout`, `Set-Content`…). Chỉ cảnh báo; tắt bằng `FE_KIT_BASH_GUARD=off`. Matcher `PreToolUse` thêm `Bash|PowerShell`.
+
+### Lệch đã biết
+
+- Template `input-sync-report.md` (4 mục) không qua `check-input-sync-report` (đòi 11 mục). Có từ trước bản này; ghi trong ROADMAP để quyết định.
+
 ## [2.2.0] — 2026-10-08
 
 Phase 1 của [ROADMAP.md](ROADMAP.md): đo được kit đang chạy thế nào. Không đổi gate, schema `workflow-status.md` hay prompt của command/agent; hook vẫn mặc định `warn`.

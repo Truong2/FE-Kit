@@ -8,7 +8,9 @@
  *   - chặn cook/bugfix/quick sửa source khi gate của task chưa mở;
  *   - hỏi xác nhận người dùng khi agent tự bật `human_override: true`;
  *   - không cho mode kết thúc khi workflow-status.md chưa được cập nhật hợp lệ;
- *   - ghi sự kiện (mở/kết thúc mode, bị chặn, bị từ chối sửa) vào tracking/run-log.jsonl của task.
+ *   - ghi sự kiện (mở/kết thúc mode, bị chặn, bị từ chối sửa) vào tracking/run-log.jsonl của task;
+ *   - cảnh báo lệnh shell trông như ghi file của agent không phải developer, và
+ *     không cho mode chỉ đọc kết thúc khi file source bị đổi (kể cả qua shell).
  *
  * Mức thực thi qua biến môi trường FE_KIT_HOOKS: `off` | `warn` | `enforce`
  * (khi chạy `claude plugin eval`: EVAL_FE_KIT_HOOKS, xem `level()`).
@@ -41,6 +43,9 @@ import {
   KIT_WRITABLE_PREFIXES,
   appendRunLog,
   hashSession,
+  effectiveOpenIssues,
+  countOpenIssuesInTask,
+  loadProjectConfig,
 } from '@frontend-delivery-kit/validators';
 
 // esbuild `define` thay hằng này khi bundle; chạy trực tiếp từ source thì là 'dev'.
@@ -134,7 +139,11 @@ function loadTask(taskDir) {
   const openBlockingQuestions = countOpenBlockingQuestions(
     readFileSafe(path.join(taskDir, 'planning', 'questions.md'))
   );
-  return { workflowPath, raw, loose, data: loose.data, openBlockingQuestions };
+  const openIssues = effectiveOpenIssues(
+    loose.data,
+    countOpenIssuesInTask((rel) => readFileSafe(path.join(taskDir, rel)))
+  );
+  return { workflowPath, raw, loose, data: loose.data, openBlockingQuestions, openIssues };
 }
 
 // ---------------------------------------------------------------------------
@@ -181,10 +190,10 @@ function beginMode(payload, { command, taskArg, workspace }) {
     // path → dấu vân tay nội dung của file đang dirty lúc mở mode
     baseline: {},
   };
-  if (SOURCE_EDIT_COMMANDS.includes(command)) {
-    const changed = listChangedFiles({ cwd: workspace });
-    if (changed.ok) marker.baseline = snapshotFiles(workspace, changed.files);
-  }
+  // Chụp mọi mode: mode sửa source cần để tách thay đổi có sẵn của người dùng,
+  // mode chỉ đọc cần để phát hiện source bị đổi qua shell.
+  const changed = listChangedFiles({ cwd: workspace });
+  if (changed.ok) marker.baseline = snapshotFiles(workspace, changed.files);
   writeMarker(payload.session_id, marker);
   logEvent(payload, taskDir, 'mode_start', { mode: command });
   if (replaced) logEvent(payload, replaced.task, 'mode_abandoned', { mode: replaced.command, replaced_by: command });
@@ -208,9 +217,9 @@ function onPrompt(payload) {
   const out = replaced ? { systemMessage: replacedMessage(replaced) } : {};
 
   // Đưa verdict của gate vào ngữ cảnh ngay từ đầu, không phụ thuộc việc model có gọi fe_begin_mode hay không.
-  const { data, openBlockingQuestions, raw } = loadTask(marker.task);
+  const { data, openBlockingQuestions, openIssues, raw } = loadTask(marker.task);
   const entry = raw
-    ? evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, taskRef: marker.taskRef })
+    ? evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, openIssues, taskRef: marker.taskRef })
     : { allowed: true };
   if (!entry.allowed) {
     logEvent(payload, marker.task, 'entry_blocked', { mode: marker.command, codes: entry.reasonCodes });
@@ -337,6 +346,31 @@ function onPreEdit(payload) {
   );
 }
 
+/** Lệnh shell trông như ghi/xoá/khôi phục file. Chỉ dùng để cảnh báo sớm; kiểm chính là so nội dung file khi kết thúc mode. */
+const SHELL_WRITE =
+  /(^|[;&|(]\s*)(rm|mv|cp|tee|touch|truncate|dd)\s|(^|[^0-9&>=-])>>?\s*(?!\/dev\/null|&|nul\b)[^\s&|;=]|\bsed\s+(-[a-z]*i|--in-place)|\bgit\s+(checkout|restore|reset|apply|stash|clean)\b|\b(Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|New-Item)\b/i;
+
+function shellGuardEnabled() {
+  return String(process.env.FE_KIT_BASH_GUARD || '').trim().toLowerCase() !== 'off';
+}
+
+/** Agent của kit không phải developer chạy lệnh shell trông như ghi file: chỉ cảnh báo. */
+function onShell(payload) {
+  if (!shellGuardEnabled()) return;
+  const agent = kitAgentName(payload.agent_type);
+  if (!agent || agent === SOURCE_EDIT_AGENT) return;
+  const command = String(payload.tool_input?.command || '');
+  if (!SHELL_WRITE.test(command)) return;
+  const marker = readMarker(payload.session_id);
+  if (marker?.status === 'pending') {
+    logEvent(payload, marker.task, 'edit_warned', { mode: marker.command, agent, codes: ['SHELL_WRITE_SUSPECTED'] });
+  }
+  warn(
+    `Agent ${agent} đang chạy lệnh shell có thể ghi file. Agent này không được sửa source; chỉ ghi artifact trong docs/frontend-tasks/. ` +
+      'Source bị đổi trong mode sẽ bị chặn khi kết thúc mode.'
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Stop / SubagentStop
 // ---------------------------------------------------------------------------
@@ -348,6 +382,21 @@ function baselineOf(marker) {
 }
 
 /**
+ * File source (theo `source_paths` của .frontend-delivery/standard.yaml) bị đổi
+ * kể từ lúc mở mode. Marker cũ không có baseline (mở trước v2.3.0) thì bỏ qua.
+ */
+function sourceTouchedInReadOnlyMode(marker) {
+  if (!marker.baseline || typeof marker.baseline !== 'object') return [];
+  const changed = listChangedFiles({ cwd: marker.workspace });
+  if (!changed.ok) return [];
+  const { touched } = filesTouchedSince(marker.workspace, marker.baseline, changed.files);
+  const { source_paths: sourcePaths } = loadProjectConfig(marker.workspace).config;
+  return touched.filter(
+    (f) => !KIT_WRITABLE_PREFIXES.some((p) => f.startsWith(p)) && sourcePaths.some((p) => f.startsWith(p))
+  );
+}
+
+/**
  * Lý do mode chưa được coi là xong (rỗng = đạt), mỗi lý do kèm reason code.
  * Gate chung nằm ở `evaluateModeCompletion`; hook chỉ thêm phần chỉ hook biết:
  * file đã dirty từ trước khi mở mode mà bị sửa thêm ngoài plan.
@@ -356,7 +405,17 @@ function baselineOf(marker) {
 function completionProblems(marker) {
   let scope;
   const extraIssues = [];
-  if (SOURCE_EDIT_COMMANDS.includes(marker.command)) {
+  if (!SOURCE_EDIT_COMMANDS.includes(marker.command)) {
+    const touched = sourceTouchedInReadOnlyMode(marker);
+    if (touched.length) {
+      extraIssues.push({
+        code: 'END_SOURCE_TOUCHED_IN_READONLY_MODE',
+        message:
+          `FE ${marker.command} không được sửa source, nhưng các file sau đã bị đổi trong mode này: ${touched.join(', ')}. ` +
+          'Hoàn tác phần mode này đã sửa (không đụng thay đổi có sẵn của người dùng) và ghi phát hiện vào artifact để route FE bugfix/cook.',
+      });
+    }
+  } else {
     const changed = listChangedFiles({ cwd: marker.workspace });
     if (changed.ok) {
       const { touched, preDirtyTouched } = filesTouchedSince(marker.workspace, baselineOf(marker), changed.files);
@@ -445,6 +504,7 @@ const HANDLERS = {
   PostToolUse: onBeginModeTool,
   PreToolUse(payload) {
     if (/^(Agent|Task)$/.test(payload.tool_name || '')) onDelegate(payload);
+    else if (/^(Bash|PowerShell)$/.test(payload.tool_name || '')) onShell(payload);
     else onPreEdit(payload);
   },
   SubagentStop: onSubagentStop,

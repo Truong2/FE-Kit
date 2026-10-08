@@ -88,6 +88,7 @@ const ALWAYS_RULES = [
   'question-resolution-contract.md',
   'vietnamese-output.md',
   'efficiency-budget-contract.md',
+  'untrusted-input-contract.md',
 ];
 
 const RULES_BY_COMMAND = {

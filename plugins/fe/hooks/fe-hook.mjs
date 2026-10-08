@@ -3324,10 +3324,10 @@ var require_stringify = __commonJS({
       data = Object.assign({}, file2.data, data);
       const open2 = opts.delimiters[0];
       const close = opts.delimiters[1];
-      const matter2 = engine.stringify(data, options2).trim();
+      const matter3 = engine.stringify(data, options2).trim();
       let buf = "";
-      if (matter2 !== "{}") {
-        buf = newline(open2) + newline(matter2) + newline(close);
+      if (matter3 !== "{}") {
+        buf = newline(open2) + newline(matter3) + newline(close);
       }
       if (typeof file2.excerpt === "string" && file2.excerpt !== "") {
         if (str2.indexOf(file2.excerpt.trim()) === -1) {
@@ -3424,7 +3424,7 @@ var require_parse = __commonJS({
 var require_gray_matter = __commonJS({
   "node_modules/gray-matter/index.js"(exports2, module2) {
     "use strict";
-    var fs5 = __require("fs");
+    var fs6 = __require("fs");
     var sections = require_section_matter();
     var defaults = require_defaults();
     var stringify = require_stringify();
@@ -3433,19 +3433,19 @@ var require_gray_matter = __commonJS({
     var toFile = require_to_file();
     var parse4 = require_parse();
     var utils = require_utils();
-    function matter2(input2, options2) {
+    function matter3(input2, options2) {
       if (input2 === "") {
         return { data: {}, content: input2, excerpt: "", orig: input2 };
       }
       let file2 = toFile(input2);
-      const cached2 = matter2.cache[file2.content];
+      const cached2 = matter3.cache[file2.content];
       if (!options2) {
         if (cached2) {
           file2 = Object.assign({}, cached2);
           file2.orig = cached2.orig;
           return file2;
         }
-        matter2.cache[file2.content] = file2;
+        matter3.cache[file2.content] = file2;
       }
       return parseMatter(file2, options2);
     }
@@ -3467,7 +3467,7 @@ var require_gray_matter = __commonJS({
       }
       str2 = str2.slice(openLen);
       const len = str2.length;
-      const language = matter2.language(str2, opts);
+      const language = matter3.language(str2, opts);
       if (language.name) {
         file2.language = language.name;
         str2 = str2.slice(language.raw.length);
@@ -3502,24 +3502,24 @@ var require_gray_matter = __commonJS({
       }
       return file2;
     }
-    matter2.engines = engines2;
-    matter2.stringify = function(file2, data, options2) {
-      if (typeof file2 === "string") file2 = matter2(file2, options2);
+    matter3.engines = engines2;
+    matter3.stringify = function(file2, data, options2) {
+      if (typeof file2 === "string") file2 = matter3(file2, options2);
       return stringify(file2, data, options2);
     };
-    matter2.read = function(filepath, options2) {
-      const str2 = fs5.readFileSync(filepath, "utf8");
-      const file2 = matter2(str2, options2);
+    matter3.read = function(filepath, options2) {
+      const str2 = fs6.readFileSync(filepath, "utf8");
+      const file2 = matter3(str2, options2);
       file2.path = filepath;
       return file2;
     };
-    matter2.test = function(str2, options2) {
+    matter3.test = function(str2, options2) {
       return utils.startsWith(str2, defaults(options2).delimiters[0]);
     };
-    matter2.language = function(str2, options2) {
+    matter3.language = function(str2, options2) {
       const opts = defaults(options2);
       const open2 = opts.delimiters[0];
-      if (matter2.test(str2)) {
+      if (matter3.test(str2)) {
         str2 = str2.slice(open2.length);
       }
       const language = str2.slice(0, str2.search(/\r?\n/));
@@ -3528,22 +3528,22 @@ var require_gray_matter = __commonJS({
         name: language ? language.trim() : ""
       };
     };
-    matter2.cache = {};
-    matter2.clearCache = function() {
-      matter2.cache = {};
+    matter3.cache = {};
+    matter3.clearCache = function() {
+      matter3.cache = {};
     };
-    module2.exports = matter2;
+    module2.exports = matter3;
   }
 });
 
 // core/hooks/fe-hook.mjs
-import fs4 from "node:fs";
+import fs5 from "node:fs";
 import os from "node:os";
-import path5 from "node:path";
+import path6 from "node:path";
 
 // packages/validators/src/index.mjs
-import fs3 from "node:fs";
-import path4 from "node:path";
+import fs4 from "node:fs";
+import path5 from "node:path";
 
 // packages/validators/src/parse.mjs
 var import_gray_matter = __toESM(require_gray_matter(), 1);
@@ -4292,10 +4292,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path6) {
-  if (!path6)
+function getElementAtPath(obj, path7) {
+  if (!path7)
     return obj;
-  return path6.reduce((acc, key) => acc?.[key], obj);
+  return path7.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -4707,11 +4707,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path6, issues) {
+function prefixIssues(path7, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path6);
+    iss.path.unshift(path7);
     return iss;
   });
 }
@@ -5144,16 +5144,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path6 = []) => {
+  const processError = (error62, path7 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path6, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path7, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path6, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path6, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
       } else {
-        const fullpath = [...path6, ...issue2.path];
+        const fullpath = [...path7, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -5192,17 +5192,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path6 = []) => {
+  const processError = (error62, path7 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path6, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path7, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path6, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path6, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
       } else {
-        const fullpath = [...path6, ...issue2.path];
+        const fullpath = [...path7, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -5241,8 +5241,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path6 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path6) {
+  const path7 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path7) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -21752,13 +21752,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path6 = ref.slice(1).split("/").filter(Boolean);
-  if (path6.length === 0) {
+  const path7 = ref.slice(1).split("/").filter(Boolean);
+  if (path7.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path6[0] === defsKey) {
-    const key = path6[1] === void 0 ? void 0 : decodeJSONPointerSegment(path6[1]);
+  if (path7[0] === defsKey) {
+    const key = path7[1] === void 0 ? void 0 : decodeJSONPointerSegment(path7[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -22445,6 +22445,29 @@ var CoreMode = external_exports.enum([
 ]);
 var TriState = external_exports.union([external_exports.boolean(), external_exports.literal("unknown")]);
 var SelfReported = GateStatus.optional();
+var REF_REASON = 'M\u1EE5c "Input ledger" trong body c\u1EE7a workflow-status.md m\u1EDBi l\xE0 danh s\xE1ch input; kh\xF4ng gate n\xE0o \u0111\u1ECDc field n\xE0y.';
+var UNREAD = "Kh\xF4ng gate n\xE0o \u0111\u1ECDc field n\xE0y.";
+var FROM_FILE = "Suy ra \u0111\u01B0\u1EE3c t\u1EEB vi\u1EC7c artifact t\u01B0\u01A1ng \u1EE9ng c\xF3 t\u1ED3n t\u1EA1i.";
+var DEPRECATED_FIELDS = [
+  ...["srs_input_refs", "api_input_refs", "figma_input_refs", "project_context_refs", "feature_context_refs", "design_context_refs", "source_inspection_refs", "rule_refs"].map(
+    (field) => ({ field, since: "2.3.0", reason: REF_REASON })
+  ),
+  { field: "required_input_count", since: "2.3.0", reason: "Gate ch\u1EC9 \u0111\u1ECDc missing_input_count." },
+  ...["srs_logic_coverage_status", "api_contract_mapping_status", "api_error_mapping_status", "fe_error_display_status"].map((field) => ({
+    field,
+    since: "2.3.0",
+    reason: `${UNREAD} SRS \u0111\u01B0\u1EE3c ki\u1EC3m qua srs_trace_matrix_status v\xE0 ma tr\u1EADn trace trong plan.`
+  })),
+  ...["ui_implementation_contract_status", "figma_node_matrix_status", "figma_component_binding_status"].map((field) => ({
+    field,
+    since: "2.3.0",
+    reason: `${UNREAD} Figma \u0111\u01B0\u1EE3c ki\u1EC3m qua figma_gate_status v\xE0 ui_match_review_status.`
+  })),
+  ...["rule_contract_application_status", "clean_code_gate_status"].map((field) => ({ field, since: "2.3.0", reason: UNREAD })),
+  ...["input_sync_report_status", "figma_summary_status", "cook_status", "review_report_status", "test_summary_status", "ui_figma_review_report_status", "pr_summary_status"].map(
+    (field) => ({ field, since: "2.3.0", reason: FROM_FILE })
+  )
+];
 var WorkflowStatusSchema = external_exports.object({
   // --- Header ---
   task_id: external_exports.string().min(1, "task_id kh\xF4ng \u0111\u01B0\u1EE3c r\u1ED7ng"),
@@ -22462,7 +22485,7 @@ var WorkflowStatusSchema = external_exports.object({
   // --- Plan input ledger gates ---
   input_inventory_status: GateStatus,
   plan_input_ledger_status: GateStatus,
-  required_input_count: external_exports.number().int().min(0),
+  required_input_count: external_exports.number().int().min(0).optional(),
   missing_input_count: external_exports.number().int().min(0),
   srs_input_refs: external_exports.string().default(""),
   api_input_refs: external_exports.string().default(""),
@@ -22475,10 +22498,10 @@ var WorkflowStatusSchema = external_exports.object({
   // --- Core gates ---
   srs_required: TriState,
   srs_trace_matrix_status: GateStatus,
-  srs_logic_coverage_status: GateStatus,
-  api_contract_mapping_status: GateStatus,
-  api_error_mapping_status: GateStatus,
-  fe_error_display_status: GateStatus,
+  srs_logic_coverage_status: SelfReported,
+  api_contract_mapping_status: SelfReported,
+  api_error_mapping_status: SelfReported,
+  fe_error_display_status: SelfReported,
   rule_contract_application_status: SelfReported,
   clean_code_gate_status: SelfReported,
   questions_status: external_exports.enum(["none", "open", "blocked", "resolved", "not_required"]),
@@ -22496,9 +22519,9 @@ var WorkflowStatusSchema = external_exports.object({
   // --- Figma/UI gates ---
   figma_required: TriState,
   figma_gate_status: GateStatus,
-  ui_implementation_contract_status: GateStatus,
-  figma_node_matrix_status: GateStatus,
-  figma_component_binding_status: GateStatus,
+  ui_implementation_contract_status: SelfReported,
+  figma_node_matrix_status: SelfReported,
+  figma_component_binding_status: SelfReported,
   ui_match_review_status: GateStatus,
   ui_match_severity_status: external_exports.enum(["unknown", "none", "low", "medium", "high", "critical"]),
   // --- Mode output status (suy ra được từ file tồn tại → optional) ---
@@ -22514,11 +22537,13 @@ var WorkflowStatusSchema = external_exports.object({
     "not_required"
   ]),
   review_report_status: SelfReported,
-  review_bug_status: external_exports.enum(["none", "open", "blocked", "closed"]),
+  // 'resolved', 'fixed', 'waived' có trong template/standard từ v1.x nhưng schema thiếu.
+  review_bug_status: external_exports.enum(["none", "open", "blocked", "closed", "resolved", "fixed", "waived"]),
   critical_issues_open: external_exports.number().int().min(0),
   high_issues_open: external_exports.number().int().min(0),
-  medium_issues_open: external_exports.number().int().min(0),
-  low_issues_open: external_exports.number().int().min(0),
+  // Medium/Low tự đếm được từ bảng issue (`countOpenIssuesBySeverity`).
+  medium_issues_open: external_exports.number().int().min(0).optional(),
+  low_issues_open: external_exports.number().int().min(0).optional(),
   bugfix_required: external_exports.boolean(),
   test_summary_status: external_exports.enum(["not_started", "created", "updated", "passed", "failed", "partial"]).optional(),
   ui_figma_review_report_status: SelfReported,
@@ -22557,6 +22582,13 @@ function parseWorkflowStatus(raw) {
     return { ok: false, errors };
   }
   return { ok: true, data: result.data, body };
+}
+function realQuestionCell(v) {
+  const t = String(v ?? "").trim();
+  if (!t) return false;
+  if (/^(n\/a|na|không áp dụng|khong ap dung|none|-|—|\.\.\.)$/i.test(t)) return false;
+  if (/^<.*>$/.test(t)) return false;
+  return true;
 }
 
 // packages/validators/src/transitions.mjs
@@ -22621,7 +22653,7 @@ function checkRecordedNextMode({ currentMode, nextMode }) {
   }
   return { warnings };
 }
-function evaluateModeEntry({ requested, data = {}, openBlockingQuestions = 0, taskRef = "<task-folder>" }) {
+function evaluateModeEntry({ requested, data = {}, openBlockingQuestions = 0, openIssues, taskRef = "<task-folder>" }) {
   const command = normalizeCommand(requested);
   const result = { allowed: true, command, mode: COMMAND_TO_MODE[command] || "", reasons: [], reasonCodes: [], warnings: [], redirect: "" };
   const block = (code, reason) => {
@@ -22654,7 +22686,9 @@ function evaluateModeEntry({ requested, data = {}, openBlockingQuestions = 0, ta
     }
   }
   if (command === "pr") {
-    if (Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0 || bool(data.bugfix_required)) {
+    const critical = Math.max(Number(data.critical_issues_open || 0), Number(openIssues?.critical || 0));
+    const high = Math.max(Number(data.high_issues_open || 0), Number(openIssues?.high || 0));
+    if (critical > 0 || high > 0 || bool(data.bugfix_required)) {
       block("ENTRY_OPEN_BUGS", "C\xF2n bug Critical/High ho\u1EB7c bugfix_required=true.");
       result.redirect ||= `FE bugfix ${taskRef}`;
     }
@@ -22724,19 +22758,159 @@ var AGENT_FOR_COMMAND = {
 var SOURCE_EDIT_AGENT = "frontend-developer";
 var KIT_WRITABLE_PREFIXES = ["docs/frontend-tasks/", "docs/frontend-context/"];
 
+// packages/validators/src/review-bugs.mjs
+var ISSUE_CATEGORIES = [
+  "srs-logic",
+  "api-contract",
+  "error-handling",
+  "ui-figma",
+  "state-data",
+  "a11y",
+  "performance",
+  "clean-code",
+  "test",
+  "scope",
+  "other"
+];
+var ISSUE_ROOT_CAUSES = [
+  "requirement-unclear",
+  "plan-gap",
+  "implementation-error",
+  "missing-test",
+  "figma-mismatch",
+  "rule-violation",
+  "environment",
+  "other"
+];
+var COLUMN_ALIASES = {
+  id: /^(id|bug id|issue id|mã)$/i,
+  severity: /^(severity|mức độ|muc do)$/i,
+  category: /^(nhóm|nhom|category|loại|loai)$/i,
+  rootCause: /^(nguyên nhân gốc|nguyen nhan goc|root cause)$/i,
+  status: /^(trạng thái|trang thai|status)$/i
+};
+var SEVERITY_WORDS = [
+  ["critical", /\b(critical|blocker)\b|nghiêm trọng|nghiem trong/i],
+  ["high", /\bhigh\b|\bcao\b/i],
+  ["medium", /\bmedium\b|trung bình|trung binh/i],
+  ["low", /\blow\b|thấp|\bthap\b/i]
+];
+var CLOSED = /(fixed|closed|resolved|done|verified|accepted|won'?t ?fix|đã fix|da fix|đã sửa|da sua|đã đóng|da dong|đã xong|da xong|chấp nhận|chap nhan|không sửa|khong sua|hoàn tất|hoan tat)/i;
+var OPEN = /(open|pending|blocked|in progress|reopen|mở|\bmo\b|đang|dang|chưa|chua|bị chặn|bi chan|cần sửa|can sua)/i;
+function severityOf(cell) {
+  const found = SEVERITY_WORDS.filter(([, re]) => re.test(cell)).map(([s]) => s);
+  return found.length === 1 ? found[0] : null;
+}
+function statusOf(cell) {
+  const t = String(cell || "").trim();
+  if (CLOSED.test(t)) return "closed";
+  if (OPEN.test(t)) return "open";
+  return "unknown";
+}
+function splitRow(line) {
+  return line.split("|").slice(1, -1).map((c) => c.trim().replace(/^`|`$/g, ""));
+}
+function sectionTable(markdown, headingRe) {
+  const lines = String(markdown || "").split(/\r?\n/);
+  const start = lines.findIndex((l) => /^#{2,3}\s/.test(l) && headingRe.test(l));
+  if (start < 0) return null;
+  const table = [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^#{1,3}\s/.test(line)) break;
+    if (/^\s*\|/.test(line)) table.push(line);
+    else if (table.length) break;
+  }
+  if (table.length < 2) return null;
+  const header = splitRow(table[0]);
+  const rows = table.slice(1).filter((l) => !/^\s*\|\s*:?-+/.test(l)).map(splitRow);
+  return { header, rows };
+}
+function columnIndex(header) {
+  const index = {};
+  header.forEach((name, i) => {
+    for (const [key, re] of Object.entries(COLUMN_ALIASES)) {
+      if (index[key] === void 0 && re.test(name)) index[key] = i;
+    }
+  });
+  return index;
+}
+function parseIssueTable(markdown, headingRe) {
+  const table = sectionTable(markdown, headingRe);
+  if (!table) return { rows: [], confident: true };
+  const col = columnIndex(table.header);
+  const confident = col.id !== void 0 && col.severity !== void 0 && col.status !== void 0;
+  const rows = [];
+  for (const cells of table.rows) {
+    const id = cells[col.id ?? 0] || "";
+    if (!realQuestionCell(id)) continue;
+    const severity = severityOf(cells[col.severity ?? 1] || "");
+    if (!severity) continue;
+    rows.push({
+      id,
+      severity,
+      category: col.category !== void 0 ? cells[col.category] || "" : "",
+      rootCause: col.rootCause !== void 0 ? cells[col.rootCause] || "" : "",
+      status: statusOf(col.status !== void 0 ? cells[col.status] : ""),
+      hasCategory: col.category !== void 0,
+      hasRootCause: col.rootCause !== void 0
+    });
+  }
+  return { rows, confident: rows.length === 0 || confident };
+}
+function statusOverrides(reviewBugsMd) {
+  const table = sectionTable(reviewBugsMd, /Trạng thái sau bugfix|Status after bugfix/i);
+  const map2 = /* @__PURE__ */ new Map();
+  if (!table) return map2;
+  const col = columnIndex(table.header);
+  for (const cells of table.rows) {
+    const id = cells[col.id ?? 0] || "";
+    const status = statusOf(cells[col.status ?? 1]);
+    if (realQuestionCell(id) && status !== "unknown") map2.set(id, status);
+  }
+  return map2;
+}
+function countOpenIssuesBySeverity(reviewBugsMd = "", reviewReportMd = "") {
+  const bugs = parseIssueTable(reviewBugsMd, /Bug cần xử lý|Bugs?\b/i);
+  const report = parseIssueTable(reviewReportMd, /Issue phát hiện|Issues?\b/i);
+  const byId = /* @__PURE__ */ new Map();
+  for (const row of [...report.rows, ...bugs.rows]) byId.set(row.id, row);
+  const overrides = statusOverrides(reviewBugsMd);
+  const result = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    openIds: { critical: [], high: [], medium: [], low: [] },
+    unknownStatusIds: [],
+    unknownCategoryIds: [],
+    unknownRootCauseIds: [],
+    confident: bugs.confident && report.confident
+  };
+  const categories = new Set(ISSUE_CATEGORIES);
+  const rootCauses = new Set(ISSUE_ROOT_CAUSES);
+  for (const row of byId.values()) {
+    const status = overrides.get(row.id) || row.status;
+    if (status === "open") {
+      result[row.severity] += 1;
+      result.openIds[row.severity].push(row.id);
+    } else if (status === "unknown") {
+      result.unknownStatusIds.push(row.id);
+    }
+    if (row.hasCategory && !categories.has(row.category.toLowerCase())) result.unknownCategoryIds.push(row.id);
+    if (row.hasRootCause && !rootCauses.has(row.rootCause.toLowerCase())) result.unknownRootCauseIds.push(row.id);
+  }
+  return result;
+}
+function countOpenIssuesInTask(read) {
+  return countOpenIssuesBySeverity(read("tracking/review-bugs.md"), read("output/review-report.md"));
+}
+
 // packages/validators/src/gates.mjs
 function norm2(v) {
   return String(v ?? "").trim().toLowerCase();
 }
 function bool2(v) {
   return v === true || norm2(v) === "true";
-}
-function realQuestionCell(v) {
-  const t = String(v ?? "").trim();
-  if (!t) return false;
-  if (/^(n\/a|na|không áp dụng|khong ap dung|none|-|—|\.\.\.)$/i.test(t)) return false;
-  if (/^<.*>$/.test(t)) return false;
-  return true;
 }
 function countOpenBlockingQuestions(questionsMarkdown) {
   const text = questionsMarkdown || "";
@@ -22827,6 +23001,24 @@ function commandEvidenceWarnings(testSummaryMarkdown) {
   }
   return warnings;
 }
+var SEVERITY_LABEL = { critical: "Critical", high: "High" };
+function effectiveOpenIssues(data, computed) {
+  const pick2 = (sev) => Math.max(Number(data[`${sev}_issues_open`] || 0), computed?.confident ? computed[sev] : 0);
+  return { critical: pick2("critical"), high: pick2("high") };
+}
+function issueTableWarnings(computed) {
+  const warnings = [];
+  if (computed.unknownStatusIds.length) {
+    warnings.push(`Issue ch\u01B0a r\xF5 tr\u1EA1ng th\xE1i (ghi Open, Fixed, Closed...): ${computed.unknownStatusIds.join(", ")}.`);
+  }
+  if (computed.unknownCategoryIds.length) {
+    warnings.push(`Issue c\xF3 c\u1ED9t Nh\xF3m ngo\xE0i danh s\xE1ch c\u1EE7a review-bug-contract.md: ${computed.unknownCategoryIds.join(", ")}.`);
+  }
+  if (computed.unknownRootCauseIds.length) {
+    warnings.push(`Issue c\xF3 c\u1ED9t Nguy\xEAn nh\xE2n g\u1ED1c ngo\xE0i danh s\xE1ch c\u1EE7a review-bug-contract.md: ${computed.unknownRootCauseIds.join(", ")}.`);
+  }
+  return warnings;
+}
 var MD_FILES_WITHOUT_NEXT_PROMPT = [
   "task.md",
   "planning/implementation-plan.md",
@@ -22859,6 +23051,8 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
     Number(data.blocking_questions_open || 0),
     countOpenBlockingQuestions(questionsText)
   );
+  const computedIssues = countOpenIssuesInTask(read);
+  const openIssues = effectiveOpenIssues(data, computedIssues);
   const questionGate = norm2(data.questions_resolution_gate_status);
   const questionStatus = norm2(data.questions_status);
   const questionBlocked = openBlockingQuestions > 0 || ["open", "blocked", "pending", "needs_answer", "needs_answers"].includes(questionStatus) || ["open", "blocked", "pending", "needs_input_sync"].includes(questionGate) || bool2(data.input_sync_required) || bool2(data.plan_recheck_required_after_input_sync);
@@ -22917,7 +23111,7 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
     if (!exists("output/review-report.md")) {
       fail("ARTIFACT_REVIEW_REPORT_MISSING", "FE review ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/review-report.md.");
     }
-    const needBug = bool2(data.bugfix_required) || Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0 || ["open", "blocked"].includes(norm2(data.review_bug_status));
+    const needBug = bool2(data.bugfix_required) || openIssues.critical > 0 || openIssues.high > 0 || ["open", "blocked"].includes(norm2(data.review_bug_status));
     if (needBug && !exists("tracking/review-bugs.md")) {
       fail("ARTIFACT_REVIEW_BUGS_MISSING", "Review c\xF3 bug/Critical/High ph\u1EA3i c\xF3 tracking/review-bugs.md.");
     }
@@ -22964,7 +23158,23 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
     fail("COMMAND_EVIDENCE_UNPROVEN", "command_evidence_status=passed/completed nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.");
   }
   if (exists("output/test-summary.md")) warnings.push(...commandEvidenceWarnings(read("output/test-summary.md")));
-  const criticalOrHigh = Number(data.critical_issues_open || 0) > 0 || Number(data.high_issues_open || 0) > 0;
+  for (const sev of ["critical", "high"]) {
+    const field = `${sev}_issues_open`;
+    const declared = Number(data[field] || 0);
+    if (computedIssues[sev] <= declared) continue;
+    const message = `B\u1EA3ng issue (tracking/review-bugs.md, output/review-report.md) c\xF2n ${computedIssues[sev]} issue ${SEVERITY_LABEL[sev]} \u0111ang m\u1EDF (${computedIssues.openIds[sev].join(", ")}) nh\u01B0ng ${field}=${declared}. C\u1EADp nh\u1EADt ${field} ho\u1EB7c tr\u1EA1ng th\xE1i issue.`;
+    if (computedIssues.confident) fail("ISSUES_COUNT_MISMATCH", message);
+    else warnings.push(`${message} B\u1EA3ng issue thi\u1EBFu c\u1ED9t ID/Severity/Tr\u1EA1ng th\xE1i n\xEAn ch\u1EC9 c\u1EA3nh b\xE1o.`);
+  }
+  const openCriticalHigh = computedIssues.confident ? [...computedIssues.openIds.critical, ...computedIssues.openIds.high] : [];
+  if (openCriticalHigh.length && ["none", "closed", "resolved", "fixed", "waived"].includes(norm2(data.review_bug_status))) {
+    fail(
+      "REVIEW_BUG_STATUS_MISMATCH",
+      `review_bug_status=${norm2(data.review_bug_status)} nh\u01B0ng c\xF2n issue Critical/High \u0111ang m\u1EDF: ${openCriticalHigh.join(", ")}.`
+    );
+  }
+  warnings.push(...issueTableWarnings(computedIssues));
+  const criticalOrHigh = openIssues.critical > 0 || openIssues.high > 0;
   if (criticalOrHigh && ["test", "pr"].includes(normalizeCommand(data.next_mode))) {
     fail("NEXT_MODE_WITH_CRITICAL_HIGH", "C\xF2n issue Critical/High th\xEC next_mode kh\xF4ng \u0111\u01B0\u1EE3c l\xE0 test/pr; route sang bugfix, input-sync ho\u1EB7c figma-review.");
   }
@@ -23154,9 +23364,53 @@ function filesTouchedSince(cwd, snapshot, currentFiles) {
   return { touched, preDirtyTouched };
 }
 
-// packages/validators/src/runlog.mjs
+// packages/validators/src/project-config.mjs
+var import_gray_matter2 = __toESM(require_gray_matter(), 1);
 import fs2 from "node:fs";
 import path3 from "node:path";
+var PROJECT_CONFIG_FILE = ".frontend-delivery/standard.yaml";
+var PROJECT_CONFIG_DEFAULTS = Object.freeze({
+  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
+  require_task_for_source: "warn",
+  /** Thư mục được coi là source khi kiểm PR không gắn task. */
+  source_paths: ["src/", "app/", "apps/", "packages/"]
+});
+var VALIDATORS = {
+  require_task_for_source: (v) => ["off", "warn", "error"].includes(v),
+  source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === "string" && p.trim())
+};
+function loadProjectConfig(repoRoot) {
+  const file2 = path3.join(repoRoot, PROJECT_CONFIG_FILE);
+  const config2 = { ...PROJECT_CONFIG_DEFAULTS };
+  const warnings = [];
+  let raw;
+  try {
+    raw = fs2.readFileSync(file2, "utf8");
+  } catch {
+    return { config: config2, warnings, source: "default" };
+  }
+  let data = {};
+  try {
+    data = (0, import_gray_matter2.default)(`---
+${raw}
+---
+`).data || {};
+  } catch (err) {
+    warnings.push(`${PROJECT_CONFIG_FILE} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML (${err.message}); d\xF9ng c\u1EA5u h\xECnh m\u1EB7c \u0111\u1ECBnh.`);
+    return { config: config2, warnings, source: "default" };
+  }
+  for (const [key, valid] of Object.entries(VALIDATORS)) {
+    if (data[key] === void 0) continue;
+    if (valid(data[key])) config2[key] = data[key];
+    else warnings.push(`${PROJECT_CONFIG_FILE}: gi\xE1 tr\u1ECB ${key} kh\xF4ng h\u1EE3p l\u1EC7; d\xF9ng m\u1EB7c \u0111\u1ECBnh ${JSON.stringify(PROJECT_CONFIG_DEFAULTS[key])}.`);
+  }
+  config2.source_paths = config2.source_paths.map((p) => p.endsWith("/") ? p : `${p}/`);
+  return { config: config2, warnings, source: "file" };
+}
+
+// packages/validators/src/runlog.mjs
+import fs3 from "node:fs";
+import path4 from "node:path";
 import crypto2 from "node:crypto";
 var RUNLOG_FILE = "tracking/run-log.jsonl";
 var RUNLOG_VERSION = 1;
@@ -23197,23 +23451,23 @@ function enabled() {
 function appendRunLog(taskDir, record2) {
   try {
     if (!enabled() || !taskDir) return false;
-    const trackingDir = path3.join(taskDir, "tracking");
-    if (!fs2.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
-    const file2 = path3.join(taskDir, RUNLOG_FILE);
-    const size = fs2.statSync(file2, { throwIfNoEntry: false })?.size || 0;
+    const trackingDir = path4.join(taskDir, "tracking");
+    if (!fs3.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
+    const file2 = path4.join(taskDir, RUNLOG_FILE);
+    const size = fs3.statSync(file2, { throwIfNoEntry: false })?.size || 0;
     if (size > RUNLOG_MAX_BYTES) return false;
     const full = {
       v: RUNLOG_VERSION,
       ts: (/* @__PURE__ */ new Date()).toISOString(),
       pack: "fe",
-      task: path3.basename(taskDir),
+      task: path4.basename(taskDir),
       ...dropEmpty(record2)
     };
     let line = JSON.stringify(full);
     if (Buffer.byteLength(line) > MAX_RECORD_BYTES) {
       line = JSON.stringify({ ...full, codes: full.codes?.slice(0, 20), files: full.files?.slice(0, 20), truncated: true });
     }
-    fs2.appendFileSync(file2, line + "\n");
+    fs3.appendFileSync(file2, line + "\n");
     return true;
   } catch {
     return false;
@@ -23227,20 +23481,20 @@ function dropEmpty(record2) {
 
 // packages/validators/src/index.mjs
 function taskIo(taskDir) {
-  const exists = (rel) => fs3.existsSync(path4.join(taskDir, rel));
+  const exists = (rel) => fs4.existsSync(path5.join(taskDir, rel));
   const read = (rel) => {
-    const p = path4.join(taskDir, rel);
-    return fs3.existsSync(p) ? fs3.readFileSync(p, "utf8") : "";
+    const p = path5.join(taskDir, rel);
+    return fs4.existsSync(p) ? fs4.readFileSync(p, "utf8") : "";
   };
   return { exists, read };
 }
 function loadWorkflow(taskDir) {
-  const workflowPath = path4.join(taskDir, "tracking", "workflow-status.md");
-  if (!fs3.existsSync(workflowPath)) {
+  const workflowPath = path5.join(taskDir, "tracking", "workflow-status.md");
+  if (!fs4.existsSync(workflowPath)) {
     const errors = ["Thi\u1EBFu tracking/workflow-status.md"];
     return { ok: false, errors, issues: [{ code: "STATUS_MISSING", message: errors[0] }] };
   }
-  const parsed = parseWorkflowStatus(fs3.readFileSync(workflowPath, "utf8"));
+  const parsed = parseWorkflowStatus(fs4.readFileSync(workflowPath, "utf8"));
   if (parsed.ok) return parsed;
   return { ...parsed, issues: parsed.errors.map((message) => ({ code: "STATUS_SCHEMA_INVALID", message })) };
 }
@@ -23263,17 +23517,18 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   }
   return { ...result, plannedFiles };
 }
-function plannedFilesOfSiblingTasks(taskDir) {
-  const parent = path4.dirname(taskDir);
-  if (!fs3.existsSync(parent)) return [];
-  const self = path4.basename(taskDir);
+function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
+  if (!fs4.existsSync(tasksRoot)) return [];
   const planned = [];
-  for (const ent of fs3.readdirSync(parent, { withFileTypes: true })) {
-    if (!ent.isDirectory() || ent.name === self) continue;
-    const plan = path4.join(parent, ent.name, "planning", "implementation-plan.md");
-    if (fs3.existsSync(plan)) planned.push(...parsePlannedFiles(fs3.readFileSync(plan, "utf8")));
+  for (const ent of fs4.readdirSync(tasksRoot, { withFileTypes: true })) {
+    if (!ent.isDirectory() || ent.name === exclude) continue;
+    const plan = path5.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
+    if (fs4.existsSync(plan)) planned.push(...parsePlannedFiles(fs4.readFileSync(plan, "utf8")));
   }
   return planned;
+}
+function plannedFilesOfSiblingTasks(taskDir) {
+  return plannedFilesOfTasksIn(path5.dirname(taskDir), path5.basename(taskDir));
 }
 function validateWorkflow(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
@@ -23288,7 +23543,7 @@ function evaluateModeCompletion({ taskDir, taskRef, command, startedAt, scope, r
     errors: issues2.map((i) => i.message)
   });
   const { read } = taskIo(taskDir);
-  const workflowPath = path4.join(taskDir, "tracking", "workflow-status.md");
+  const workflowPath = path5.join(taskDir, "tracking", "workflow-status.md");
   const raw = read("tracking/workflow-status.md");
   if (!raw) return done([{ code: "END_STATUS_MISSING", message: `Ch\u01B0a c\xF3 ${taskRef}/tracking/workflow-status.md.` }]);
   const loose = parseFrontMatterLoose(raw);
@@ -23305,6 +23560,7 @@ function evaluateModeCompletion({ taskDir, taskRef, command, startedAt, scope, r
     requested: command,
     data,
     openBlockingQuestions: countOpenBlockingQuestions(read("planning/questions.md")),
+    openIssues: effectiveOpenIssues(data, countOpenIssuesInTask(read)),
     taskRef
   });
   if (!entry.allowed) {
@@ -23325,7 +23581,7 @@ function evaluateModeCompletion({ taskDir, taskRef, command, startedAt, scope, r
   if (startedAt !== void 0) {
     let mtime = 0;
     try {
-      mtime = fs3.statSync(workflowPath).mtimeMs;
+      mtime = fs4.statSync(workflowPath).mtimeMs;
     } catch {
     }
     if (mtime + 1e3 < startedAt) {
@@ -23343,7 +23599,7 @@ function evaluateModeCompletion({ taskDir, taskRef, command, startedAt, scope, r
     });
   }
   for (const rel of MODE_REQUIRED_ARTIFACTS[command] || []) {
-    if (!fs3.existsSync(path4.join(taskDir, rel))) {
+    if (!fs4.existsSync(path5.join(taskDir, rel))) {
       issues.push({ code: "END_ARTIFACT_MISSING", message: `Thi\u1EBFu artifact b\u1EAFt bu\u1ED9c c\u1EE7a FE ${command}: ${rel}` });
     }
   }
@@ -23380,7 +23636,7 @@ function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
 }
 
 // core/hooks/fe-hook.mjs
-var KIT_VERSION = true ? "2.2.0" : "dev";
+var KIT_VERSION = true ? "2.3.0" : "dev";
 var DEFAULT_LEVEL = "warn";
 var MARKER_TTL_MS = 4 * 60 * 60 * 1e3;
 var KIT_AGENT_PREFIX = "frontend-";
@@ -23389,15 +23645,15 @@ function level() {
   return ["off", "warn", "enforce"].includes(v) ? v : DEFAULT_LEVEL;
 }
 function stateDir() {
-  const base = process.env.CLAUDE_PLUGIN_DATA || path5.join(os.tmpdir(), "fe-kit-hooks");
-  return path5.join(base, "sessions");
+  const base = process.env.CLAUDE_PLUGIN_DATA || path6.join(os.tmpdir(), "fe-kit-hooks");
+  return path6.join(base, "sessions");
 }
 function markerPath(sessionId) {
-  return path5.join(stateDir(), `${String(sessionId || "unknown").replace(/[^A-Za-z0-9_.-]/g, "_")}.json`);
+  return path6.join(stateDir(), `${String(sessionId || "unknown").replace(/[^A-Za-z0-9_.-]/g, "_")}.json`);
 }
 function readMarker(sessionId) {
   try {
-    const m = JSON.parse(fs4.readFileSync(markerPath(sessionId), "utf8"));
+    const m = JSON.parse(fs5.readFileSync(markerPath(sessionId), "utf8"));
     if (Date.now() - Number(m.startedAt || 0) > MARKER_TTL_MS) return null;
     return m;
   } catch {
@@ -23405,8 +23661,8 @@ function readMarker(sessionId) {
   }
 }
 function writeMarker(sessionId, marker) {
-  fs4.mkdirSync(stateDir(), { recursive: true });
-  fs4.writeFileSync(markerPath(sessionId), JSON.stringify(marker, null, 2));
+  fs5.mkdirSync(stateDir(), { recursive: true });
+  fs5.writeFileSync(markerPath(sessionId), JSON.stringify(marker, null, 2));
 }
 function kitAgentName(agentType) {
   const name = String(agentType || "").replace(/^fe:/, "");
@@ -23420,7 +23676,7 @@ function warn(message) {
 }
 function readFileSafe(p) {
   try {
-    return fs4.readFileSync(p, "utf8");
+    return fs5.readFileSync(p, "utf8");
   } catch {
     return "";
   }
@@ -23440,13 +23696,17 @@ function logEvent(payload, taskDir, event, fields = {}) {
   }
 }
 function loadTask(taskDir) {
-  const workflowPath = path5.join(taskDir, "tracking", "workflow-status.md");
+  const workflowPath = path6.join(taskDir, "tracking", "workflow-status.md");
   const raw = readFileSafe(workflowPath);
   const loose = parseFrontMatterLoose(raw);
   const openBlockingQuestions = countOpenBlockingQuestions(
-    readFileSafe(path5.join(taskDir, "planning", "questions.md"))
+    readFileSafe(path6.join(taskDir, "planning", "questions.md"))
   );
-  return { workflowPath, raw, loose, data: loose.data, openBlockingQuestions };
+  const openIssues = effectiveOpenIssues(
+    loose.data,
+    countOpenIssuesInTask((rel) => readFileSafe(path6.join(taskDir, rel)))
+  );
+  return { workflowPath, raw, loose, data: loose.data, openBlockingQuestions, openIssues };
 }
 function parseFePrompt(prompt) {
   const m = String(prompt || "").match(/^\s*(?:\/fe:|FE\s+)([a-z-]+)(?:\s+(\S+))?/i);
@@ -23479,10 +23739,8 @@ function beginMode(payload, { command, taskArg, workspace }) {
     // path → dấu vân tay nội dung của file đang dirty lúc mở mode
     baseline: {}
   };
-  if (SOURCE_EDIT_COMMANDS.includes(command)) {
-    const changed = listChangedFiles({ cwd: workspace });
-    if (changed.ok) marker.baseline = snapshotFiles(workspace, changed.files);
-  }
+  const changed = listChangedFiles({ cwd: workspace });
+  if (changed.ok) marker.baseline = snapshotFiles(workspace, changed.files);
   writeMarker(payload.session_id, marker);
   logEvent(payload, taskDir, "mode_start", { mode: command });
   if (replaced) logEvent(payload, replaced.task, "mode_abandoned", { mode: replaced.command, replaced_by: command });
@@ -23494,13 +23752,13 @@ function replacedMessage(replaced) {
 function onPrompt(payload) {
   const parsed = parseFePrompt(payload.prompt);
   if (!parsed) return;
-  const workspace = path5.resolve(payload.cwd || process.cwd());
+  const workspace = path6.resolve(payload.cwd || process.cwd());
   const begun = beginMode(payload, { ...parsed, workspace });
   if (!begun) return;
   const { marker, replaced } = begun;
   const out = replaced ? { systemMessage: replacedMessage(replaced) } : {};
-  const { data, openBlockingQuestions, raw } = loadTask(marker.task);
-  const entry = raw ? evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, taskRef: marker.taskRef }) : { allowed: true };
+  const { data, openBlockingQuestions, openIssues, raw } = loadTask(marker.task);
+  const entry = raw ? evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, openIssues, taskRef: marker.taskRef }) : { allowed: true };
   if (!entry.allowed) {
     logEvent(payload, marker.task, "entry_blocked", { mode: marker.command, codes: entry.reasonCodes });
     out.hookSpecificOutput = {
@@ -23514,7 +23772,7 @@ function onBeginModeTool(payload) {
   const input2 = payload.tool_input || {};
   const command = normalizeCommand(input2.mode);
   if (!command || !input2.task_folder) return;
-  const workspace = path5.resolve(input2.workspace_root || payload.cwd || process.cwd());
+  const workspace = path6.resolve(input2.workspace_root || payload.cwd || process.cwd());
   const begun = beginMode(payload, { command, taskArg: input2.task_folder, workspace });
   if (begun?.replaced) emit({ systemMessage: replacedMessage(begun.replaced) });
 }
@@ -23559,11 +23817,11 @@ function onPreEdit(payload) {
   const rawPath = toolInput.file_path || toolInput.notebook_path;
   if (!rawPath) return;
   const marker = readMarker(payload.session_id);
-  const workspace = marker?.workspace || path5.resolve(payload.cwd || process.cwd());
-  const filePath = path5.resolve(workspace, rawPath);
+  const workspace = marker?.workspace || path6.resolve(payload.cwd || process.cwd());
+  const filePath = path6.resolve(workspace, rawPath);
   if (!isPathInside(workspace, filePath)) return;
   if (turnsOnHumanOverride(filePath, toolInput)) {
-    logEvent(payload, path5.dirname(path5.dirname(filePath)), "override_requested", {
+    logEvent(payload, path6.dirname(path6.dirname(filePath)), "override_requested", {
       mode: marker?.status === "pending" ? marker.command : void 0
     });
     decide(
@@ -23597,14 +23855,50 @@ function onPreEdit(payload) {
     { taskDir: marker.task, mode: marker.command, codes: ["EDIT_GATE_CLOSED", ...entry.reasonCodes], file: rel }
   );
 }
+var SHELL_WRITE = /(^|[;&|(]\s*)(rm|mv|cp|tee|touch|truncate|dd)\s|(^|[^0-9&>=-])>>?\s*(?!\/dev\/null|&|nul\b)[^\s&|;=]|\bsed\s+(-[a-z]*i|--in-place)|\bgit\s+(checkout|restore|reset|apply|stash|clean)\b|\b(Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|New-Item)\b/i;
+function shellGuardEnabled() {
+  return String(process.env.FE_KIT_BASH_GUARD || "").trim().toLowerCase() !== "off";
+}
+function onShell(payload) {
+  if (!shellGuardEnabled()) return;
+  const agent = kitAgentName(payload.agent_type);
+  if (!agent || agent === SOURCE_EDIT_AGENT) return;
+  const command = String(payload.tool_input?.command || "");
+  if (!SHELL_WRITE.test(command)) return;
+  const marker = readMarker(payload.session_id);
+  if (marker?.status === "pending") {
+    logEvent(payload, marker.task, "edit_warned", { mode: marker.command, agent, codes: ["SHELL_WRITE_SUSPECTED"] });
+  }
+  warn(
+    `Agent ${agent} \u0111ang ch\u1EA1y l\u1EC7nh shell c\xF3 th\u1EC3 ghi file. Agent n\xE0y kh\xF4ng \u0111\u01B0\u1EE3c s\u1EEDa source; ch\u1EC9 ghi artifact trong docs/frontend-tasks/. Source b\u1ECB \u0111\u1ED5i trong mode s\u1EBD b\u1ECB ch\u1EB7n khi k\u1EBFt th\xFAc mode.`
+  );
+}
 function baselineOf(marker) {
   if (marker.baseline && typeof marker.baseline === "object") return marker.baseline;
   return Object.fromEntries((marker.baselineChanged || []).map((f) => [f, "skipped"]));
 }
+function sourceTouchedInReadOnlyMode(marker) {
+  if (!marker.baseline || typeof marker.baseline !== "object") return [];
+  const changed = listChangedFiles({ cwd: marker.workspace });
+  if (!changed.ok) return [];
+  const { touched } = filesTouchedSince(marker.workspace, marker.baseline, changed.files);
+  const { source_paths: sourcePaths } = loadProjectConfig(marker.workspace).config;
+  return touched.filter(
+    (f) => !KIT_WRITABLE_PREFIXES.some((p) => f.startsWith(p)) && sourcePaths.some((p) => f.startsWith(p))
+  );
+}
 function completionProblems(marker) {
   let scope;
   const extraIssues = [];
-  if (SOURCE_EDIT_COMMANDS.includes(marker.command)) {
+  if (!SOURCE_EDIT_COMMANDS.includes(marker.command)) {
+    const touched = sourceTouchedInReadOnlyMode(marker);
+    if (touched.length) {
+      extraIssues.push({
+        code: "END_SOURCE_TOUCHED_IN_READONLY_MODE",
+        message: `FE ${marker.command} kh\xF4ng \u0111\u01B0\u1EE3c s\u1EEDa source, nh\u01B0ng c\xE1c file sau \u0111\xE3 b\u1ECB \u0111\u1ED5i trong mode n\xE0y: ${touched.join(", ")}. Ho\xE0n t\xE1c ph\u1EA7n mode n\xE0y \u0111\xE3 s\u1EEDa (kh\xF4ng \u0111\u1EE5ng thay \u0111\u1ED5i c\xF3 s\u1EB5n c\u1EE7a ng\u01B0\u1EDDi d\xF9ng) v\xE0 ghi ph\xE1t hi\u1EC7n v\xE0o artifact \u0111\u1EC3 route FE bugfix/cook.`
+      });
+    }
+  } else {
     const changed = listChangedFiles({ cwd: marker.workspace });
     if (changed.ok) {
       const { touched, preDirtyTouched } = filesTouchedSince(marker.workspace, baselineOf(marker), changed.files);
@@ -23679,6 +23973,7 @@ var HANDLERS = {
   PostToolUse: onBeginModeTool,
   PreToolUse(payload) {
     if (/^(Agent|Task)$/.test(payload.tool_name || "")) onDelegate(payload);
+    else if (/^(Bash|PowerShell)$/.test(payload.tool_name || "")) onShell(payload);
     else onPreEdit(payload);
   },
   SubagentStop: onSubagentStop,
@@ -23686,7 +23981,7 @@ var HANDLERS = {
 };
 function readStdin() {
   try {
-    return fs4.readFileSync(0, "utf8");
+    return fs5.readFileSync(0, "utf8");
   } catch {
     return "";
   }
@@ -23694,7 +23989,7 @@ function readStdin() {
 try {
   const raw = readStdin();
   if (process.env.FE_KIT_HOOKS_DEBUG) {
-    fs4.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, raw.trim() + "\n");
+    fs5.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, raw.trim() + "\n");
   }
   if (level() !== "off") {
     const payload = JSON.parse(raw || "{}");
@@ -23703,7 +23998,7 @@ try {
   }
 } catch (err) {
   if (process.env.FE_KIT_HOOKS_DEBUG) {
-    fs4.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, `ERROR ${err.stack || err}
+    fs5.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, `ERROR ${err.stack || err}
 `);
   }
 }

@@ -11,7 +11,7 @@
       "name": "fe",
       "source": "./plugins/fe",
       "description": "Skill + 11 slash command /fe:* (new-task/plan/quick/input-sync/figma/cook/review/bugfix/test/figma-review/pr) + 6 subagent cho quy trình frontend delivery chuẩn, output tiếng Việt có dấu.",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "author": {
         "name": "Frontend Platform Team"
       },

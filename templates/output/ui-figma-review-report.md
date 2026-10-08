@@ -25,6 +25,5 @@
 | ui_match_review_status | passed / waived / needs_fix |
 | ui_match_severity_status | none / low / medium / high / critical |
 | playwright_screenshot_diff_status | passed / failed / manual_review / not_required / waived |
-| ui_figma_review_report_status | created / updated |
 
 > Không PR nếu còn Critical/High mismatch chưa fix/waive.

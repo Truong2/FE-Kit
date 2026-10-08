@@ -1,5 +1,5 @@
 name: frontend-delivery-standard
-version: 2.2.0
+version: 2.3.0
 status: stable
 owner: frontend-platform-team
 description: >
@@ -95,4 +95,14 @@ rules:
   blocking_question_blocks_cook: true
 
 rules_folder: .frontend-delivery/rules
+
+# Cấu hình repo dự án (fe-kit đọc các key dưới đây; key khác chỉ để tham khảo).
+# PR sửa source mà không task nào khai file đó trong plan: off | warn | error.
+require_task_for_source: warn
+# Thư mục được coi là source khi kiểm require_task_for_source.
+source_paths:
+  - src/
+  - app/
+  - apps/
+  - packages/
 feature_source_context_file: docs/frontend-context/feature-source-context.md

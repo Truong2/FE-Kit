@@ -496,6 +496,64 @@ describe('run-log', () => {
   });
 });
 
+describe('mode chỉ đọc không được đổi source (kể cả qua shell)', () => {
+  const git = (...a) => spawnSync('git', a, { cwd: workspace, encoding: 'utf8' });
+
+  /** Workspace git có src/app.ts đã commit và src/user.ts người dùng đang sửa dở. */
+  function gitWorkspace() {
+    const task = addTask('task-ready-to-cook');
+    fs.mkdirSync(path.join(workspace, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(workspace, 'src', 'app.ts'), 'export const a = 1;\n');
+    fs.writeFileSync(path.join(workspace, 'src', 'user.ts'), 'export const u = 1;\n');
+    git('init', '-q');
+    git('add', '-A');
+    git('-c', 'user.email=a@b', '-c', 'user.name=a', 'commit', '-qm', 'base');
+    fs.writeFileSync(path.join(workspace, 'src', 'user.ts'), 'export const u = 2; // người dùng đang sửa\n');
+    return task;
+  }
+  const endCodes = (task) => runLog(task).filter((e) => e.event === 'mode_end').at(-1)?.codes || [];
+
+  it('review đổi file source (vd qua shell) thì không được kết thúc', () => {
+    const task = gitWorkspace();
+    begin(`/fe:review ${task}`);
+    fs.writeFileSync(path.join(workspace, 'src', 'app.ts'), 'export const a = 2;\n'); // ghi thẳng, không qua Edit
+    const out = runHook({ hook_event_name: 'Stop', stop_hook_active: false });
+    expect(out.decision).toBe('block');
+    expect(out.reason).toMatch(/FE review không được sửa source.*src\/app\.ts/);
+    expect(endCodes(task)).toContain('END_SOURCE_TOUCHED_IN_READONLY_MODE');
+  });
+
+  it('không tính thay đổi có sẵn của người dùng, file ngoài source_paths hay artifact của task', () => {
+    const task = gitWorkspace();
+    begin(`/fe:review ${task}`);
+    fs.mkdirSync(path.join(workspace, 'coverage'), { recursive: true });
+    fs.writeFileSync(path.join(workspace, 'coverage', 'lcov.info'), 'x\n');
+    fs.mkdirSync(path.join(workspace, task, 'output'), { recursive: true });
+    fs.writeFileSync(path.join(workspace, task, 'output', 'review-report.md'), '# Review\n');
+    runHook({ hook_event_name: 'Stop', stop_hook_active: false });
+    expect(endCodes(task)).not.toContain('END_SOURCE_TOUCHED_IN_READONLY_MODE');
+  });
+
+  it('cảnh báo lệnh shell trông như ghi file của agent không phải developer', () => {
+    const task = gitWorkspace();
+    begin(`/fe:review ${task}`);
+    const shell = (command, agent = 'fe:frontend-reviewer', opts) =>
+      runHook({ hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command }, agent_type: agent }, opts);
+
+    expect(shell('echo x > src/app.ts').systemMessage).toMatch(/có thể ghi file/);
+    expect(shell("sed -i 's/a/b/' src/app.ts").systemMessage).toMatch(/có thể ghi file/);
+    expect(shell('git checkout -- src/app.ts').systemMessage).toMatch(/có thể ghi file/);
+    expect(runLog(task).filter((e) => e.event === 'edit_warned').at(-1)).toMatchObject({ codes: ['SHELL_WRITE_SUSPECTED'], mode: 'review' });
+
+    for (const safe of ['git diff --stat', 'npm test 2>&1', 'cat src/app.ts | head -5', 'ls > /dev/null', 'node -e "[1].map((x) => x)"']) {
+      expect(shell(safe), safe).toBeNull();
+    }
+    expect(shell('echo x > src/app.ts', 'fe:frontend-developer')).toBeNull();
+    expect(shell('echo x > src/app.ts', 'Explore')).toBeNull();
+    expect(shell('echo x > src/app.ts', 'fe:frontend-reviewer', { env: { FE_KIT_BASH_GUARD: 'off' } })).toBeNull();
+  });
+});
+
 describe('an toàn', () => {
   it('payload hỏng hoặc sự kiện lạ không làm hook lỗi', () => {
     const r = spawnSync(process.execPath, [HOOK, 'Stop'], { input: 'không phải json', encoding: 'utf8', env: { ...process.env, CLAUDE_PLUGIN_DATA: dataDir } });

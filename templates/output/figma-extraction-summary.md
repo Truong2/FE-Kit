@@ -30,8 +30,4 @@
 
 | Field | Giá trị |
 |---|---|
-| figma_summary_status | created / updated |
 | figma_gate_status |  |
-| ui_implementation_contract_status |  |
-| figma_node_matrix_status |  |
-| figma_component_binding_status |  |

@@ -26,16 +26,15 @@ Kiểm lại các claim ở mục "Kiểm chứng claim" của `planning/impleme
 
 ## 4. Issue phát hiện
 
-| ID | Severity | Nhóm | File/evidence | Expected | Actual | Owner | Trạng thái |
-|---|---|---|---|---|---|---|---|
-|  |  |  |  |  |  |  |  |
+| ID | Severity | Nhóm | File/evidence | Expected | Actual | Nguyên nhân gốc | Owner | Trạng thái |
+|---|---|---|---|---|---|---|---|---|
+|  |  |  |  |  |  |  |  |  |
 
 ## 5. Cập nhật workflow-status.md
 
 | Field | Giá trị |
 |---|---|
 | review_status |  |
-| review_report_status | created / updated |
 | review_bug_status | none / open / blocked / resolved |
 | scope_diff_status | passed / failed / not_required |
 | bugfix_required | true / false |
