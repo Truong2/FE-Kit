@@ -179,7 +179,18 @@ Khoảng 2,2–3,8 nghìn token mỗi mode. `tests/context-budget.test.mjs` đ�
 
 ## Eval hành vi
 
-`evals/` chạy bằng `claude plugin eval` qua workflow `plugin-evals.yml` (chạy tay). Input `hooks_level: both` chạy cả `warn` và `enforce`, truyền mức hook qua `EVAL_FE_KIT_HOOKS`.
+`evals/` chạy bằng `claude plugin eval` qua `node evals/run.mjs <profile>` (trên máy: `npm run eval:<profile>`; CI: workflow `plugin-evals.yml`, chạy tay). Mức hook truyền qua `EVAL_FE_KIT_HOOKS`.
+
+Chi phí tỉ lệ với số lượt chạy (case × số lần × số mức hook); mỗi lượt là một phiên Claude Code đầy đủ. Hook chỉ chèn vài dòng cảnh báo nên gần như không tốn token. `evals/profiles.mjs` định nghĩa các mức, mức nào cũng có trần `--max-cost-usd` và không chạy nhánh không plugin (`--ablation none`):
+
+| Profile | Chạy | Model | Trần | Ghi baseline |
+|---|---|---|---|---|
+| `pilot` | `cook-refuses-when-blocked` × 1, enforce | Sonnet | 1 USD | Không |
+| `smoke` | mọi case × 1, warn | Haiku | 5 USD | Không |
+| `gate` | case `gate` × 3, warn và enforce | Sonnet | 10 USD/mức | Có |
+| `full` | mọi case × 5 ở warn, case `gate` × 5 ở enforce | Sonnet | 30 USD/mức | Có |
+
+Luật `enforce` chỉ xét case `gate`, nên không chạy case khác ở cả hai mức. Baseline cần ≥ 3 run mỗi case gate mới được dùng để quyết định.
 
 | Nhóm | Case |
 |---|---|

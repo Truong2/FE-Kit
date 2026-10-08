@@ -26,6 +26,8 @@ export const ENFORCE_RULE = {
   gateMinScore: 0.8,
   falseBlockCase: 'cook-proceeds-when-ready',
   maxRegression: 0.05,
+  /** Ít hơn số run này mỗi case gate thì điểm quá nhiễu để quyết định. */
+  minRuns: 3,
 };
 
 /** Tag của từng case, đọc từ frontmatter `tags: [a, b]` của prompt.md. */
@@ -37,7 +39,7 @@ export function caseTags(name, evalsDir = HERE) {
 }
 
 /** Rút gọn kết quả `--json` của `claude plugin eval` thành bản ghi baseline. */
-export function summarizeResults(results, { level, model, version, tagsOf = caseTags, recordedAt = new Date().toISOString() }) {
+export function summarizeResults(results, { level, model, version, profile = null, tagsOf = caseTags, recordedAt = new Date().toISOString() }) {
   const cases = (results.cases || []).map((c) => {
     const runs = c.arms?.with || [];
     return {
@@ -49,16 +51,21 @@ export function summarizeResults(results, { level, model, version, tagsOf = case
       skipped_paid_graders: runs.filter((r) => r.skippedPaidGraders).length,
     };
   });
+  const totalRuns = cases.reduce((s, c) => s + c.runs, 0);
+  const cost = typeof results.costUsd === 'number' ? results.costUsd : null;
   return {
     schema: 1,
     kit_version: version,
     model,
     level,
+    profile,
     recorded_at: recordedAt,
     claude_version: results.claudeVersion ?? null,
     partial: Boolean(results.partial),
     partial_reason: results.partialReason ?? null,
-    cost_usd: results.costUsd ?? null,
+    cost_usd: cost,
+    total_runs: totalRuns,
+    cost_per_run_usd: cost !== null && totalRuns ? Math.round((cost / totalRuns) * 10000) / 10000 : null,
     duration_seconds: results.durationSeconds ?? null,
     overall_score: results.aggregates?.overallScore ?? null,
     cases_passed: results.aggregates?.casesPassed ?? null,
@@ -83,6 +90,7 @@ export function enforceDecision(warn, enforce, rule = ENFORCE_RULE) {
   for (const c of enforce.cases) {
     if (c.failed_runs) reasons.push(`${c.name}: ${c.failed_runs} run lỗi/aborted ở enforce.`);
     if (!c.tags.includes('gate')) continue;
+    if (c.runs < rule.minRuns) reasons.push(`${c.name}: chỉ ${c.runs} run ở enforce, cần ≥ ${rule.minRuns}.`);
     if (c.score === null || c.score < rule.gateMinScore) {
       reasons.push(`${c.name}: ${fmt(c.score)} < ${rule.gateMinScore} ở enforce.`);
     }
@@ -120,7 +128,9 @@ export function renderReadme(baselines) {
     '',
     'File này do `node evals/summarize.mjs` sinh ra, không sửa tay. Mỗi file JSON bên cạnh là kết quả một lượt `plugin-evals.yml` (một mức hook).',
     '',
-    `Luật bật \`enforce\` mặc định: mọi case tag \`gate\` đạt ≥ ${ENFORCE_RULE.gateMinScore} ở enforce, \`${ENFORCE_RULE.falseBlockCase}\` đạt 1, enforce không kém warn quá ${ENFORCE_RULE.maxRegression} ở case gate, không có run lỗi.`,
+    `Luật bật \`enforce\` mặc định: mọi case tag \`gate\` chạy ≥ ${ENFORCE_RULE.minRuns} lần và đạt ≥ ${ENFORCE_RULE.gateMinScore} ở enforce, \`${ENFORCE_RULE.falseBlockCase}\` đạt 1, enforce không kém warn quá ${ENFORCE_RULE.maxRegression} ở case gate, không có run lỗi.`,
+    '',
+    'Chỉ profile `gate` và `full` của `node evals/run.mjs` ghi baseline; `pilot` và `smoke` chạy quá ít lần nên chỉ in tóm tắt.',
   ];
   const groups = new Map();
   for (const b of baselines) {
@@ -138,7 +148,10 @@ export function renderReadme(baselines) {
     lines.push('', `## ${key}`, '', '| Case | Tag | warn | enforce |', '|---|---|---|---|');
     for (const name of names) lines.push(`| \`${name}\` | ${tags(name)} | ${score(warn, name)} | ${score(enforce, name)} |`);
     lines.push(`| **Tổng** | | ${fmt(warn?.overall_score)} | ${fmt(enforce?.overall_score)} |`);
-    const cost = [warn, enforce].filter(Boolean).map((b) => `${b.level} ${b.cost_usd ?? '—'} USD, ${b.cases[0]?.runs ?? '—'} run/case`).join('; ');
+    const cost = [warn, enforce]
+      .filter(Boolean)
+      .map((b) => `${b.level} ${b.cost_usd ?? '—'} USD, ${b.cases[0]?.runs ?? '—'} run/case${b.cost_per_run_usd != null ? `, ${b.cost_per_run_usd} USD/run` : ''}`)
+      .join('; ');
     lines.push('', `Chi phí: ${cost}.`);
     const d = enforceDecision(warn, enforce);
     lines.push('', d.ok ? '**Quyết định:** đạt luật, có thể bật `enforce` mặc định.' : '**Quyết định:** chưa đạt luật, giữ `warn`.');
@@ -152,25 +165,36 @@ function arg(args, name) {
   return i >= 0 ? args[i + 1] : undefined;
 }
 
+/** Ghi baseline vào `evals/baselines/<version>/<model>-<level>.json`; trả đường dẫn. */
+export function writeBaseline(baseline, dir = BASELINES) {
+  const out = path.join(dir, baseline.kit_version, `${baseline.model}-${baseline.level}.json`);
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  fs.writeFileSync(out, JSON.stringify(baseline, null, 2) + '\n');
+  return out;
+}
+
+/** Sinh lại `evals/baselines/README.md` từ mọi baseline đã ghi. */
+export function writeReadme(dir = BASELINES) {
+  fs.mkdirSync(dir, { recursive: true });
+  const out = path.join(dir, 'README.md');
+  fs.writeFileSync(out, renderReadme(readBaselines(dir)));
+  return out;
+}
+
 function main(args) {
   if (!args.includes('--readme-only')) {
     const resultsFile = arg(args, '--results');
     const level = arg(args, '--level');
     const model = arg(args, '--model');
     if (!resultsFile || !['warn', 'enforce'].includes(level) || !model) {
-      console.error('Dùng: node evals/summarize.mjs --results <file.json> --level warn|enforce --model <model> [--version <v>]');
+      console.error('Dùng: node evals/summarize.mjs --results <file.json> --level warn|enforce --model <model> [--version <v>] [--profile <p>]');
       process.exit(1);
     }
     const version = arg(args, '--version') || JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
-    const baseline = summarizeResults(JSON.parse(fs.readFileSync(resultsFile, 'utf8')), { level, model, version });
-    const out = path.join(BASELINES, version, `${model}-${level}.json`);
-    fs.mkdirSync(path.dirname(out), { recursive: true });
-    fs.writeFileSync(out, JSON.stringify(baseline, null, 2) + '\n');
-    console.log(`Đã ghi ${path.relative(ROOT, out)}`);
+    const baseline = summarizeResults(JSON.parse(fs.readFileSync(resultsFile, 'utf8')), { level, model, version, profile: arg(args, '--profile') || null });
+    console.log(`Đã ghi ${path.relative(ROOT, writeBaseline(baseline))}`);
   }
-  fs.mkdirSync(BASELINES, { recursive: true });
-  fs.writeFileSync(path.join(BASELINES, 'README.md'), renderReadme(readBaselines()));
-  console.log(`Đã sinh lại ${path.relative(ROOT, path.join(BASELINES, 'README.md'))}`);
+  console.log(`Đã sinh lại ${path.relative(ROOT, writeReadme())}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

@@ -28,6 +28,10 @@
     "validate:task": "node bin/fe-kit.mjs validate-task",
     "validate:workflow": "node bin/fe-kit.mjs validate-workflow",
     "validate:pr": "node bin/fe-kit.mjs validate-pr",
+    "eval:pilot": "npm run build && node evals/run.mjs pilot",
+    "eval:smoke": "npm run build && node evals/run.mjs smoke",
+    "eval:gate": "npm run build && node evals/run.mjs gate",
+    "eval:full": "npm run build && node evals/run.mjs full",
     "test": "npm run test --workspaces --if-present && npm run test:kit",
     "test:kit": "vitest run --dir tests"
   },

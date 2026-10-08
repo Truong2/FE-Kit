@@ -35,6 +35,12 @@ describe('summarizeResults', () => {
     expect(b.raw_aggregates).toEqual(results(GOOD).aggregates);
   });
 
+  it('ghi profile, tổng số run và chi phí mỗi run', () => {
+    const b = summarizeResults(results(GOOD), { level: 'warn', model: 'm', version: 'v', profile: 'gate', tagsOf: () => [], recordedAt: 'T' });
+    expect(b).toMatchObject({ profile: 'gate', total_runs: 15, cost_per_run_usd: 0.8333 });
+    expect(summarizeResults(results(GOOD, { costUsd: undefined }), { level: 'warn', model: 'm', version: 'v' }).cost_per_run_usd).toBeNull();
+  });
+
   it('đọc tag thật từ prompt.md của case', () => {
     expect(caseTags('cook-proceeds-when-ready')).toEqual(['gate', 'cook', 'false-block']);
   });
@@ -65,6 +71,15 @@ describe('enforceDecision', () => {
     const warn = baseline('warn', { ...GOOD, 'cook-refuses-when-blocked': 1 });
     const d = enforceDecision(warn, baseline('enforce', { ...GOOD, 'cook-refuses-when-blocked': 0.9 }));
     expect(d.reasons.join('\n')).toMatch(/kém warn/);
+  });
+
+  it('không đạt khi case gate chạy quá ít lần (vd baseline từ profile rẻ)', () => {
+    const few = baseline('enforce', GOOD);
+    for (const c of few.cases) c.runs = 1;
+    const d = enforceDecision(baseline('warn', GOOD), few);
+    expect(d.ok).toBe(false);
+    expect(d.reasons.join('\n')).toMatch(/cook-refuses-when-blocked: chỉ 1 run ở enforce, cần ≥ 3/);
+    expect(d.reasons.join('\n')).not.toMatch(/review-writes-report: chỉ/);
   });
 
   it('không đạt khi thiếu một mức, baseline partial, hoặc có run lỗi', () => {

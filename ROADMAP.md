@@ -52,11 +52,12 @@ Mặc định đổi được khi review từng phase:
 
 Không đạt thì giữ `warn` và ghi lý do vào bảng phase ở trên.
 
-Trạng thái ở 2.2.0: **giữ `warn`**. Bộ eval chưa chạy thật nên chưa có baseline để áp luật. Chạy `plugin-evals.yml` (`hooks_level: both`), commit baseline, rồi đổi `DEFAULT_LEVEL` trong `core/hooks/fe-hook.mjs` trong một bản riêng nếu đạt.
+Trạng thái ở 2.2.0: **giữ `warn`**. Bộ eval chưa chạy thật nên chưa có baseline để áp luật. Chạy profile `gate` (`npm run eval:gate` hoặc `plugin-evals.yml`), commit baseline, rồi đổi `DEFAULT_LEVEL` trong `core/hooks/fe-hook.mjs` trong một bản riêng nếu đạt.
 
 ## Phase 0 — việc còn lại
 
-- Chạy workflow `plugin-evals.yml` với `hooks_level: both`, `runs: 5`. Tải artifact `eval-baselines` về `evals/baselines/` rồi commit.
+- Chạy theo bậc: `pilot` (đo chi phí một lượt) → `smoke` (mọi case một lần, trần 5 USD) → `gate` (baseline để áp luật `enforce`). Chạy trên máy với tài khoản `claude` đang đăng nhập, hoặc qua `plugin-evals.yml`. Commit baseline trong `evals/baselines/`.
+- Sau `pilot`: xem số turn thật của từng case để hạ `max_turns` (đang 25–40) nếu dư nhiều.
 - Chạy một case trên Windows để chắc scaffold Node chạy được ngoài Linux:
 
   ```bash
@@ -88,4 +89,4 @@ Có thể làm riêng nếu thấy cần: sinh `standard.yaml` từ manifest. Fi
 
 - **Hook chưa chắc thấy được mức đã đặt.** `plugin eval` chỉ chuyển `EVAL_*` vào phiên, nên hook đọc `EVAL_FE_KIT_HOOKS`. Chưa xác minh hook thật sự nhận được biến này trong phiên eval. Từ 2.2.0, grader `hook-logged-entry-block` chứng minh hook có chạy, và field `level` trong `run-log.jsonl` của workspace eval (`--keep-temp`) cho biết hook chạy ở mức nào.
 - **Chưa rõ `tool_used` có thấy tool call bên trong subagent không.** Tài liệu không nói. Vì vậy grader cấm sửa source luôn đi kèm grader theo trạng thái file (`source-unchanged`, `file_exists`).
-- **Eval dao động giữa các lần chạy.** Dùng 5 run mỗi case. Mỗi lượt baseline tốn tối đa khoảng 2 × 30 USD.
+- **Eval dao động giữa các lần chạy.** Baseline cần ≥ 3 run mỗi case gate. Chi phí chặn bằng profile (`evals/profiles.mjs`): `pilot` 1 USD, `smoke` 5 USD, `gate` 2 × 10 USD, `full` 2 × 30 USD là trần, chưa phải chi phí đo được.

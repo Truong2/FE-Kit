@@ -2,35 +2,54 @@ name: Plugin behaviour evals
 
 # Eval hành vi của plugin `fe`: delegation, gate câu hỏi blocking, không sửa
 # source sai vai, gate bị lọt (evidence giả, file ngoài plan) và chặn nhầm.
-# Tốn chi phí API nên chỉ chạy tay hoặc trước release.
-# Cần secret ANTHROPIC_API_KEY.
+# Tốn chi phí API nên chỉ chạy tay. Cần secret ANTHROPIC_API_KEY.
 #
-# Kết quả: artifact `eval-baselines` chứa `evals/baselines/` (JSON từng mức hook
-# + README có quyết định bật `enforce`). Tải về, chép vào repo và commit.
+# Profile (định nghĩa ở evals/profiles.mjs, rẻ → đắt):
+#   pilot  1 case × 1 lần, trần 1 USD — đo chi phí thật của một lượt
+#   smoke  mọi case × 1 lần trên Haiku, trần 5 USD — kiểm scaffold và grader
+#   gate   case gate × 3 lần × warn + enforce, trần 10 USD/mức — áp luật enforce
+#   full   mọi case × 5 lần ở warn, case gate × 5 lần ở enforce — trước release
+#
+# Chạy trên máy (dùng tài khoản claude đang đăng nhập): `npm run eval:pilot` …
+#
+# Profile gate/full ghi baseline: tải artifact `eval-baselines`, chép vào
+# evals/baselines/ và commit.
 
 on:
   workflow_dispatch:
     inputs:
-      model:
-        description: Model chạy agent
-        default: claude-sonnet-5-5
-      runs:
-        description: Số lần chạy mỗi case
-        default: "5"
-      hooks_level:
-        description: Mức hook của kit trong lúc eval. both = chạy cả warn và enforce để so sánh.
+      profile:
+        description: Mức chạy (xem evals/profiles.mjs)
         type: choice
-        options: [both, enforce, warn]
-        default: both
+        options: [pilot, smoke, gate, full]
+        default: pilot
+      model:
+        description: Đổi model chạy agent (để trống = model mặc định của profile)
+        default: ""
 
 jobs:
+  levels:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.levels.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - id: levels
+        env:
+          PROFILE: ${{ inputs.profile }}
+        run: echo "matrix=$(node evals/run.mjs "$PROFILE" --print-levels)" >> "$GITHUB_OUTPUT"
+
   evals:
+    needs: levels
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
-        level: ${{ fromJSON(inputs.hooks_level == 'both' && '["warn","enforce"]' || format('["{0}"]', inputs.hooks_level)) }}
+        level: ${{ fromJSON(needs.levels.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -38,50 +57,30 @@ jobs:
         with:
           node-version: 20
 
+      - name: Cài Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
       - name: Chạy eval (hook ${{ matrix.level }})
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # `plugin eval` chỉ chuyển biến EVAL_* (cùng một allowlist) vào phiên được
-          # đánh giá, nên đặt FE_KIT_HOOKS ở đây không tới được hook.
-          EVAL_FE_KIT_HOOKS: ${{ matrix.level }}
-        run: |
-          npx -y @anthropic-ai/claude-code plugin eval ./plugins/fe \
-            --eval-dir evals \
-            --ablation none \
-            --scaffold \
-            --allow-tools Write Edit "mcp__plugin_fe_frontend-delivery__*" \
-            --allow-real-servers \
-            --trust-plugin \
-            --runs "${{ inputs.runs }}" \
-            --model "${{ inputs.model }}" \
-            --judge-model claude-haiku-4-5 \
-            --threshold 0.8 \
-            --max-cost-usd 30 \
-            --no-publish \
-            --json eval-results.json \
-            --output-dir eval-report
-
-      - name: Ghi baseline
-        if: always()
-        run: |
-          if [ -f eval-results.json ]; then
-            node evals/summarize.mjs --results eval-results.json --level "${{ matrix.level }}" --model "${{ inputs.model }}"
-          else
-            echo "Không có eval-results.json (eval lỗi trước khi ghi kết quả)." >> "$GITHUB_STEP_SUMMARY"
-          fi
+          PROFILE: ${{ inputs.profile }}
+          MODEL: ${{ inputs.model }}
+          LEVEL: ${{ matrix.level }}
+        # run.mjs đặt EVAL_FE_KIT_HOOKS (plugin eval chỉ chuyển biến EVAL_* vào phiên).
+        run: node evals/run.mjs "$PROFILE" --level "$LEVEL" ${MODEL:+--model "$MODEL"}
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: plugin-eval-${{ matrix.level }}
           path: |
-            eval-results.json
-            eval-report/
+            evals/results/
             evals/baselines/*/*.json
+          if-no-files-found: ignore
 
   baseline:
     needs: evals
-    if: always()
+    if: always() && (inputs.profile == 'gate' || inputs.profile == 'full')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
