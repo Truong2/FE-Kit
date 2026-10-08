@@ -4,16 +4,22 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 
 /**
- * Run-log của task: mỗi sự kiện một dòng JSON trong `tracking/run-log.jsonl`.
- * Hook, MCP và CLI cùng ghi qua `appendRunLog`; `fe-kit report` đọc qua
- * `readRunLog`. File nằm trong task folder nên được commit cùng code và không
- * bị scope diff tính là file ngoài plan.
+ * Run-log của task: mỗi sự kiện một dòng JSON trong `run-log.jsonl`, đặt cạnh
+ * file trạng thái của pack (`runLogFileFor`). Hook, MCP và CLI cùng ghi qua
+ * `appendRunLog`; lệnh `report` của CLI đọc qua `readRunLog`. File nằm trong
+ * task folder nên được commit cùng code và không bị scope diff tính là file ngoài plan.
  *
  * Không ghi prompt, nội dung file hay input của người dùng: chỉ mode, kết quả,
  * reason code và path tương đối.
  */
 
-export const RUNLOG_FILE = 'tracking/run-log.jsonl';
+export const RUNLOG_FILE_NAME = 'run-log.jsonl';
+
+/** Path run-log trong task folder: cùng thư mục với file trạng thái của pack. */
+export function runLogFileFor(statusFile) {
+  const dir = path.posix.dirname(statusFile);
+  return dir === '.' ? RUNLOG_FILE_NAME : `${dir}/${RUNLOG_FILE_NAME}`;
+}
 export const RUNLOG_VERSION = 1;
 
 /** Quá ngưỡng này thì ngừng ghi, để log hỏng không làm phình repo. */
@@ -61,18 +67,18 @@ function enabled() {
 
 /**
  * Ghi một sự kiện vào run-log của task. Không bao giờ throw và không tạo thư
- * mục: task chưa có `tracking/` thì bỏ qua.
+ * mục: thư mục chứa run-log chưa có thì bỏ qua.
  *
  * @param {string} taskDir đường dẫn tuyệt đối tới task folder
  * @param {object} record field của sự kiện, phải có `pack` (id của domain pack); `v`, `ts`, `task` được điền nếu thiếu
+ * @param {{ file: string }} opts path run-log trong task folder (`runLogFileFor(statusFile)`)
  * @returns {boolean} đã ghi hay chưa
  */
-export function appendRunLog(taskDir, record) {
+export function appendRunLog(taskDir, record, { file: runLogFile }) {
   try {
     if (!enabled() || !taskDir) return false;
-    const trackingDir = path.join(taskDir, 'tracking');
-    if (!fs.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
-    const file = path.join(taskDir, RUNLOG_FILE);
+    const file = path.join(taskDir, runLogFile);
+    if (!fs.statSync(path.dirname(file), { throwIfNoEntry: false })?.isDirectory()) return false;
     const size = fs.statSync(file, { throwIfNoEntry: false })?.size || 0;
     if (size > RUNLOG_MAX_BYTES) return false;
 
@@ -106,10 +112,11 @@ function dropEmpty(record) {
  * qua và được đếm vào `skipped`.
  *
  * @param {string} taskDir
+ * @param {{ file: string }} opts path run-log trong task folder
  * @returns {{ records: object[], skipped: number }}
  */
-export function readRunLog(taskDir) {
-  const file = path.join(taskDir, RUNLOG_FILE);
+export function readRunLog(taskDir, { file: runLogFile }) {
+  const file = path.join(taskDir, runLogFile);
   let text = '';
   try {
     text = fs.readFileSync(file, 'utf8');

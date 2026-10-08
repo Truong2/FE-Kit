@@ -20,6 +20,7 @@ import { TASKS_ROOT, resolveTaskDir } from './resolve.mjs';
 import { loadProjectConfig } from './project-config.mjs';
 import { scaffoldTask } from './scaffold.mjs';
 import manifest from './manifest.gen.mjs';
+import { RUNLOG_FILE } from './runlog.mjs';
 
 const m = manifest;
 
@@ -35,6 +36,7 @@ export const fePack = {
   agentPrefix: m.agent_prefix,
   tasksRoot: TASKS_ROOT,
   statusFile: m.status_file,
+  runLogFile: RUNLOG_FILE,
   writablePrefixes: KIT_WRITABLE_PREFIXES,
   commands: COMMANDS,
   commandToMode: COMMAND_TO_MODE,

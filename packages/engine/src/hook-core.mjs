@@ -108,7 +108,7 @@ export function createHookHandlers(pack, { version = 'dev' } = {}) {
   /** Ghi một sự kiện vào run-log của task. Lỗi ghi log không bao giờ đổi quyết định của hook. */
   function logEvent(payload, taskDir, event, fields = {}) {
     try {
-      appendRunLog(taskDir, {
+      const record = {
         pack: pack.id,
         event,
         source: 'hook',
@@ -117,7 +117,8 @@ export function createHookHandlers(pack, { version = 'dev' } = {}) {
         level: level(),
         session: hashSession(payload.session_id),
         ...fields,
-      });
+      };
+      appendRunLog(taskDir, record, { file: pack.runLogFile });
     } catch {
       // appendRunLog đã tự nuốt lỗi; lớp này chỉ để chắc chắn.
     }

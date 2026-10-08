@@ -1,0 +1,81 @@
+# Pack mẫu "docs" — chỉ dùng trong tests/engine-genericity.test.mjs để chứng minh
+# engine không phụ thuộc FE. Mọi giá trị cố ý khác pack FE.
+
+id: docs
+display_name: Docs-Kit
+plugin: docs
+prompt_prefix: DOC
+env_prefix: DOCS_KIT
+agent_prefix: docs-
+
+tasks_root: docs/doc-tasks
+config_dir: .docs-kit
+project_config_file: .docs-kit/config.yaml
+status_file: state/status.md
+writable_prefixes: [docs/doc-tasks/]
+scope_ignore: [docs/doc-tasks/, .docs-kit/]
+planned_files_heading: 'Files to change'
+task_name_hint: DOC-<id>-<slug>
+
+task_files:
+  required_docs: [brief.md, state/status.md]
+  empty: []
+  conditional: [review/notes.md]
+
+modes:
+  draft:
+    state: drafting
+    agent: docs-writer
+    artifacts: [brief.md, state/status.md]
+    next: [review, draft]
+  review:
+    state: reviewing
+    agent: docs-reviewer
+    artifacts: [review/notes.md, state/status.md]
+    next: [draft, publish]
+  publish:
+    state: publishing
+    agent: null
+    artifacts: [state/status.md]
+    next: [draft]
+
+aliases:
+  write: draft
+terminal_next: [none, done]
+always_allowed: [draft]
+source_edit_modes: [draft]
+source_edit_agent: docs-writer
+source_fix_route: DOC draft
+plan_update_route: draft
+read_inputs_hint: Read brief.md first.
+
+rules:
+  always: [style.md]
+  by_mode:
+    review-checklist.md: [review]
+  conditional:
+    - rule: legal.md
+      always: [publish]
+      modes: [review]
+      when_field: legal_review
+
+mcp:
+  server_name: docs-kit
+  tool_prefix: docs
+  skill_dir: skills/docs
+  next_prompt_heading: Next step
+  first_command: draft
+  task_prop_description: Task name or folder.
+  task_name_description: Task name like DOC-1-intro.
+  scope_self_reported: 'Scope: self-reported.'
+  scope_unavailable: Cannot compute scope.
+  planned_files_missing: The brief lists no files.
+  status_fields: [current_mode, next_mode, approved]
+  descriptions:
+    begin_mode: Start a docs mode.
+    new_task: Create a docs task.
+    validate_task: Check required files.
+    validate_workflow: Run docs gates.
+    scope_diff: Compare changed files with the brief.
+    next_step: Read the next step.
+    task_status: Show task status.

@@ -87,7 +87,8 @@ const machine = createStateMachine({
   aliases: COMMAND_ALIASES,
   terminalNext: TERMINAL_NEXT_MODES,
   alwaysAllowed: ALWAYS_ALLOWED,
-  commandPrefix: `${manifest.plugin}[:\\s]+`,
+  pluginName: manifest.plugin,
+  promptPrefix: manifest.prompt_prefix,
   statusFileName: manifest.status_file.split('/').pop(),
   entryRules: feEntryRules,
 });

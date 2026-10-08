@@ -1,0 +1,12 @@
+{
+  "name": "@frontend-delivery-kit/pack-sample-docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pack mẫu chỉ dùng trong test: chứng minh engine chạy được với domain khác FE (thư mục, mode, agent, rule, file trạng thái khác hẳn). Không được build thành plugin.",
+  "type": "module",
+  "main": "./src/index.mjs",
+  "dependencies": {
+    "@frontend-delivery-kit/engine": "*",
+    "zod": "^4.5.4"
+  }
+}

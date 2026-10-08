@@ -203,15 +203,11 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
       if (!fs.existsSync(taskDir)) return textResult(`Không tìm thấy task folder: ${taskDir}`, true);
 
       const res = pack.validateWorkflowAtGate(taskDir, { repoRoot: workspace_root, base: base_ref });
-      appendRunLog(taskDir, {
-        pack: pack.id,
-        event: 'validate',
-        source: 'mcp',
-        actor: 'claude',
-        kit: version,
-        outcome: res.ok ? 'ok' : 'failed',
-        codes: codesOf(res),
-      });
+      appendRunLog(
+        taskDir,
+        { pack: pack.id, event: 'validate', source: 'mcp', actor: 'claude', kit: version, outcome: res.ok ? 'ok' : 'failed', codes: codesOf(res) },
+        { file: pack.runLogFile }
+      );
       const warnings = (res.warnings || []).map((w) => '- Cảnh báo: ' + w);
       const scopeLine = {
         git: `Scope: tính từ git (base: ${res.base || 'chỉ thay đổi chưa commit'}).`,

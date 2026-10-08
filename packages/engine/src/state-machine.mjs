@@ -22,7 +22,8 @@ function bool(v) {
  * @param {Record<string, string>} [spec.aliases] tên lịch sử → lệnh
  * @param {string[]} spec.terminalNext giá trị `next_mode` nghĩa là "không còn bước bắt buộc"
  * @param {string[]} spec.alwaysAllowed lệnh luôn chạy được vì dùng để gỡ blocker
- * @param {string} spec.commandPrefix regex (chuỗi) của tiền tố lệnh cần bỏ, vd `fe[:\\s]+`
+ * @param {string} spec.pluginName namespace của plugin (`/<plugin>:<mode>`)
+ * @param {string} spec.promptPrefix tiền tố lệnh dạng chữ (`<prefix> <mode>`)
  * @param {string} spec.statusFileName tên file trạng thái để in trong cảnh báo
  * @param {(ctx: object) => { code: string, reason: string, redirect?: string }[]} spec.entryRules
  *   luật chặn của pack, theo thứ tự; redirect đầu tiên được dùng
@@ -35,7 +36,11 @@ export function createStateMachine(spec) {
   const TERMINAL_NEXT = spec.terminalNext;
   const ALWAYS_ALLOWED = spec.alwaysAllowed;
   const MODE_TO_COMMAND = Object.fromEntries(Object.entries(COMMAND_TO_MODE).map(([cmd, mode]) => [mode, cmd]));
-  const prefixRe = new RegExp(`^${spec.commandPrefix}`);
+  // `<plugin>:` hoặc `<prefix> ` ở đầu, không phân biệt hoa thường; tiền tố dài thử trước.
+  const prefixes = [...new Set([spec.pluginName, spec.promptPrefix].map((p) => String(p).toLowerCase()))]
+    .sort((a, b) => b.length - a.length)
+    .map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const prefixRe = new RegExp(`^(?:${prefixes.join('|')})[:\\s]+`);
 
   /**
    * Chuẩn hoá mọi cách viết về tên lệnh (`cook`, `<prefix> cook`, `/<plugin>:cook`,

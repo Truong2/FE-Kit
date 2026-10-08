@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { readRunLog, RUNLOG_FILE } from './runlog.mjs';
+import { readRunLog } from './runlog.mjs';
 
 /**
- * Tổng hợp run-log cho `fe-kit report`. Mọi số liệu tính từ sự kiện đã ghi;
+ * Tổng hợp run-log cho lệnh `report` của CLI. Mọi số liệu tính từ sự kiện đã ghi;
  * không đọc field tự khai của workflow-status.md.
  *
  * - Lượt hoàn tất của một mode = `mode_end` có outcome `pass` hoặc `released`
@@ -105,15 +105,15 @@ function taskDirs(repoRoot, tasksRoot, task) {
 }
 
 /**
- * @param {{ repoRoot: string, tasksRoot: string, task?: string, since?: string }} params
+ * @param {{ repoRoot: string, tasksRoot: string, runLogFile: string, task?: string, since?: string }} params
  * @returns {{ since?: string, tasks: { task: string, summary: object, skipped: number }[], total: object, skipped: number }}
  */
-export function buildReport({ repoRoot, tasksRoot, task, since }) {
+export function buildReport({ repoRoot, tasksRoot, runLogFile, task, since }) {
   const tasks = [];
   const all = [];
   let skipped = 0;
   for (const dir of taskDirs(repoRoot, tasksRoot, task)) {
-    const { records, skipped: bad } = readRunLog(dir);
+    const { records, skipped: bad } = readRunLog(dir, { file: runLogFile });
     skipped += bad;
     if (!records.length && !task) continue;
     all.push(...records);
@@ -161,14 +161,14 @@ function modeTable(summary) {
 /**
  * Báo cáo Markdown tiếng Việt.
  * @param {object} report kết quả `buildReport`
- * @param {{ title: string, tasksRoot: string }} opts
+ * @param {{ title: string, tasksRoot: string, runLogFile: string }} opts
  */
-export function renderReport(report, { title, tasksRoot }) {
+export function renderReport(report, { title, tasksRoot, runLogFile }) {
   const { total } = report;
   const lines = [`# ${title}`, ''];
   if (report.since) lines.push(`Tính từ: ${report.since}`, '');
   if (!report.tasks.length) {
-    lines.push(`Chưa có run-log nào trong ${tasksRoot}/*/${RUNLOG_FILE}.`);
+    lines.push(`Chưa có run-log nào trong ${tasksRoot}/*/${runLogFile}.`);
     return lines.join('\n') + '\n';
   }
 

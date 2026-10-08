@@ -22578,7 +22578,11 @@ function date4(params) {
 }
 
 // packages/engine/src/runlog.mjs
-var RUNLOG_FILE = "tracking/run-log.jsonl";
+var RUNLOG_FILE_NAME = "run-log.jsonl";
+function runLogFileFor(statusFile) {
+  const dir = path3.posix.dirname(statusFile);
+  return dir === "." ? RUNLOG_FILE_NAME : `${dir}/${RUNLOG_FILE_NAME}`;
+}
 var RUNLOG_VERSION = 1;
 var RUNLOG_MAX_BYTES = 5 * 1024 * 1024;
 var MAX_RECORD_BYTES = 4096;
@@ -22614,12 +22618,11 @@ function hashSession(sessionId) {
 function enabled() {
   return String(process.env.FE_KIT_RUNLOG || "").trim().toLowerCase() !== "off";
 }
-function appendRunLog(taskDir, record2) {
+function appendRunLog(taskDir, record2, { file: runLogFile }) {
   try {
     if (!enabled() || !taskDir) return false;
-    const trackingDir = path3.join(taskDir, "tracking");
-    if (!fs2.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
-    const file2 = path3.join(taskDir, RUNLOG_FILE);
+    const file2 = path3.join(taskDir, runLogFile);
+    if (!fs2.statSync(path3.dirname(file2), { throwIfNoEntry: false })?.isDirectory()) return false;
     const size = fs2.statSync(file2, { throwIfNoEntry: false })?.size || 0;
     if (size > RUNLOG_MAX_BYTES) return false;
     const full = {
@@ -22742,7 +22745,8 @@ function createStateMachine(spec) {
   const TERMINAL_NEXT = spec.terminalNext;
   const ALWAYS_ALLOWED2 = spec.alwaysAllowed;
   const MODE_TO_COMMAND = Object.fromEntries(Object.entries(COMMAND_TO_MODE2).map(([cmd, mode]) => [mode, cmd]));
-  const prefixRe = new RegExp(`^${spec.commandPrefix}`);
+  const prefixes = [...new Set([spec.pluginName, spec.promptPrefix].map((p) => String(p).toLowerCase()))].sort((a, b) => b.length - a.length).map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const prefixRe = new RegExp(`^(?:${prefixes.join("|")})[:\\s]+`);
   function normalizeCommand2(value) {
     let v = norm(value);
     if (!v) return "";
@@ -23006,7 +23010,7 @@ function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
   }
   function logEvent(payload, taskDir, event, fields = {}) {
     try {
-      appendRunLog(taskDir, {
+      const record2 = {
         pack: pack.id,
         event,
         source: "hook",
@@ -23015,7 +23019,8 @@ function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
         level: level(),
         session: hashSession(payload.session_id),
         ...fields
-      });
+      };
+      appendRunLog(taskDir, record2, { file: pack.runLogFile });
     } catch {
     }
   }
@@ -23960,7 +23965,8 @@ var machine = createStateMachine({
   aliases: COMMAND_ALIASES,
   terminalNext: TERMINAL_NEXT_MODES,
   alwaysAllowed: ALWAYS_ALLOWED,
-  commandPrefix: `${manifest_gen_default.plugin}[:\\s]+`,
+  pluginName: manifest_gen_default.plugin,
+  promptPrefix: manifest_gen_default.prompt_prefix,
   statusFileName: manifest_gen_default.status_file.split("/").pop(),
   entryRules: feEntryRules
 });
@@ -24528,6 +24534,9 @@ function scaffoldTask2({ workspaceRoot, name: name2, templatesDir }) {
   });
 }
 
+// packages/pack-fe/src/runlog.mjs
+var RUNLOG_FILE = runLogFileFor(manifest_gen_default.status_file);
+
 // packages/pack-fe/src/pack.mjs
 var m = manifest_gen_default;
 var fePack = {
@@ -24542,6 +24551,7 @@ var fePack = {
   agentPrefix: m.agent_prefix,
   tasksRoot: TASKS_ROOT,
   statusFile: m.status_file,
+  runLogFile: RUNLOG_FILE,
   writablePrefixes: KIT_WRITABLE_PREFIXES,
   commands: COMMANDS,
   commandToMode: COMMAND_TO_MODE,

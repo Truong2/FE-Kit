@@ -3659,6 +3659,9 @@ function listChangedFiles({ cwd, base = "" }) {
 }
 var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
 
+// packages/engine/src/runlog.mjs
+import path2 from "node:path";
+
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
 __export(external_exports, {
@@ -4403,10 +4406,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path7) {
-  if (!path7)
+function getElementAtPath(obj, path8) {
+  if (!path8)
     return obj;
-  return path7.reduce((acc, key) => acc?.[key], obj);
+  return path8.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -4818,11 +4821,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path7, issues) {
+function prefixIssues(path8, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path7);
+    iss.path.unshift(path8);
     return iss;
   });
 }
@@ -5255,16 +5258,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path7 = []) => {
+  const processError = (error62, path8 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path7, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path8, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
       } else {
-        const fullpath = [...path7, ...issue2.path];
+        const fullpath = [...path8, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -5303,17 +5306,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path7 = []) => {
+  const processError = (error62, path8 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path7, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path8, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
       } else {
-        const fullpath = [...path7, ...issue2.path];
+        const fullpath = [...path8, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -5352,8 +5355,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path7 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path7) {
+  const path8 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path8) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -21863,13 +21866,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path7 = ref.slice(1).split("/").filter(Boolean);
-  if (path7.length === 0) {
+  const path8 = ref.slice(1).split("/").filter(Boolean);
+  if (path8.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path7[0] === defsKey) {
-    const key = path7[1] === void 0 ? void 0 : decodeJSONPointerSegment(path7[1]);
+  if (path8[0] === defsKey) {
+    const key = path8[1] === void 0 ? void 0 : decodeJSONPointerSegment(path8[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -22526,6 +22529,11 @@ function date4(params) {
 }
 
 // packages/engine/src/runlog.mjs
+var RUNLOG_FILE_NAME = "run-log.jsonl";
+function runLogFileFor(statusFile) {
+  const dir = path2.posix.dirname(statusFile);
+  return dir === "." ? RUNLOG_FILE_NAME : `${dir}/${RUNLOG_FILE_NAME}`;
+}
 var RUNLOG_VERSION = 1;
 var RUNLOG_MAX_BYTES = 5 * 1024 * 1024;
 var RUNLOG_EVENTS = [
@@ -22557,7 +22565,7 @@ var RunLogRecordSchema = external_exports.object({
 // packages/engine/src/project-config.mjs
 var import_gray_matter = __toESM(require_gray_matter(), 1);
 import fs from "node:fs";
-import path2 from "node:path";
+import path3 from "node:path";
 var PROJECT_CONFIG_DEFAULTS = Object.freeze({
   /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
   require_task_for_source: "warn",
@@ -22569,7 +22577,7 @@ var VALIDATORS = {
   source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === "string" && p.trim())
 };
 function loadProjectConfig(repoRoot, { file: configFile }) {
-  const file2 = path2.join(repoRoot, configFile);
+  const file2 = path3.join(repoRoot, configFile);
   const config2 = { ...PROJECT_CONFIG_DEFAULTS };
   const warnings = [];
   let raw;
@@ -22599,7 +22607,7 @@ ${raw}
 
 // packages/engine/src/scaffold.mjs
 import fs2 from "node:fs";
-import path3 from "node:path";
+import path4 from "node:path";
 function isValidTaskName(name2) {
   return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name2 || ""));
 }
@@ -22607,29 +22615,29 @@ function scaffoldTask({ workspaceRoot, name: name2, templatesDir, tasksRoot, tem
   if (!isValidTaskName(name2)) {
     return { ok: false, error: `T\xEAn task kh\xF4ng h\u1EE3p l\u1EC7: "${name2}". D\xF9ng d\u1EA1ng ${nameHint}, ch\u1EC9 g\u1ED3m ch\u1EEF, s\u1ED1, d\u1EA5u ch\u1EA5m, g\u1EA1ch d\u01B0\u1EDBi, g\u1EA1ch ngang.` };
   }
-  const root = path3.resolve(workspaceRoot);
-  const taskDir = path3.join(root, tasksRoot, name2);
+  const root = path4.resolve(workspaceRoot);
+  const taskDir = path4.join(root, tasksRoot, name2);
   if (!isPathInside(root, taskDir)) return { ok: false, error: "Task path n\u1EB1m ngo\xE0i workspace." };
-  const taskRef = toPosix(path3.relative(root, taskDir));
+  const taskRef = toPosix(path4.relative(root, taskDir));
   const fill = (text) => text.replaceAll("<task-folder>", taskRef).replaceAll("<task-id>", name2).replaceAll("<TASK_ID>", name2);
   const created = [];
   const skipped = [];
   for (const rel of templateFiles) {
-    const dest = path3.join(taskDir, rel);
+    const dest = path4.join(taskDir, rel);
     if (fs2.existsSync(dest)) {
       skipped.push(rel);
       continue;
     }
-    const src = path3.join(templatesDir, rel);
+    const src = path4.join(templatesDir, rel);
     const template = fs2.existsSync(src) ? fs2.readFileSync(src, "utf8") : "";
-    fs2.mkdirSync(path3.dirname(dest), { recursive: true });
+    fs2.mkdirSync(path4.dirname(dest), { recursive: true });
     fs2.writeFileSync(dest, fill(template));
     created.push(rel);
   }
   for (const rel of emptyFiles) {
-    const file2 = path3.join(taskDir, rel);
+    const file2 = path4.join(taskDir, rel);
     if (fs2.existsSync(file2)) continue;
-    fs2.mkdirSync(path3.dirname(file2), { recursive: true });
+    fs2.mkdirSync(path4.dirname(file2), { recursive: true });
     fs2.writeFileSync(file2, "");
     created.push(rel);
   }
@@ -22651,7 +22659,8 @@ function createStateMachine(spec) {
   const TERMINAL_NEXT = spec.terminalNext;
   const ALWAYS_ALLOWED2 = spec.alwaysAllowed;
   const MODE_TO_COMMAND = Object.fromEntries(Object.entries(COMMAND_TO_MODE2).map(([cmd, mode]) => [mode, cmd]));
-  const prefixRe = new RegExp(`^${spec.commandPrefix}`);
+  const prefixes = [...new Set([spec.pluginName, spec.promptPrefix].map((p) => String(p).toLowerCase()))].sort((a, b) => b.length - a.length).map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const prefixRe = new RegExp(`^(?:${prefixes.join("|")})[:\\s]+`);
   function normalizeCommand2(value) {
     let v = norm(value);
     if (!v) return "";
@@ -22731,9 +22740,9 @@ function realCell(v) {
 
 // packages/engine/src/completion.mjs
 import fs3 from "node:fs";
-import path4 from "node:path";
+import path5 from "node:path";
 function createModeCompletion(pack) {
-  const statusName = path4.posix.basename(pack.statusFile);
+  const statusName = path5.posix.basename(pack.statusFile);
   return function evaluateModeCompletion2({ taskDir, taskRef, command, startedAt, scope, repoRoot, base, extraIssues = [] }) {
     const done = (issues2, refused = false) => ({
       ok: issues2.length === 0,
@@ -22742,10 +22751,10 @@ function createModeCompletion(pack) {
       errors: issues2.map((i) => i.message)
     });
     const read = (rel) => {
-      const p = path4.join(taskDir, rel);
+      const p = path5.join(taskDir, rel);
       return fs3.existsSync(p) ? fs3.readFileSync(p, "utf8") : "";
     };
-    const statusPath = path4.join(taskDir, pack.statusFile);
+    const statusPath = path5.join(taskDir, pack.statusFile);
     const raw = read(pack.statusFile);
     if (!raw) return done([{ code: "END_STATUS_MISSING", message: `Ch\u01B0a c\xF3 ${taskRef}/${pack.statusFile}.` }]);
     const loose = parseFrontMatterLoose(raw);
@@ -22795,7 +22804,7 @@ function createModeCompletion(pack) {
       });
     }
     for (const rel of pack.requiredArtifacts[command] || []) {
-      if (!fs3.existsSync(path4.join(taskDir, rel))) {
+      if (!fs3.existsSync(path5.join(taskDir, rel))) {
         issues.push({ code: "END_ARTIFACT_MISSING", message: `Thi\u1EBFu artifact b\u1EAFt bu\u1ED9c c\u1EE7a ${pack.label(command)}: ${rel}` });
       }
     }
@@ -22809,15 +22818,15 @@ function createModeCompletion(pack) {
 
 // packages/engine/src/briefing.mjs
 import fs4 from "node:fs";
-import path5 from "node:path";
+import path6 from "node:path";
 function readIfExists(p) {
   return fs4.existsSync(p) ? fs4.readFileSync(p, "utf8") : "";
 }
 function createModeBriefing(pack) {
-  const statusName = path5.posix.basename(pack.statusFile);
+  const statusName = path6.posix.basename(pack.statusFile);
   return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint }) {
     const lines = [];
-    const statusPath = path5.join(taskDir, pack.statusFile);
+    const statusPath = path6.join(taskDir, pack.statusFile);
     if (!fs4.existsSync(statusPath)) {
       lines.push(`GATE: CH\u01AFA C\xD3 TASK FOLDER H\u1EE2P L\u1EC6 (${taskRef}/${pack.statusFile} kh\xF4ng t\u1ED3n t\u1EA1i).`);
       lines.push(newTaskHint);
@@ -22826,7 +22835,7 @@ function createModeBriefing(pack) {
     const raw = fs4.readFileSync(statusPath, "utf8");
     const strict = pack.parseStatus(raw);
     const data = strict.ok ? strict.data : parseFrontMatterLoose(raw).data;
-    const read = (rel) => readIfExists(path5.join(taskDir, rel));
+    const read = (rel) => readIfExists(path6.join(taskDir, rel));
     const entry = pack.evaluateModeEntry({ requested: command, data, ...pack.entryInputs({ data, read }), taskRef });
     if (entry.allowed) {
       lines.push(`GATE: \u0110\u01AF\u1EE2C CH\u1EA0Y ${pack.label(command)} (${entry.mode}) cho ${taskRef}.`);
@@ -22850,7 +22859,7 @@ function createModeBriefing(pack) {
       lines.push(finishHint);
       lines.push("", `=== RULE \xC1P D\u1EE4NG CHO ${pack.label(command)} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
       for (const file2 of pack.rulesFor(command, data)) {
-        const body = readIfExists(path5.join(rulesDir, file2)).trim();
+        const body = readIfExists(path6.join(rulesDir, file2)).trim();
         if (body) lines.push("", `--- ${file2} ---`, body);
       }
     }
@@ -23303,7 +23312,7 @@ function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
 
 // packages/pack-fe/src/workflow.mjs
 import fs5 from "node:fs";
-import path6 from "node:path";
+import path7 from "node:path";
 
 // packages/pack-fe/src/parse.mjs
 var import_gray_matter3 = __toESM(require_gray_matter(), 1);
@@ -23521,7 +23530,8 @@ var machine = createStateMachine({
   aliases: COMMAND_ALIASES,
   terminalNext: TERMINAL_NEXT_MODES,
   alwaysAllowed: ALWAYS_ALLOWED,
-  commandPrefix: `${manifest_gen_default.plugin}[:\\s]+`,
+  pluginName: manifest_gen_default.plugin,
+  promptPrefix: manifest_gen_default.prompt_prefix,
   statusFileName: manifest_gen_default.status_file.split("/").pop(),
   entryRules: feEntryRules
 });
@@ -24033,15 +24043,15 @@ function loadProjectConfig2(repoRoot) {
 
 // packages/pack-fe/src/workflow.mjs
 function taskIo(taskDir) {
-  const exists = (rel) => fs5.existsSync(path6.join(taskDir, rel));
+  const exists = (rel) => fs5.existsSync(path7.join(taskDir, rel));
   const read = (rel) => {
-    const p = path6.join(taskDir, rel);
+    const p = path7.join(taskDir, rel);
     return fs5.existsSync(p) ? fs5.readFileSync(p, "utf8") : "";
   };
   return { exists, read };
 }
 function loadWorkflow(taskDir) {
-  const workflowPath = path6.join(taskDir, "tracking", "workflow-status.md");
+  const workflowPath = path7.join(taskDir, "tracking", "workflow-status.md");
   if (!fs5.existsSync(workflowPath)) {
     const errors = ["Thi\u1EBFu tracking/workflow-status.md"];
     return { ok: false, errors, issues: [{ code: "STATUS_MISSING", message: errors[0] }] };
@@ -24074,13 +24084,13 @@ function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
   const planned = [];
   for (const ent of fs5.readdirSync(tasksRoot, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === exclude) continue;
-    const plan = path6.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
+    const plan = path7.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
     if (fs5.existsSync(plan)) planned.push(...parsePlannedFiles2(fs5.readFileSync(plan, "utf8")));
   }
   return planned;
 }
 function plannedFilesOfSiblingTasks(taskDir) {
-  return plannedFilesOfTasksIn(path6.dirname(taskDir), path6.basename(taskDir));
+  return plannedFilesOfTasksIn(path7.dirname(taskDir), path7.basename(taskDir));
 }
 function validateWorkflow(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
@@ -24137,6 +24147,9 @@ function scaffoldTask2({ workspaceRoot, name: name2, templatesDir }) {
   });
 }
 
+// packages/pack-fe/src/runlog.mjs
+var RUNLOG_FILE = runLogFileFor(manifest_gen_default.status_file);
+
 // packages/pack-fe/src/pack.mjs
 var m = manifest_gen_default;
 var fePack = {
@@ -24151,6 +24164,7 @@ var fePack = {
   agentPrefix: m.agent_prefix,
   tasksRoot: TASKS_ROOT,
   statusFile: m.status_file,
+  runLogFile: RUNLOG_FILE,
   writablePrefixes: KIT_WRITABLE_PREFIXES,
   commands: COMMANDS,
   commandToMode: COMMAND_TO_MODE,

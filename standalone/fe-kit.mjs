@@ -22678,7 +22678,11 @@ var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
 // packages/engine/src/runlog.mjs
 import fs from "node:fs";
 import path2 from "node:path";
-var RUNLOG_FILE = "tracking/run-log.jsonl";
+var RUNLOG_FILE_NAME = "run-log.jsonl";
+function runLogFileFor(statusFile) {
+  const dir = path2.posix.dirname(statusFile);
+  return dir === "." ? RUNLOG_FILE_NAME : `${dir}/${RUNLOG_FILE_NAME}`;
+}
 var RUNLOG_VERSION = 1;
 var RUNLOG_MAX_BYTES = 5 * 1024 * 1024;
 var MAX_RECORD_BYTES = 4096;
@@ -22710,12 +22714,11 @@ var RunLogRecordSchema = external_exports.object({
 function enabled() {
   return String(process.env.FE_KIT_RUNLOG || "").trim().toLowerCase() !== "off";
 }
-function appendRunLog(taskDir, record2) {
+function appendRunLog(taskDir, record2, { file: runLogFile }) {
   try {
     if (!enabled() || !taskDir) return false;
-    const trackingDir = path2.join(taskDir, "tracking");
-    if (!fs.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
-    const file2 = path2.join(taskDir, RUNLOG_FILE);
+    const file2 = path2.join(taskDir, runLogFile);
+    if (!fs.statSync(path2.dirname(file2), { throwIfNoEntry: false })?.isDirectory()) return false;
     const size = fs.statSync(file2, { throwIfNoEntry: false })?.size || 0;
     if (size > RUNLOG_MAX_BYTES) return false;
     const full = {
@@ -22740,8 +22743,8 @@ function dropEmpty(record2) {
     Object.entries(record2 || {}).filter(([, v]) => v !== void 0 && v !== null && !(Array.isArray(v) && v.length === 0))
   );
 }
-function readRunLog(taskDir) {
-  const file2 = path2.join(taskDir, RUNLOG_FILE);
+function readRunLog(taskDir, { file: runLogFile }) {
+  const file2 = path2.join(taskDir, runLogFile);
   let text = "";
   try {
     text = fs.readFileSync(file2, "utf8");
@@ -22850,12 +22853,12 @@ function taskDirs(repoRoot, tasksRoot, task) {
   if (!fs2.existsSync(root)) return [];
   return fs2.readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => path3.join(root, d.name)).sort();
 }
-function buildReport({ repoRoot, tasksRoot, task, since }) {
+function buildReport({ repoRoot, tasksRoot, runLogFile, task, since }) {
   const tasks = [];
   const all = [];
   let skipped = 0;
   for (const dir of taskDirs(repoRoot, tasksRoot, task)) {
-    const { records, skipped: bad } = readRunLog(dir);
+    const { records, skipped: bad } = readRunLog(dir, { file: runLogFile });
     skipped += bad;
     if (!records.length && !task) continue;
     all.push(...records);
@@ -22892,12 +22895,12 @@ function modeTable(summary) {
   }
   return lines;
 }
-function renderReport(report2, { title, tasksRoot }) {
+function renderReport(report2, { title, tasksRoot, runLogFile }) {
   const { total } = report2;
   const lines = [`# ${title}`, ""];
   if (report2.since) lines.push(`T\xEDnh t\u1EEB: ${report2.since}`, "");
   if (!report2.tasks.length) {
-    lines.push(`Ch\u01B0a c\xF3 run-log n\xE0o trong ${tasksRoot}/*/${RUNLOG_FILE}.`);
+    lines.push(`Ch\u01B0a c\xF3 run-log n\xE0o trong ${tasksRoot}/*/${runLogFile}.`);
     return lines.join("\n") + "\n";
   }
   lines.push(`Task c\xF3 run-log: ${report2.tasks.length}. S\u1EF1 ki\u1EC7n: ${total.events}.`, "");
@@ -23030,7 +23033,8 @@ function createStateMachine(spec) {
   const TERMINAL_NEXT = spec.terminalNext;
   const ALWAYS_ALLOWED2 = spec.alwaysAllowed;
   const MODE_TO_COMMAND = Object.fromEntries(Object.entries(COMMAND_TO_MODE2).map(([cmd, mode]) => [mode, cmd]));
-  const prefixRe = new RegExp(`^${spec.commandPrefix}`);
+  const prefixes = [...new Set([spec.pluginName, spec.promptPrefix].map((p) => String(p).toLowerCase()))].sort((a, b) => b.length - a.length).map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  const prefixRe = new RegExp(`^(?:${prefixes.join("|")})[:\\s]+`);
   function normalizeCommand2(value) {
     let v = norm(value);
     if (!v) return "";
@@ -23735,7 +23739,8 @@ var machine = createStateMachine({
   aliases: COMMAND_ALIASES,
   terminalNext: TERMINAL_NEXT_MODES,
   alwaysAllowed: ALWAYS_ALLOWED,
-  commandPrefix: `${manifest_gen_default.plugin}[:\\s]+`,
+  pluginName: manifest_gen_default.plugin,
+  promptPrefix: manifest_gen_default.prompt_prefix,
   statusFileName: manifest_gen_default.status_file.split("/").pop(),
   entryRules: feEntryRules
 });
@@ -24389,6 +24394,15 @@ function scaffoldTask2({ workspaceRoot, name: name2, templatesDir }) {
   });
 }
 
+// packages/pack-fe/src/runlog.mjs
+var RUNLOG_FILE = runLogFileFor(manifest_gen_default.status_file);
+function appendRunLog2(taskDir, record2) {
+  return appendRunLog(taskDir, { pack: manifest_gen_default.id, ...record2 }, { file: RUNLOG_FILE });
+}
+function readRunLog2(taskDir) {
+  return readRunLog(taskDir, { file: RUNLOG_FILE });
+}
+
 // packages/pack-fe/src/pack.mjs
 var m = manifest_gen_default;
 var fePack = {
@@ -24403,6 +24417,7 @@ var fePack = {
   agentPrefix: m.agent_prefix,
   tasksRoot: TASKS_ROOT,
   statusFile: m.status_file,
+  runLogFile: RUNLOG_FILE,
   writablePrefixes: KIT_WRITABLE_PREFIXES,
   commands: COMMANDS,
   commandToMode: COMMAND_TO_MODE,
@@ -24461,17 +24476,12 @@ var evaluateModeCompletion = createModeCompletion(fePack);
 fePack.evaluateModeCompletion = evaluateModeCompletion;
 var modeBriefing = createModeBriefing(fePack);
 
-// packages/pack-fe/src/runlog.mjs
-function appendRunLog2(taskDir, record2) {
-  return appendRunLog(taskDir, { pack: manifest_gen_default.id, ...record2 });
-}
-
 // packages/pack-fe/src/report.mjs
 function buildReport2({ repoRoot, task, since }) {
-  return buildReport({ repoRoot, tasksRoot: TASKS_ROOT, task, since });
+  return buildReport({ repoRoot, tasksRoot: TASKS_ROOT, runLogFile: RUNLOG_FILE, task, since });
 }
 function renderReport2(report2) {
-  return renderReport(report2, { title: "B\xE1o c\xE1o run-log FE-Kit", tasksRoot: TASKS_ROOT });
+  return renderReport(report2, { title: "B\xE1o c\xE1o run-log FE-Kit", tasksRoot: TASKS_ROOT, runLogFile: RUNLOG_FILE });
 }
 
 // packages/pack-fe/src/fe-checks.mjs
@@ -25417,7 +25427,7 @@ function logValidate(taskDir, check2, ok, codes) {
   logCli(taskDir, { event: "validate", check: check2, outcome: ok ? "ok" : "failed", codes: [...new Set(codes)] });
 }
 function lastModeRun(taskDir, command2) {
-  const { records } = readRunLog(taskDir);
+  const { records } = readRunLog2(taskDir);
   let start = -1;
   records.forEach((r, i) => {
     if (r.event === "mode_start" && r.mode === command2) start = i;
