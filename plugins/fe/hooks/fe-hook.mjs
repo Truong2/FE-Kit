@@ -3324,10 +3324,10 @@ var require_stringify = __commonJS({
       data = Object.assign({}, file2.data, data);
       const open2 = opts.delimiters[0];
       const close = opts.delimiters[1];
-      const matter3 = engine.stringify(data, options2).trim();
+      const matter4 = engine.stringify(data, options2).trim();
       let buf = "";
-      if (matter3 !== "{}") {
-        buf = newline(open2) + newline(matter3) + newline(close);
+      if (matter4 !== "{}") {
+        buf = newline(open2) + newline(matter4) + newline(close);
       }
       if (typeof file2.excerpt === "string" && file2.excerpt !== "") {
         if (str2.indexOf(file2.excerpt.trim()) === -1) {
@@ -3424,7 +3424,7 @@ var require_parse = __commonJS({
 var require_gray_matter = __commonJS({
   "node_modules/gray-matter/index.js"(exports2, module2) {
     "use strict";
-    var fs6 = __require("fs");
+    var fs8 = __require("fs");
     var sections = require_section_matter();
     var defaults = require_defaults();
     var stringify = require_stringify();
@@ -3433,19 +3433,19 @@ var require_gray_matter = __commonJS({
     var toFile = require_to_file();
     var parse4 = require_parse();
     var utils = require_utils();
-    function matter3(input2, options2) {
+    function matter4(input2, options2) {
       if (input2 === "") {
         return { data: {}, content: input2, excerpt: "", orig: input2 };
       }
       let file2 = toFile(input2);
-      const cached2 = matter3.cache[file2.content];
+      const cached2 = matter4.cache[file2.content];
       if (!options2) {
         if (cached2) {
           file2 = Object.assign({}, cached2);
           file2.orig = cached2.orig;
           return file2;
         }
-        matter3.cache[file2.content] = file2;
+        matter4.cache[file2.content] = file2;
       }
       return parseMatter(file2, options2);
     }
@@ -3467,7 +3467,7 @@ var require_gray_matter = __commonJS({
       }
       str2 = str2.slice(openLen);
       const len = str2.length;
-      const language = matter3.language(str2, opts);
+      const language = matter4.language(str2, opts);
       if (language.name) {
         file2.language = language.name;
         str2 = str2.slice(language.raw.length);
@@ -3502,24 +3502,24 @@ var require_gray_matter = __commonJS({
       }
       return file2;
     }
-    matter3.engines = engines2;
-    matter3.stringify = function(file2, data, options2) {
-      if (typeof file2 === "string") file2 = matter3(file2, options2);
+    matter4.engines = engines2;
+    matter4.stringify = function(file2, data, options2) {
+      if (typeof file2 === "string") file2 = matter4(file2, options2);
       return stringify(file2, data, options2);
     };
-    matter3.read = function(filepath, options2) {
-      const str2 = fs6.readFileSync(filepath, "utf8");
-      const file2 = matter3(str2, options2);
+    matter4.read = function(filepath, options2) {
+      const str2 = fs8.readFileSync(filepath, "utf8");
+      const file2 = matter4(str2, options2);
       file2.path = filepath;
       return file2;
     };
-    matter3.test = function(str2, options2) {
+    matter4.test = function(str2, options2) {
       return utils.startsWith(str2, defaults(options2).delimiters[0]);
     };
-    matter3.language = function(str2, options2) {
+    matter4.language = function(str2, options2) {
       const opts = defaults(options2);
       const open2 = opts.delimiters[0];
-      if (matter3.test(str2)) {
+      if (matter4.test(str2)) {
         str2 = str2.slice(open2.length);
       }
       const language = str2.slice(0, str2.search(/\r?\n/));
@@ -3528,25 +3528,21 @@ var require_gray_matter = __commonJS({
         name: language ? language.trim() : ""
       };
     };
-    matter3.cache = {};
-    matter3.clearCache = function() {
-      matter3.cache = {};
+    matter4.cache = {};
+    matter4.clearCache = function() {
+      matter4.cache = {};
     };
-    module2.exports = matter3;
+    module2.exports = matter4;
   }
 });
 
 // core/hooks/fe-hook.mjs
-import fs5 from "node:fs";
+import fs7 from "node:fs";
 import os from "node:os";
-import path6 from "node:path";
-
-// packages/validators/src/index.mjs
-import fs4 from "node:fs";
-import path5 from "node:path";
+import path8 from "node:path";
 
 // packages/validators/src/parse.mjs
-var import_gray_matter = __toESM(require_gray_matter(), 1);
+var import_gray_matter3 = __toESM(require_gray_matter(), 1);
 
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -4292,10 +4288,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path7) {
-  if (!path7)
+function getElementAtPath(obj, path9) {
+  if (!path9)
     return obj;
-  return path7.reduce((acc, key) => acc?.[key], obj);
+  return path9.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -4707,11 +4703,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path7, issues) {
+function prefixIssues(path9, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path7);
+    iss.path.unshift(path9);
     return iss;
   });
 }
@@ -5144,16 +5140,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path7 = []) => {
+  const processError = (error62, path9 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path7, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path9, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
       } else {
-        const fullpath = [...path7, ...issue2.path];
+        const fullpath = [...path9, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -5192,17 +5188,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path7 = []) => {
+  const processError = (error62, path9 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path7, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path9, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path7, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
       } else {
-        const fullpath = [...path7, ...issue2.path];
+        const fullpath = [...path9, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -5241,8 +5237,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path7 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path7) {
+  const path9 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path9) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -21752,13 +21748,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path7 = ref.slice(1).split("/").filter(Boolean);
-  if (path7.length === 0) {
+  const path9 = ref.slice(1).split("/").filter(Boolean);
+  if (path9.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path7[0] === defsKey) {
-    const key = path7[1] === void 0 ? void 0 : decodeJSONPointerSegment(path7[1]);
+  if (path9[0] === defsKey) {
+    const key = path9[1] === void 0 ? void 0 : decodeJSONPointerSegment(path9[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -22552,637 +22548,6 @@ var WorkflowStatusSchema = external_exports.object({
   build_ready: external_exports.boolean()
 }).passthrough();
 
-// packages/validators/src/parse.mjs
-function parseFrontMatterLoose(raw) {
-  const text = String(raw ?? "");
-  const hasFrontMatter = /^﻿?---\r?\n/.test(text);
-  if (!hasFrontMatter) return { data: {}, body: text, hasFrontMatter: false };
-  try {
-    const parsed = (0, import_gray_matter.default)(text);
-    return { data: parsed.data || {}, body: parsed.content, hasFrontMatter: true };
-  } catch (err) {
-    return { data: {}, body: text, hasFrontMatter: true, error: err.message };
-  }
-}
-function parseWorkflowStatus(raw) {
-  let frontMatter;
-  let body;
-  try {
-    const parsed = (0, import_gray_matter.default)(raw);
-    frontMatter = parsed.data;
-    body = parsed.content;
-  } catch (err) {
-    return { ok: false, errors: [`Kh\xF4ng parse \u0111\u01B0\u1EE3c YAML frontmatter: ${err.message}`] };
-  }
-  const result = WorkflowStatusSchema.safeParse(frontMatter);
-  if (!result.success) {
-    const errors = result.error.issues.map(
-      (issue2) => `workflow-status.md frontmatter \u2014 ${issue2.path.join(".")}: ${issue2.message}`
-    );
-    return { ok: false, errors };
-  }
-  return { ok: true, data: result.data, body };
-}
-function realQuestionCell(v) {
-  const t = String(v ?? "").trim();
-  if (!t) return false;
-  if (/^(n\/a|na|không áp dụng|khong ap dung|none|-|—|\.\.\.)$/i.test(t)) return false;
-  if (/^<.*>$/.test(t)) return false;
-  return true;
-}
-
-// packages/validators/src/transitions.mjs
-var COMMAND_TO_MODE = {
-  plan: "planning-mode",
-  quick: "quick-mode",
-  "input-sync": "input-sync-mode",
-  figma: "figma-extraction-mode",
-  "figma-review": "figma-review-mode",
-  cook: "implementation-mode",
-  bugfix: "bugfix-mode",
-  review: "review-mode",
-  test: "testing-mode",
-  pr: "pr-ready-mode"
-};
-var COMMANDS = Object.keys(COMMAND_TO_MODE);
-var MODE_TO_COMMAND = Object.fromEntries(
-  Object.entries(COMMAND_TO_MODE).map(([cmd, mode]) => [mode, cmd])
-);
-var COMMAND_ALIASES = { build: "cook", "figma-extract": "figma", implement: "cook" };
-var TERMINAL_NEXT_MODES = ["none", "done", "completed", "merged"];
-var SOURCE_EDIT_COMMANDS = ["cook", "bugfix", "quick"];
-var ALWAYS_ALLOWED = ["plan", "input-sync"];
-var ALLOWED_NEXT = {
-  plan: ["input-sync", "figma", "cook", "plan", "quick"],
-  quick: ["review", "test", "pr", "plan", "input-sync"],
-  "input-sync": ["plan", "input-sync", "figma", "cook", "bugfix", "review"],
-  figma: ["cook", "plan", "input-sync", "figma"],
-  cook: ["review", "cook", "input-sync", "plan"],
-  bugfix: ["review", "bugfix", "input-sync", "test", "figma-review"],
-  review: ["bugfix", "input-sync", "figma-review", "test", "pr"],
-  test: ["figma-review", "pr", "bugfix", "input-sync", "test"],
-  "figma-review": ["pr", "bugfix", "input-sync", "figma-review", "test"],
-  pr: ["bugfix", "input-sync", "pr"]
-};
-function norm(v) {
-  return String(v ?? "").trim().toLowerCase();
-}
-function bool(v) {
-  return v === true || norm(v) === "true";
-}
-function normalizeCommand(value) {
-  let v = norm(value);
-  if (!v) return "";
-  v = v.replace(/^\//, "").replace(/^fe[:\s]+/, "").split(/\s+/)[0];
-  if (MODE_TO_COMMAND[v]) return MODE_TO_COMMAND[v];
-  if (COMMAND_ALIASES[v]) return COMMAND_ALIASES[v];
-  return COMMANDS.includes(v) ? v : "";
-}
-function checkRecordedNextMode({ currentMode, nextMode }) {
-  const warnings = [];
-  const raw = norm(nextMode);
-  if (!raw || TERMINAL_NEXT_MODES.includes(raw)) return { warnings };
-  const next = normalizeCommand(raw);
-  if (!next) {
-    warnings.push(`next_mode="${nextMode}" kh\xF4ng thu\u1ED9c danh s\xE1ch mode \u0111\xE3 bi\u1EBFt (${COMMANDS.join(", ")}, none).`);
-    return { warnings };
-  }
-  const current = normalizeCommand(currentMode);
-  if (current && !ALLOWED_NEXT[current].includes(next)) {
-    warnings.push(`next_mode="${next}" sau mode "${current}" l\xE0 chuy\u1EC3n b\u01B0\u1EDBc b\u1EA5t th\u01B0\u1EDDng (th\u01B0\u1EDDng l\xE0: ${ALLOWED_NEXT[current].join(", ")}).`);
-  }
-  return { warnings };
-}
-function evaluateModeEntry({ requested, data = {}, openBlockingQuestions = 0, openIssues, taskRef = "<task-folder>" }) {
-  const command = normalizeCommand(requested);
-  const result = { allowed: true, command, mode: COMMAND_TO_MODE[command] || "", reasons: [], reasonCodes: [], warnings: [], redirect: "" };
-  const block = (code, reason) => {
-    result.reasons.push(reason);
-    result.reasonCodes.push(code);
-  };
-  if (!command) {
-    result.allowed = false;
-    block("ENTRY_UNKNOWN_MODE", `Kh\xF4ng nh\u1EADn ra mode "${requested}". Mode h\u1EE3p l\u1EC7: ${COMMANDS.join(", ")}.`);
-    return result;
-  }
-  const blocking = Math.max(Number(data.blocking_questions_open || 0), Number(openBlockingQuestions || 0));
-  const questionBlocked = blocking > 0 || ["open", "blocked", "pending"].includes(norm(data.questions_status)) || ["open", "blocked", "pending", "needs_input_sync"].includes(norm(data.questions_resolution_gate_status)) || bool(data.input_sync_required) || bool(data.plan_recheck_required_after_input_sync);
-  if (questionBlocked && !ALWAYS_ALLOWED.includes(command)) {
-    block(
-      blocking > 0 ? "ENTRY_QUESTIONS_BLOCKING" : "ENTRY_INPUT_SYNC_REQUIRED",
-      blocking > 0 ? `C\xF2n ${blocking} c\xE2u h\u1ECFi blocking \u0111ang m\u1EDF trong planning/questions.md.` : "workflow-status.md \u0111ang y\xEAu c\u1EA7u input-sync (questions/input_sync_required/plan_recheck ch\u01B0a \u0111\xF3ng)."
-    );
-    result.redirect = `FE input-sync ${taskRef} <answer-or-cr>`;
-  }
-  if (command === "cook") {
-    if (!bool(data.build_ready)) {
-      block("ENTRY_NOT_BUILD_READY", "build_ready ch\u01B0a true: plan ch\u01B0a s\u1EB5n s\xE0ng \u0111\u1EC3 cook.");
-      result.redirect ||= `FE plan ${taskRef}`;
-    }
-    const figmaGate = norm(data.figma_gate_status);
-    if (bool(data.figma_required) && !["passed", "waived", "substituted", "not_required"].includes(figmaGate)) {
-      block("ENTRY_FIGMA_GATE_OPEN", `Task c\u1EA7n Figma nh\u01B0ng figma_gate_status="${figmaGate || "(tr\u1ED1ng)"}".`);
-      result.redirect ||= `FE figma ${taskRef}`;
-    }
-  }
-  if (command === "pr") {
-    const critical = Math.max(Number(data.critical_issues_open || 0), Number(openIssues?.critical || 0));
-    const high = Math.max(Number(data.high_issues_open || 0), Number(openIssues?.high || 0));
-    if (critical > 0 || high > 0 || bool(data.bugfix_required)) {
-      block("ENTRY_OPEN_BUGS", "C\xF2n bug Critical/High ho\u1EB7c bugfix_required=true.");
-      result.redirect ||= `FE bugfix ${taskRef}`;
-    }
-    if (!["passed", "not_required"].includes(norm(data.review_status))) {
-      block("ENTRY_REVIEW_NOT_PASSED", `review_status="${norm(data.review_status) || "(tr\u1ED1ng)"}" \u2014 c\u1EA7n review passed tr\u01B0\u1EDBc PR.`);
-      result.redirect ||= `FE review ${taskRef}`;
-    }
-  }
-  const recorded = normalizeCommand(data.next_mode);
-  if (recorded && recorded !== command && !ALWAYS_ALLOWED.includes(command)) {
-    result.warnings.push(`workflow-status.md ghi b\u01B0\u1EDBc k\u1EBF ti\u1EBFp l\xE0 "${recorded}" nh\u01B0ng \u0111ang ch\u1EA1y "${command}".`);
-  }
-  if (result.reasons.length) {
-    if (bool(data.human_override)) {
-      result.warnings.push(...result.reasons.map((r) => `[human_override] ${r}`));
-      result.reasons = [];
-      result.reasonCodes = [];
-      result.redirect = "";
-    } else {
-      result.allowed = false;
-    }
-  }
-  return result;
-}
-
-// packages/validators/src/modes.mjs
-var STATUS = "tracking/workflow-status.md";
-var TASK_GITKEEP = "output/figma-reference-screenshots/.gitkeep";
-var REQUIRED_TASK_DOCS = [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  STATUS
-];
-var REQUIRED_TASK_FILES = [...REQUIRED_TASK_DOCS, TASK_GITKEEP];
-var MODE_REQUIRED_ARTIFACTS = {
-  plan: [
-    "task.md",
-    "planning/implementation-plan.md",
-    "planning/build-checklist.md",
-    "planning/questions.md",
-    STATUS
-  ],
-  quick: [STATUS],
-  "input-sync": ["tracking/input-sync-report.md", "planning/questions.md", STATUS],
-  figma: ["output/figma-extraction-summary.md", STATUS],
-  cook: ["planning/build-checklist.md", STATUS],
-  review: ["output/review-report.md", STATUS],
-  bugfix: ["tracking/review-bugs.md", STATUS],
-  test: ["output/test-summary.md", STATUS],
-  "figma-review": ["output/ui-figma-review-report.md", STATUS],
-  pr: ["output/pr-summary.md", STATUS]
-};
-var AGENT_FOR_COMMAND = {
-  plan: "frontend-planner",
-  "input-sync": "frontend-planner",
-  figma: "frontend-figma-specialist",
-  "figma-review": "frontend-figma-specialist",
-  cook: "frontend-developer",
-  bugfix: "frontend-developer",
-  review: "frontend-reviewer",
-  test: "frontend-tester",
-  pr: "frontend-release-manager",
-  quick: null
-};
-var SOURCE_EDIT_AGENT = "frontend-developer";
-var KIT_WRITABLE_PREFIXES = ["docs/frontend-tasks/", "docs/frontend-context/"];
-
-// packages/validators/src/review-bugs.mjs
-var ISSUE_CATEGORIES = [
-  "srs-logic",
-  "api-contract",
-  "error-handling",
-  "ui-figma",
-  "state-data",
-  "a11y",
-  "performance",
-  "clean-code",
-  "test",
-  "scope",
-  "other"
-];
-var ISSUE_ROOT_CAUSES = [
-  "requirement-unclear",
-  "plan-gap",
-  "implementation-error",
-  "missing-test",
-  "figma-mismatch",
-  "rule-violation",
-  "environment",
-  "other"
-];
-var COLUMN_ALIASES = {
-  id: /^(id|bug id|issue id|mã)$/i,
-  severity: /^(severity|mức độ|muc do)$/i,
-  category: /^(nhóm|nhom|category|loại|loai)$/i,
-  rootCause: /^(nguyên nhân gốc|nguyen nhan goc|root cause)$/i,
-  status: /^(trạng thái|trang thai|status)$/i
-};
-var SEVERITY_WORDS = [
-  ["critical", /\b(critical|blocker)\b|nghiêm trọng|nghiem trong/i],
-  ["high", /\bhigh\b|\bcao\b/i],
-  ["medium", /\bmedium\b|trung bình|trung binh/i],
-  ["low", /\blow\b|thấp|\bthap\b/i]
-];
-var CLOSED = /(fixed|closed|resolved|done|verified|accepted|won'?t ?fix|đã fix|da fix|đã sửa|da sua|đã đóng|da dong|đã xong|da xong|chấp nhận|chap nhan|không sửa|khong sua|hoàn tất|hoan tat)/i;
-var OPEN = /(open|pending|blocked|in progress|reopen|mở|\bmo\b|đang|dang|chưa|chua|bị chặn|bi chan|cần sửa|can sua)/i;
-function severityOf(cell) {
-  const found = SEVERITY_WORDS.filter(([, re]) => re.test(cell)).map(([s]) => s);
-  return found.length === 1 ? found[0] : null;
-}
-function statusOf(cell) {
-  const t = String(cell || "").trim();
-  if (CLOSED.test(t)) return "closed";
-  if (OPEN.test(t)) return "open";
-  return "unknown";
-}
-function splitRow(line) {
-  return line.split("|").slice(1, -1).map((c) => c.trim().replace(/^`|`$/g, ""));
-}
-function sectionTable(markdown, headingRe) {
-  const lines = String(markdown || "").split(/\r?\n/);
-  const start = lines.findIndex((l) => /^#{2,3}\s/.test(l) && headingRe.test(l));
-  if (start < 0) return null;
-  const table = [];
-  for (const line of lines.slice(start + 1)) {
-    if (/^#{1,3}\s/.test(line)) break;
-    if (/^\s*\|/.test(line)) table.push(line);
-    else if (table.length) break;
-  }
-  if (table.length < 2) return null;
-  const header = splitRow(table[0]);
-  const rows = table.slice(1).filter((l) => !/^\s*\|\s*:?-+/.test(l)).map(splitRow);
-  return { header, rows };
-}
-function columnIndex(header) {
-  const index = {};
-  header.forEach((name, i) => {
-    for (const [key, re] of Object.entries(COLUMN_ALIASES)) {
-      if (index[key] === void 0 && re.test(name)) index[key] = i;
-    }
-  });
-  return index;
-}
-function parseIssueTable(markdown, headingRe) {
-  const table = sectionTable(markdown, headingRe);
-  if (!table) return { rows: [], confident: true };
-  const col = columnIndex(table.header);
-  const confident = col.id !== void 0 && col.severity !== void 0 && col.status !== void 0;
-  const rows = [];
-  for (const cells of table.rows) {
-    const id = cells[col.id ?? 0] || "";
-    if (!realQuestionCell(id)) continue;
-    const severity = severityOf(cells[col.severity ?? 1] || "");
-    if (!severity) continue;
-    rows.push({
-      id,
-      severity,
-      category: col.category !== void 0 ? cells[col.category] || "" : "",
-      rootCause: col.rootCause !== void 0 ? cells[col.rootCause] || "" : "",
-      status: statusOf(col.status !== void 0 ? cells[col.status] : ""),
-      hasCategory: col.category !== void 0,
-      hasRootCause: col.rootCause !== void 0
-    });
-  }
-  return { rows, confident: rows.length === 0 || confident };
-}
-function statusOverrides(reviewBugsMd) {
-  const table = sectionTable(reviewBugsMd, /Trạng thái sau bugfix|Status after bugfix/i);
-  const map2 = /* @__PURE__ */ new Map();
-  if (!table) return map2;
-  const col = columnIndex(table.header);
-  for (const cells of table.rows) {
-    const id = cells[col.id ?? 0] || "";
-    const status = statusOf(cells[col.status ?? 1]);
-    if (realQuestionCell(id) && status !== "unknown") map2.set(id, status);
-  }
-  return map2;
-}
-function countOpenIssuesBySeverity(reviewBugsMd = "", reviewReportMd = "") {
-  const bugs = parseIssueTable(reviewBugsMd, /Bug cần xử lý|Bugs?\b/i);
-  const report = parseIssueTable(reviewReportMd, /Issue phát hiện|Issues?\b/i);
-  const byId = /* @__PURE__ */ new Map();
-  for (const row of [...report.rows, ...bugs.rows]) byId.set(row.id, row);
-  const overrides = statusOverrides(reviewBugsMd);
-  const result = {
-    critical: 0,
-    high: 0,
-    medium: 0,
-    low: 0,
-    openIds: { critical: [], high: [], medium: [], low: [] },
-    unknownStatusIds: [],
-    unknownCategoryIds: [],
-    unknownRootCauseIds: [],
-    confident: bugs.confident && report.confident
-  };
-  const categories = new Set(ISSUE_CATEGORIES);
-  const rootCauses = new Set(ISSUE_ROOT_CAUSES);
-  for (const row of byId.values()) {
-    const status = overrides.get(row.id) || row.status;
-    if (status === "open") {
-      result[row.severity] += 1;
-      result.openIds[row.severity].push(row.id);
-    } else if (status === "unknown") {
-      result.unknownStatusIds.push(row.id);
-    }
-    if (row.hasCategory && !categories.has(row.category.toLowerCase())) result.unknownCategoryIds.push(row.id);
-    if (row.hasRootCause && !rootCauses.has(row.rootCause.toLowerCase())) result.unknownRootCauseIds.push(row.id);
-  }
-  return result;
-}
-function countOpenIssuesInTask(read) {
-  return countOpenIssuesBySeverity(read("tracking/review-bugs.md"), read("output/review-report.md"));
-}
-
-// packages/validators/src/gates.mjs
-function norm2(v) {
-  return String(v ?? "").trim().toLowerCase();
-}
-function bool2(v) {
-  return v === true || norm2(v) === "true";
-}
-function countOpenBlockingQuestions(questionsMarkdown) {
-  const text = questionsMarkdown || "";
-  const section = text.match(
-    /##\s+Câu hỏi blocking[\s\S]*?(?=\n##\s+Câu hỏi non-blocking|\n##\s+Quyết định|$)/i
-  );
-  if (!section) return 0;
-  let count = 0;
-  for (const line of section[0].split(/\r?\n/)) {
-    if (!/^\s*\|/.test(line)) continue;
-    if (/^\s*\|\s*-+\s*\|/.test(line)) continue;
-    if (/\|\s*ID\s*\|/i.test(line)) continue;
-    const cells = line.split("|").slice(1, -1).map((c) => c.trim());
-    if (cells.length < 9) continue;
-    const status = cells[cells.length - 1] || "";
-    const isOpen = /(open|pending|blocked|chưa trả lời|chua tra loi|bị chặn|bi chan|chưa rõ|chua ro)/i.test(
-      status
-    ) && !/(resolved|closed|answered|done|đã trả lời|da tra loi|đã đóng|da dong|không áp dụng|khong ap dung)/i.test(
-      status
-    );
-    const hasContent = [cells[0], cells[5], cells[6], cells[7], cells[8]].some(realQuestionCell);
-    if (isOpen && hasContent) count += 1;
-  }
-  return count;
-}
-var RAN_YES = /^(có|co|yes|y|true|đã chạy|da chay|ran)(?=$|[\s(,.:;-])/i;
-var RAN_NO = /^(không|khong|no|n|false|chưa chạy|chua chay|not run)(?=$|[\s(,.:;-])/i;
-var RESULT_NOT_RUN = /^(not run|chưa chạy|chua chay|skipped|bỏ qua|bo qua)(?=$|[\s(,.:;-])/i;
-var RESULT_FAIL = /(fail|lỗi|không đạt|khong dat|error)/i;
-var RESULT_PASS = /(pass|đạt|\bdat\b|\bok\b|success|thành công|thanh cong)/i;
-function templateChoiceCell(v) {
-  return /\S\s*\/\s*(không|khong|no|failed|not run)\b/i.test(v);
-}
-function commandEvidenceRows(testSummaryMarkdown) {
-  const text = String(testSummaryMarkdown || "");
-  const section = text.match(
-    /^##\s+(?:\d+\.\s*)?Command evidence log[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
-  );
-  if (!section) return [];
-  const rows = [];
-  for (const line of section[1].split(/\r?\n/)) {
-    if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
-    const cells = line.split("|").slice(1, -1).map((c) => c.trim().replace(/^`|`$/g, ""));
-    if (/^command$/i.test(cells[0] || "")) continue;
-    if (!realQuestionCell(cells[0])) continue;
-    rows.push({ command: cells[0], ran: cells[1] || "", result: cells[2] || "", time: cells[3] || "" });
-  }
-  return rows;
-}
-function summarizeCommandEvidence(testSummaryMarkdown) {
-  const out = { ran: [], notRun: [], incomplete: [], missingTime: [], latestFailed: [] };
-  const latest = /* @__PURE__ */ new Map();
-  for (const row of commandEvidenceRows(testSummaryMarkdown)) {
-    const ranCell = templateChoiceCell(row.ran) ? "" : row.ran;
-    const resultCell = templateChoiceCell(row.result) ? "" : row.result;
-    if (RAN_NO.test(ranCell) || !ranCell && RESULT_NOT_RUN.test(resultCell)) {
-      out.notRun.push(row.command);
-      continue;
-    }
-    const outcome = RESULT_NOT_RUN.test(resultCell) ? "" : RESULT_FAIL.test(resultCell) ? "failed" : RESULT_PASS.test(resultCell) ? "passed" : "";
-    if (!RAN_YES.test(ranCell) || !outcome) {
-      out.incomplete.push(row.command);
-      continue;
-    }
-    out.ran.push(row.command);
-    if (!realQuestionCell(row.time)) out.missingTime.push(row.command);
-    latest.set(row.command, outcome);
-  }
-  for (const [command, outcome] of latest) if (outcome === "failed") out.latestFailed.push(command);
-  return out;
-}
-function hasCommandEvidence(testSummaryMarkdown) {
-  return summarizeCommandEvidence(testSummaryMarkdown).ran.length > 0;
-}
-function commandEvidenceWarnings(testSummaryMarkdown) {
-  const s = summarizeCommandEvidence(testSummaryMarkdown);
-  const warnings = [];
-  if (s.incomplete.length) {
-    warnings.push(
-      `Command evidence log c\xF3 d\xF2ng thi\u1EBFu d\u1EEF li\u1EC7u, kh\xF4ng \u0111\u01B0\u1EE3c t\xEDnh l\xE0 \u0111\xE3 ch\u1EA1y: ${s.incomplete.join(", ")}. Ghi r\xF5 "C\xF3" k\xE8m k\u1EBFt qu\u1EA3 Passed/Failed, ho\u1EB7c "Kh\xF4ng" k\xE8m l\xFD do.`
-    );
-  }
-  if (s.missingTime.length) {
-    warnings.push(`Command evidence log thi\u1EBFu th\u1EDDi \u0111i\u1EC3m ch\u1EA1y: ${s.missingTime.join(", ")}.`);
-  }
-  if (s.latestFailed.length) {
-    warnings.push(`L\u1EA7n ch\u1EA1y g\u1EA7n nh\u1EA5t \u0111ang Failed: ${s.latestFailed.join(", ")}. Route FE bugfix ho\u1EB7c ghi r\xF5 l\xFD do ch\u1EA5p nh\u1EADn.`);
-  }
-  return warnings;
-}
-var SEVERITY_LABEL = { critical: "Critical", high: "High" };
-function effectiveOpenIssues(data, computed) {
-  const pick2 = (sev) => Math.max(Number(data[`${sev}_issues_open`] || 0), computed?.confident ? computed[sev] : 0);
-  return { critical: pick2("critical"), high: pick2("high") };
-}
-function issueTableWarnings(computed) {
-  const warnings = [];
-  if (computed.unknownStatusIds.length) {
-    warnings.push(`Issue ch\u01B0a r\xF5 tr\u1EA1ng th\xE1i (ghi Open, Fixed, Closed...): ${computed.unknownStatusIds.join(", ")}.`);
-  }
-  if (computed.unknownCategoryIds.length) {
-    warnings.push(`Issue c\xF3 c\u1ED9t Nh\xF3m ngo\xE0i danh s\xE1ch c\u1EE7a review-bug-contract.md: ${computed.unknownCategoryIds.join(", ")}.`);
-  }
-  if (computed.unknownRootCauseIds.length) {
-    warnings.push(`Issue c\xF3 c\u1ED9t Nguy\xEAn nh\xE2n g\u1ED1c ngo\xE0i danh s\xE1ch c\u1EE7a review-bug-contract.md: ${computed.unknownRootCauseIds.join(", ")}.`);
-  }
-  return warnings;
-}
-var MD_FILES_WITHOUT_NEXT_PROMPT = [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  "tracking/input-sync-report.md",
-  "output/review-report.md",
-  "output/test-summary.md",
-  "output/pr-summary.md",
-  "output/figma-extraction-summary.md",
-  "output/ui-figma-review-report.md",
-  "tracking/review-bugs.md"
-];
-function evaluateWorkflowGates({ data, body, exists, read, scope }) {
-  const issues = [];
-  const warnings = [];
-  const fail = (code, message) => issues.push({ code, message });
-  for (const rel of REQUIRED_TASK_DOCS) {
-    if (!exists(rel)) fail("TASK_FILE_MISSING", `Thi\u1EBFu ${rel}`);
-  }
-  if (!/^##\s+Prompt bước tiếp theo/im.test(body)) {
-    fail("STATUS_NEXT_PROMPT_SECTION_MISSING", "workflow-status.md thi\u1EBFu m\u1EE5c Prompt b\u01B0\u1EDBc ti\u1EBFp theo.");
-  }
-  if (!/^##\s+Input ledger bắt buộc cho FE plan/im.test(body)) {
-    fail("STATUS_INPUT_LEDGER_SECTION_MISSING", "workflow-status.md thi\u1EBFu m\u1EE5c Input ledger b\u1EAFt bu\u1ED9c cho FE plan.");
-  }
-  const planDone = bool2(data.build_ready) || norm2(data.next_mode) === "cook" || /FE\s+cook/i.test(String(data.next_prompt || ""));
-  const questionsText = read("planning/questions.md");
-  const openBlockingQuestions = Math.max(
-    Number(data.blocking_questions_open || 0),
-    countOpenBlockingQuestions(questionsText)
-  );
-  const computedIssues = countOpenIssuesInTask(read);
-  const openIssues = effectiveOpenIssues(data, computedIssues);
-  const questionGate = norm2(data.questions_resolution_gate_status);
-  const questionStatus = norm2(data.questions_status);
-  const questionBlocked = openBlockingQuestions > 0 || ["open", "blocked", "pending", "needs_answer", "needs_answers"].includes(questionStatus) || ["open", "blocked", "pending", "needs_input_sync"].includes(questionGate) || bool2(data.input_sync_required) || bool2(data.plan_recheck_required_after_input_sync);
-  if (planDone) {
-    if (!["completed", "documented", "passed"].includes(norm2(data.input_inventory_status))) {
-      fail("PLAN_INPUT_INVENTORY_INCOMPLETE", "Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng input_inventory_status ch\u01B0a completed/documented/passed.");
-    }
-    if (!["completed", "documented", "passed"].includes(norm2(data.plan_input_ledger_status))) {
-      fail("PLAN_INPUT_LEDGER_INCOMPLETE", "Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng plan_input_ledger_status ch\u01B0a completed/documented/passed.");
-    }
-    if (Number(data.missing_input_count || 0) > 0) {
-      fail("PLAN_INPUTS_MISSING", "Plan input ledger c\xF2n missing_input_count > 0. C\u1EA7n h\u1ECFi/input-sync tr\u01B0\u1EDBc khi cook.");
-    }
-    if (!["passed", "not_required"].includes(questionGate)) {
-      fail("PLAN_QUESTION_GATE_OPEN", "Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng questions_resolution_gate_status ch\u01B0a passed/not_required.");
-    }
-  }
-  if (questionBlocked) {
-    if (bool2(data.build_ready)) {
-      fail("QUESTIONS_BUILD_READY_CONFLICT", "Kh\xF4ng \u0111\u01B0\u1EE3c build_ready=true khi c\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required.");
-    }
-    if (norm2(data.next_mode) !== "input-sync") {
-      fail("QUESTIONS_NEXT_MODE_NOT_INPUT_SYNC", "C\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required th\xEC next_mode ph\u1EA3i l\xE0 input-sync.");
-    }
-    if (!/FE\s+input-sync/i.test(String(data.next_prompt || ""))) {
-      fail("QUESTIONS_NEXT_PROMPT_NOT_INPUT_SYNC", "C\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required th\xEC next_prompt ph\u1EA3i l\xE0 FE input-sync <task-folder> <answer-or-cr>.");
-    }
-    if (!bool2(data.input_sync_required)) {
-      fail("QUESTIONS_INPUT_SYNC_FLAG_MISSING", "C\xF2n c\xE2u h\u1ECFi blocking/open th\xEC input_sync_required ph\u1EA3i true.");
-    }
-    if (openBlockingQuestions > 0 && !bool2(data.plan_recheck_required_after_input_sync)) {
-      fail("QUESTIONS_PLAN_RECHECK_FLAG_MISSING", "C\xF2n c\xE2u h\u1ECFi blocking/open th\xEC plan_recheck_required_after_input_sync ph\u1EA3i true.");
-    }
-  }
-  for (const rel of MD_FILES_WITHOUT_NEXT_PROMPT) {
-    if (exists(rel) && /^##\s+Prompt bước tiếp theo/im.test(read(rel))) {
-      fail("NEXT_PROMPT_OUTSIDE_STATUS", `${rel} kh\xF4ng \u0111\u01B0\u1EE3c ch\u1EE9a Prompt b\u01B0\u1EDBc ti\u1EBFp theo.`);
-    }
-  }
-  const mode = norm2(data.current_mode);
-  const tokenBudget = norm2(data.token_budget_status);
-  const requiredRead = norm2(data.required_files_read_status);
-  const scopeDiff = norm2(data.scope_diff_status);
-  const commandEvidence = norm2(data.command_evidence_status);
-  const playwrightDiff = norm2(data.playwright_screenshot_diff_status);
-  const reviewRun = exists("output/review-report.md") || mode === "review-mode" || ["passed", "needs_bugfix", "blocked", "insufficient_evidence"].includes(norm2(data.review_status));
-  if (mode === "input-sync-mode" && !exists("tracking/input-sync-report.md")) {
-    fail("ARTIFACT_INPUT_SYNC_REPORT_MISSING", "FE input-sync ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt tracking/input-sync-report.md.");
-  }
-  if (mode === "figma-extraction-mode" || bool2(data.figma_required) && ["passed", "completed"].includes(norm2(data.figma_gate_status))) {
-    if (!exists("output/figma-extraction-summary.md")) {
-      fail("ARTIFACT_FIGMA_SUMMARY_MISSING", "FE figma/Figma required ph\u1EA3i c\xF3 output/figma-extraction-summary.md.");
-    }
-  }
-  if (reviewRun) {
-    if (!exists("output/review-report.md")) {
-      fail("ARTIFACT_REVIEW_REPORT_MISSING", "FE review ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/review-report.md.");
-    }
-    const needBug = bool2(data.bugfix_required) || openIssues.critical > 0 || openIssues.high > 0 || ["open", "blocked"].includes(norm2(data.review_bug_status));
-    if (needBug && !exists("tracking/review-bugs.md")) {
-      fail("ARTIFACT_REVIEW_BUGS_MISSING", "Review c\xF3 bug/Critical/High ph\u1EA3i c\xF3 tracking/review-bugs.md.");
-    }
-  }
-  if (mode === "testing-mode" && !exists("output/test-summary.md")) {
-    fail("ARTIFACT_TEST_SUMMARY_MISSING", "FE test ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/test-summary.md.");
-  }
-  if ((mode === "figma-review-mode" || norm2(data.ui_match_review_status) === "passed") && bool2(data.figma_required) && !exists("output/ui-figma-review-report.md")) {
-    fail("ARTIFACT_UI_REVIEW_REPORT_MISSING", "FE figma-review/UI passed ph\u1EA3i c\xF3 output/ui-figma-review-report.md.");
-  }
-  if (mode === "pr-ready-mode" && !exists("output/pr-summary.md")) {
-    fail("ARTIFACT_PR_SUMMARY_MISSING", "FE pr ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/pr-summary.md.");
-  }
-  if (bool2(data.build_ready)) {
-    if (openBlockingQuestions > 0) {
-      fail("BUILD_READY_OPEN_QUESTIONS", "build_ready=true nh\u01B0ng c\xF2n blocking question.");
-    }
-    if (["failed", "blocked"].includes(tokenBudget) || ["failed", "blocked"].includes(requiredRead)) {
-      fail("BUILD_READY_BUDGET_FAILED", "build_ready=true nh\u01B0ng token_budget_status/required_files_read_status \u0111ang failed/blocked.");
-    }
-    if (bool2(data.srs_required) && !["completed", "passed", "not_required"].includes(norm2(data.srs_trace_matrix_status))) {
-      fail("BUILD_READY_SRS_TRACE_INCOMPLETE", "build_ready=true y\xEAu c\u1EA7u SRS trace completed/passed/not_required.");
-    }
-    if (bool2(data.figma_required) && !["passed", "not_required", "waived", "substituted"].includes(norm2(data.figma_gate_status))) {
-      fail("BUILD_READY_FIGMA_GATE_OPEN", "build_ready=true y\xEAu c\u1EA7u Figma gate passed/waived/not_required/substituted.");
-    }
-  }
-  if (["failed", "blocked"].includes(scopeDiff)) {
-    fail("SCOPE_DIFF_DECLARED_FAILED", "scope_diff_status=failed/blocked. C\u1EA7n update plan/input-sync ho\u1EB7c s\u1EEDa diff.");
-  }
-  if (["failed", "blocked"].includes(commandEvidence)) {
-    fail("COMMAND_EVIDENCE_DECLARED_FAILED", "command_evidence_status=failed/blocked. Kh\xF4ng \u0111\u01B0\u1EE3c claim pass khi thi\u1EBFu evidence.");
-  }
-  if (bool2(data.figma_required) && ["failed", "blocked"].includes(playwrightDiff)) {
-    fail("PLAYWRIGHT_DIFF_FAILED", "playwright_screenshot_diff_status=failed/blocked cho task Figma/UI.");
-  }
-  if (scope && !scope.plannedEmpty && scope.outOfPlan?.length) {
-    fail(
-      "SCOPE_OUT_OF_PLAN",
-      `Scope diff: c\xF3 file s\u1EEDa ngo\xE0i b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" c\u1EE7a plan: ${scope.outOfPlan.join(", ")}. C\u1EADp nh\u1EADt plan/input-sync ho\u1EB7c ho\xE0n t\xE1c.`
-    );
-  }
-  if (["passed", "completed"].includes(commandEvidence) && exists("output/test-summary.md") && !hasCommandEvidence(read("output/test-summary.md"))) {
-    fail("COMMAND_EVIDENCE_UNPROVEN", "command_evidence_status=passed/completed nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.");
-  }
-  if (exists("output/test-summary.md")) warnings.push(...commandEvidenceWarnings(read("output/test-summary.md")));
-  for (const sev of ["critical", "high"]) {
-    const field = `${sev}_issues_open`;
-    const declared = Number(data[field] || 0);
-    if (computedIssues[sev] <= declared) continue;
-    const message = `B\u1EA3ng issue (tracking/review-bugs.md, output/review-report.md) c\xF2n ${computedIssues[sev]} issue ${SEVERITY_LABEL[sev]} \u0111ang m\u1EDF (${computedIssues.openIds[sev].join(", ")}) nh\u01B0ng ${field}=${declared}. C\u1EADp nh\u1EADt ${field} ho\u1EB7c tr\u1EA1ng th\xE1i issue.`;
-    if (computedIssues.confident) fail("ISSUES_COUNT_MISMATCH", message);
-    else warnings.push(`${message} B\u1EA3ng issue thi\u1EBFu c\u1ED9t ID/Severity/Tr\u1EA1ng th\xE1i n\xEAn ch\u1EC9 c\u1EA3nh b\xE1o.`);
-  }
-  const openCriticalHigh = computedIssues.confident ? [...computedIssues.openIds.critical, ...computedIssues.openIds.high] : [];
-  if (openCriticalHigh.length && ["none", "closed", "resolved", "fixed", "waived"].includes(norm2(data.review_bug_status))) {
-    fail(
-      "REVIEW_BUG_STATUS_MISMATCH",
-      `review_bug_status=${norm2(data.review_bug_status)} nh\u01B0ng c\xF2n issue Critical/High \u0111ang m\u1EDF: ${openCriticalHigh.join(", ")}.`
-    );
-  }
-  warnings.push(...issueTableWarnings(computedIssues));
-  const criticalOrHigh = openIssues.critical > 0 || openIssues.high > 0;
-  if (criticalOrHigh && ["test", "pr"].includes(normalizeCommand(data.next_mode))) {
-    fail("NEXT_MODE_WITH_CRITICAL_HIGH", "C\xF2n issue Critical/High th\xEC next_mode kh\xF4ng \u0111\u01B0\u1EE3c l\xE0 test/pr; route sang bugfix, input-sync ho\u1EB7c figma-review.");
-  }
-  warnings.push(...checkRecordedNextMode({ currentMode: data.current_mode, nextMode: data.next_mode }).warnings);
-  const errors = issues.map((i) => i.message);
-  return { ok: errors.length === 0, errors, warnings, issues };
-}
-
 // packages/engine/src/paths.mjs
 import path from "node:path";
 function toPosix(p) {
@@ -23425,7 +22790,7 @@ function dropEmpty(record2) {
 }
 
 // packages/engine/src/project-config.mjs
-var import_gray_matter2 = __toESM(require_gray_matter(), 1);
+var import_gray_matter = __toESM(require_gray_matter(), 1);
 import fs3 from "node:fs";
 import path4 from "node:path";
 var PROJECT_CONFIG_DEFAULTS = Object.freeze({
@@ -23450,7 +22815,7 @@ function loadProjectConfig(repoRoot, { file: configFile }) {
   }
   let data = {};
   try {
-    data = (0, import_gray_matter2.default)(`---
+    data = (0, import_gray_matter.default)(`---
 ${raw}
 ---
 `).data || {};
@@ -23467,6 +22832,830 @@ ${raw}
   return { config: config2, warnings, source: "file" };
 }
 
+// packages/engine/src/state-machine.mjs
+function norm(v) {
+  return String(v ?? "").trim().toLowerCase();
+}
+function bool(v) {
+  return v === true || norm(v) === "true";
+}
+function createStateMachine(spec) {
+  const COMMAND_TO_MODE2 = spec.commandToMode;
+  const COMMANDS2 = Object.keys(COMMAND_TO_MODE2);
+  const ALLOWED_NEXT2 = spec.allowedNext;
+  const ALIASES = spec.aliases || {};
+  const TERMINAL_NEXT = spec.terminalNext;
+  const ALWAYS_ALLOWED2 = spec.alwaysAllowed;
+  const MODE_TO_COMMAND = Object.fromEntries(Object.entries(COMMAND_TO_MODE2).map(([cmd, mode]) => [mode, cmd]));
+  const prefixRe = new RegExp(`^${spec.commandPrefix}`);
+  function normalizeCommand2(value) {
+    let v = norm(value);
+    if (!v) return "";
+    v = v.replace(/^\//, "").replace(prefixRe, "").split(/\s+/)[0];
+    if (MODE_TO_COMMAND[v]) return MODE_TO_COMMAND[v];
+    if (ALIASES[v]) return ALIASES[v];
+    return COMMANDS2.includes(v) ? v : "";
+  }
+  function checkRecordedNextMode2({ currentMode, nextMode }) {
+    const warnings = [];
+    const raw = norm(nextMode);
+    if (!raw || TERMINAL_NEXT.includes(raw)) return { warnings };
+    const next = normalizeCommand2(raw);
+    if (!next) {
+      warnings.push(`next_mode="${nextMode}" kh\xF4ng thu\u1ED9c danh s\xE1ch mode \u0111\xE3 bi\u1EBFt (${COMMANDS2.join(", ")}, none).`);
+      return { warnings };
+    }
+    const current = normalizeCommand2(currentMode);
+    if (current && !ALLOWED_NEXT2[current].includes(next)) {
+      warnings.push(`next_mode="${next}" sau mode "${current}" l\xE0 chuy\u1EC3n b\u01B0\u1EDBc b\u1EA5t th\u01B0\u1EDDng (th\u01B0\u1EDDng l\xE0: ${ALLOWED_NEXT2[current].join(", ")}).`);
+    }
+    return { warnings };
+  }
+  function evaluateModeEntry2({ requested, data = {}, taskRef = "<task-folder>", ...inputs }) {
+    const command = normalizeCommand2(requested);
+    const result = { allowed: true, command, mode: COMMAND_TO_MODE2[command] || "", reasons: [], reasonCodes: [], warnings: [], redirect: "" };
+    if (!command) {
+      result.allowed = false;
+      result.reasons.push(`Kh\xF4ng nh\u1EADn ra mode "${requested}". Mode h\u1EE3p l\u1EC7: ${COMMANDS2.join(", ")}.`);
+      result.reasonCodes.push("ENTRY_UNKNOWN_MODE");
+      return result;
+    }
+    for (const rule of spec.entryRules({ command, data, taskRef, alwaysAllowed: ALWAYS_ALLOWED2, bool, norm, ...inputs })) {
+      result.reasons.push(rule.reason);
+      result.reasonCodes.push(rule.code);
+      if (rule.redirect && !result.redirect) result.redirect = rule.redirect;
+    }
+    const recorded = normalizeCommand2(data.next_mode);
+    if (recorded && recorded !== command && !ALWAYS_ALLOWED2.includes(command)) {
+      result.warnings.push(`${spec.statusFileName} ghi b\u01B0\u1EDBc k\u1EBF ti\u1EBFp l\xE0 "${recorded}" nh\u01B0ng \u0111ang ch\u1EA1y "${command}".`);
+    }
+    if (result.reasons.length) {
+      if (bool(data.human_override)) {
+        result.warnings.push(...result.reasons.map((r) => `[human_override] ${r}`));
+        result.reasons = [];
+        result.reasonCodes = [];
+        result.redirect = "";
+      } else {
+        result.allowed = false;
+      }
+    }
+    return result;
+  }
+  return { COMMAND_TO_MODE: COMMAND_TO_MODE2, COMMANDS: COMMANDS2, ALLOWED_NEXT: ALLOWED_NEXT2, TERMINAL_NEXT, normalizeCommand: normalizeCommand2, checkRecordedNextMode: checkRecordedNextMode2, evaluateModeEntry: evaluateModeEntry2 };
+}
+
+// packages/engine/src/frontmatter.mjs
+var import_gray_matter2 = __toESM(require_gray_matter(), 1);
+function parseFrontMatterLoose(raw) {
+  const text = String(raw ?? "");
+  const hasFrontMatter = /^﻿?---\r?\n/.test(text);
+  if (!hasFrontMatter) return { data: {}, body: text, hasFrontMatter: false };
+  try {
+    const parsed = (0, import_gray_matter2.default)(text);
+    return { data: parsed.data || {}, body: parsed.content, hasFrontMatter: true };
+  } catch (err) {
+    return { data: {}, body: text, hasFrontMatter: true, error: err.message };
+  }
+}
+function realCell(v) {
+  const t = String(v ?? "").trim();
+  if (!t) return false;
+  if (/^(n\/a|na|không áp dụng|khong ap dung|none|-|—|\.\.\.)$/i.test(t)) return false;
+  if (/^<.*>$/.test(t)) return false;
+  return true;
+}
+
+// packages/engine/src/completion.mjs
+import fs4 from "node:fs";
+import path5 from "node:path";
+function createModeCompletion(pack) {
+  const statusName = path5.posix.basename(pack.statusFile);
+  return function evaluateModeCompletion2({ taskDir, taskRef, command, startedAt, scope, repoRoot, base, extraIssues = [] }) {
+    const done = (issues2, refused = false) => ({
+      ok: issues2.length === 0,
+      refused,
+      issues: issues2,
+      errors: issues2.map((i) => i.message)
+    });
+    const read = (rel) => {
+      const p = path5.join(taskDir, rel);
+      return fs4.existsSync(p) ? fs4.readFileSync(p, "utf8") : "";
+    };
+    const statusPath = path5.join(taskDir, pack.statusFile);
+    const raw = read(pack.statusFile);
+    if (!raw) return done([{ code: "END_STATUS_MISSING", message: `Ch\u01B0a c\xF3 ${taskRef}/${pack.statusFile}.` }]);
+    const loose = parseFrontMatterLoose(raw);
+    if (!loose.hasFrontMatter || loose.error) {
+      return done([
+        {
+          code: "END_STATUS_UNPARSEABLE",
+          message: `${pack.statusFile} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML frontmatter${loose.error ? `: ${loose.error}` : "."}`
+        }
+      ]);
+    }
+    const data = loose.data;
+    const entry = pack.evaluateModeEntry({ requested: command, data, ...pack.entryInputs({ data, read }), taskRef });
+    if (!entry.allowed) {
+      const refused = pack.validateWorkflow(taskDir);
+      if (refused.ok) return done([], true);
+      return done(
+        [
+          {
+            code: "END_REFUSED_ROUTE_INVALID",
+            message: `${pack.label(command)} \u0111ang b\u1ECB gate ch\u1EB7n (${entry.reasons.join(" ")}) n\xEAn kh\xF4ng c\u1EA7n artifact c\u1EE7a mode. Gi\u1EEF nguy\xEAn current_mode; ch\u1EC9 s\u1EEDa ${statusName} cho h\u1EE3p l\u1EC7 v\xE0 route sang: ${entry.redirect}`
+          },
+          ...refused.issues
+        ],
+        true
+      );
+    }
+    const issues = [];
+    if (startedAt !== void 0) {
+      let mtime = 0;
+      try {
+        mtime = fs4.statSync(statusPath).mtimeMs;
+      } catch {
+      }
+      if (mtime + 1e3 < startedAt) {
+        issues.push({
+          code: "END_STATUS_NOT_UPDATED",
+          message: `${pack.statusFile} ch\u01B0a \u0111\u01B0\u1EE3c c\u1EADp nh\u1EADt trong l\u01B0\u1EE3t n\xE0y (kh\xF4ng mode n\xE0o \u0111\u01B0\u1EE3c k\u1EBFt th\xFAc ch\u1EC9 b\u1EB1ng chat).`
+        });
+      }
+    }
+    const expected = pack.commandToMode[command];
+    if (String(data.current_mode || "") !== expected) {
+      issues.push({
+        code: "END_CURRENT_MODE_MISMATCH",
+        message: `current_mode trong ${statusName} ph\u1EA3i l\xE0 ${expected} (\u0111ang l\xE0 "${data.current_mode || ""}").`
+      });
+    }
+    for (const rel of pack.requiredArtifacts[command] || []) {
+      if (!fs4.existsSync(path5.join(taskDir, rel))) {
+        issues.push({ code: "END_ARTIFACT_MISSING", message: `Thi\u1EBFu artifact b\u1EAFt bu\u1ED9c c\u1EE7a ${pack.label(command)}: ${rel}` });
+      }
+    }
+    issues.push(...extraIssues);
+    const gates = repoRoot && !scope ? pack.validateWorkflowAtGate(taskDir, { repoRoot, base }) : pack.validateWorkflow(taskDir, { scope });
+    if (!gates.ok) issues.push(...gates.issues);
+    const seen = /* @__PURE__ */ new Set();
+    return done(issues.filter((i) => !seen.has(i.message) && seen.add(i.message)));
+  };
+}
+
+// packages/engine/src/briefing.mjs
+import fs5 from "node:fs";
+import path6 from "node:path";
+function readIfExists(p) {
+  return fs5.existsSync(p) ? fs5.readFileSync(p, "utf8") : "";
+}
+function createModeBriefing(pack) {
+  const statusName = path6.posix.basename(pack.statusFile);
+  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint }) {
+    const lines = [];
+    const statusPath = path6.join(taskDir, pack.statusFile);
+    if (!fs5.existsSync(statusPath)) {
+      lines.push(`GATE: CH\u01AFA C\xD3 TASK FOLDER H\u1EE2P L\u1EC6 (${taskRef}/${pack.statusFile} kh\xF4ng t\u1ED3n t\u1EA1i).`);
+      lines.push(newTaskHint);
+      return { ok: false, entry: null, text: lines.join("\n") };
+    }
+    const raw = fs5.readFileSync(statusPath, "utf8");
+    const strict = pack.parseStatus(raw);
+    const data = strict.ok ? strict.data : parseFrontMatterLoose(raw).data;
+    const read = (rel) => readIfExists(path6.join(taskDir, rel));
+    const entry = pack.evaluateModeEntry({ requested: command, data, ...pack.entryInputs({ data, read }), taskRef });
+    if (entry.allowed) {
+      lines.push(`GATE: \u0110\u01AF\u1EE2C CH\u1EA0Y ${pack.label(command)} (${entry.mode}) cho ${taskRef}.`);
+    } else {
+      lines.push(`GATE: B\u1ECA CH\u1EB6N \u2014 kh\xF4ng \u0111\u01B0\u1EE3c ch\u1EA1y ${pack.label(command)} cho ${taskRef}.`);
+      for (const r of entry.reasons) lines.push(`- ${r}`);
+      lines.push(`Vi\u1EC7c ph\u1EA3i l\xE0m: c\u1EADp nh\u1EADt ${pack.statusFile} (next_mode, next_prompt) v\xE0 d\u1EEBng. Prompt \u0111\xFAng: ${entry.redirect}`);
+      lines.push("Kh\xF4ng s\u1EEDa source code trong l\u01B0\u1EE3t n\xE0y.");
+    }
+    for (const w of entry.warnings) lines.push(`C\u1EA3nh b\xE1o: ${w}`);
+    if (!strict.ok) {
+      lines.push("", `${statusName} ch\u01B0a h\u1EE3p l\u1EC7 schema (s\u1EEDa trong l\u01B0\u1EE3t n\xE0y):`);
+      for (const e of strict.errors.slice(0, 10)) lines.push(`- ${e}`);
+    }
+    if (entry.allowed) {
+      const agent = pack.agentFor[command];
+      lines.push("", `Agent \u0111\u1EA3m nh\u1EADn: ${agent ? agent : "main thread (inline)"}`);
+      lines.push("", "Artifact b\u1EAFt bu\u1ED9c khi k\u1EBFt th\xFAc mode (t\u01B0\u01A1ng \u0111\u1ED1i task folder):");
+      for (const rel of pack.requiredArtifacts[command]) lines.push(`- ${rel}`);
+      lines.push(pack.readInputsHint);
+      lines.push(finishHint);
+      lines.push("", `=== RULE \xC1P D\u1EE4NG CHO ${pack.label(command)} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
+      for (const file2 of pack.rulesFor(command, data)) {
+        const body = readIfExists(path6.join(rulesDir, file2)).trim();
+        if (body) lines.push("", `--- ${file2} ---`, body);
+      }
+    }
+    return { ok: entry.allowed, entry, text: lines.join("\n") };
+  };
+}
+
+// packages/validators/src/parse.mjs
+function parseWorkflowStatus(raw) {
+  let frontMatter;
+  let body;
+  try {
+    const parsed = (0, import_gray_matter3.default)(raw);
+    frontMatter = parsed.data;
+    body = parsed.content;
+  } catch (err) {
+    return { ok: false, errors: [`Kh\xF4ng parse \u0111\u01B0\u1EE3c YAML frontmatter: ${err.message}`] };
+  }
+  const result = WorkflowStatusSchema.safeParse(frontMatter);
+  if (!result.success) {
+    const errors = result.error.issues.map(
+      (issue2) => `workflow-status.md frontmatter \u2014 ${issue2.path.join(".")}: ${issue2.message}`
+    );
+    return { ok: false, errors };
+  }
+  return { ok: true, data: result.data, body };
+}
+
+// packages/validators/src/transitions.mjs
+var COMMAND_TO_MODE = {
+  plan: "planning-mode",
+  quick: "quick-mode",
+  "input-sync": "input-sync-mode",
+  figma: "figma-extraction-mode",
+  "figma-review": "figma-review-mode",
+  cook: "implementation-mode",
+  bugfix: "bugfix-mode",
+  review: "review-mode",
+  test: "testing-mode",
+  pr: "pr-ready-mode"
+};
+var COMMANDS = Object.keys(COMMAND_TO_MODE);
+var COMMAND_ALIASES = { build: "cook", "figma-extract": "figma", implement: "cook" };
+var TERMINAL_NEXT_MODES = ["none", "done", "completed", "merged"];
+var SOURCE_EDIT_COMMANDS = ["cook", "bugfix", "quick"];
+var ALWAYS_ALLOWED = ["plan", "input-sync"];
+var ALLOWED_NEXT = {
+  plan: ["input-sync", "figma", "cook", "plan", "quick"],
+  quick: ["review", "test", "pr", "plan", "input-sync"],
+  "input-sync": ["plan", "input-sync", "figma", "cook", "bugfix", "review"],
+  figma: ["cook", "plan", "input-sync", "figma"],
+  cook: ["review", "cook", "input-sync", "plan"],
+  bugfix: ["review", "bugfix", "input-sync", "test", "figma-review"],
+  review: ["bugfix", "input-sync", "figma-review", "test", "pr"],
+  test: ["figma-review", "pr", "bugfix", "input-sync", "test"],
+  "figma-review": ["pr", "bugfix", "input-sync", "figma-review", "test"],
+  pr: ["bugfix", "input-sync", "pr"]
+};
+function feEntryRules({ command, data, taskRef, alwaysAllowed, bool: bool3, norm: norm3, openBlockingQuestions = 0, openIssues }) {
+  const rules = [];
+  const blocking = Math.max(Number(data.blocking_questions_open || 0), Number(openBlockingQuestions || 0));
+  const questionBlocked = blocking > 0 || ["open", "blocked", "pending"].includes(norm3(data.questions_status)) || ["open", "blocked", "pending", "needs_input_sync"].includes(norm3(data.questions_resolution_gate_status)) || bool3(data.input_sync_required) || bool3(data.plan_recheck_required_after_input_sync);
+  if (questionBlocked && !alwaysAllowed.includes(command)) {
+    rules.push({
+      code: blocking > 0 ? "ENTRY_QUESTIONS_BLOCKING" : "ENTRY_INPUT_SYNC_REQUIRED",
+      reason: blocking > 0 ? `C\xF2n ${blocking} c\xE2u h\u1ECFi blocking \u0111ang m\u1EDF trong planning/questions.md.` : "workflow-status.md \u0111ang y\xEAu c\u1EA7u input-sync (questions/input_sync_required/plan_recheck ch\u01B0a \u0111\xF3ng).",
+      redirect: `FE input-sync ${taskRef} <answer-or-cr>`
+    });
+  }
+  if (command === "cook") {
+    if (!bool3(data.build_ready)) {
+      rules.push({ code: "ENTRY_NOT_BUILD_READY", reason: "build_ready ch\u01B0a true: plan ch\u01B0a s\u1EB5n s\xE0ng \u0111\u1EC3 cook.", redirect: `FE plan ${taskRef}` });
+    }
+    const figmaGate = norm3(data.figma_gate_status);
+    if (bool3(data.figma_required) && !["passed", "waived", "substituted", "not_required"].includes(figmaGate)) {
+      rules.push({
+        code: "ENTRY_FIGMA_GATE_OPEN",
+        reason: `Task c\u1EA7n Figma nh\u01B0ng figma_gate_status="${figmaGate || "(tr\u1ED1ng)"}".`,
+        redirect: `FE figma ${taskRef}`
+      });
+    }
+  }
+  if (command === "pr") {
+    const critical = Math.max(Number(data.critical_issues_open || 0), Number(openIssues?.critical || 0));
+    const high = Math.max(Number(data.high_issues_open || 0), Number(openIssues?.high || 0));
+    if (critical > 0 || high > 0 || bool3(data.bugfix_required)) {
+      rules.push({ code: "ENTRY_OPEN_BUGS", reason: "C\xF2n bug Critical/High ho\u1EB7c bugfix_required=true.", redirect: `FE bugfix ${taskRef}` });
+    }
+    if (!["passed", "not_required"].includes(norm3(data.review_status))) {
+      rules.push({
+        code: "ENTRY_REVIEW_NOT_PASSED",
+        reason: `review_status="${norm3(data.review_status) || "(tr\u1ED1ng)"}" \u2014 c\u1EA7n review passed tr\u01B0\u1EDBc PR.`,
+        redirect: `FE review ${taskRef}`
+      });
+    }
+  }
+  return rules;
+}
+var machine = createStateMachine({
+  commandToMode: COMMAND_TO_MODE,
+  allowedNext: ALLOWED_NEXT,
+  aliases: COMMAND_ALIASES,
+  terminalNext: TERMINAL_NEXT_MODES,
+  alwaysAllowed: ALWAYS_ALLOWED,
+  commandPrefix: "fe[:\\s]+",
+  statusFileName: "workflow-status.md",
+  entryRules: feEntryRules
+});
+var normalizeCommand = machine.normalizeCommand;
+var checkRecordedNextMode = machine.checkRecordedNextMode;
+var evaluateModeEntry = machine.evaluateModeEntry;
+
+// packages/validators/src/modes.mjs
+var STATUS = "tracking/workflow-status.md";
+var TASK_GITKEEP = "output/figma-reference-screenshots/.gitkeep";
+var REQUIRED_TASK_DOCS = [
+  "task.md",
+  "planning/implementation-plan.md",
+  "planning/build-checklist.md",
+  "planning/questions.md",
+  STATUS
+];
+var REQUIRED_TASK_FILES = [...REQUIRED_TASK_DOCS, TASK_GITKEEP];
+var MODE_REQUIRED_ARTIFACTS = {
+  plan: [
+    "task.md",
+    "planning/implementation-plan.md",
+    "planning/build-checklist.md",
+    "planning/questions.md",
+    STATUS
+  ],
+  quick: [STATUS],
+  "input-sync": ["tracking/input-sync-report.md", "planning/questions.md", STATUS],
+  figma: ["output/figma-extraction-summary.md", STATUS],
+  cook: ["planning/build-checklist.md", STATUS],
+  review: ["output/review-report.md", STATUS],
+  bugfix: ["tracking/review-bugs.md", STATUS],
+  test: ["output/test-summary.md", STATUS],
+  "figma-review": ["output/ui-figma-review-report.md", STATUS],
+  pr: ["output/pr-summary.md", STATUS]
+};
+var AGENT_FOR_COMMAND = {
+  plan: "frontend-planner",
+  "input-sync": "frontend-planner",
+  figma: "frontend-figma-specialist",
+  "figma-review": "frontend-figma-specialist",
+  cook: "frontend-developer",
+  bugfix: "frontend-developer",
+  review: "frontend-reviewer",
+  test: "frontend-tester",
+  pr: "frontend-release-manager",
+  quick: null
+};
+var SOURCE_EDIT_AGENT = "frontend-developer";
+var KIT_WRITABLE_PREFIXES = ["docs/frontend-tasks/", "docs/frontend-context/"];
+var ALWAYS_RULES = [
+  "core.md",
+  "mode-output-contract.md",
+  "plan-input-ledger-contract.md",
+  "question-resolution-contract.md",
+  "vietnamese-output.md",
+  "efficiency-budget-contract.md",
+  "untrusted-input-contract.md"
+];
+var RULES_BY_COMMAND = {
+  "srs-api-contract.md": ["plan", "input-sync", "cook", "quick", "bugfix", "review"],
+  "clean-code-contract.md": ["cook", "quick", "bugfix", "review"],
+  "evidence-scope-contract.md": ["cook", "review", "test", "figma-review", "pr"],
+  "review-bug-contract.md": ["review", "bugfix", "pr"]
+};
+var FIGMA_RULE = "figma-ui-contract.md";
+var FIGMA_ALWAYS = ["figma", "figma-review"];
+var FIGMA_WHEN_REQUIRED = ["plan", "cook", "quick", "bugfix", "review", "pr"];
+function rulesForMode(command, { figmaRequired = false } = {}) {
+  const rules = [...ALWAYS_RULES];
+  for (const [rule, commands] of Object.entries(RULES_BY_COMMAND)) {
+    if (commands.includes(command)) rules.push(rule);
+  }
+  if (FIGMA_ALWAYS.includes(command) || figmaRequired && FIGMA_WHEN_REQUIRED.includes(command)) {
+    rules.push(FIGMA_RULE);
+  }
+  return rules;
+}
+
+// packages/validators/src/review-bugs.mjs
+var ISSUE_CATEGORIES = [
+  "srs-logic",
+  "api-contract",
+  "error-handling",
+  "ui-figma",
+  "state-data",
+  "a11y",
+  "performance",
+  "clean-code",
+  "test",
+  "scope",
+  "other"
+];
+var ISSUE_ROOT_CAUSES = [
+  "requirement-unclear",
+  "plan-gap",
+  "implementation-error",
+  "missing-test",
+  "figma-mismatch",
+  "rule-violation",
+  "environment",
+  "other"
+];
+var COLUMN_ALIASES = {
+  id: /^(id|bug id|issue id|mã)$/i,
+  severity: /^(severity|mức độ|muc do)$/i,
+  category: /^(nhóm|nhom|category|loại|loai)$/i,
+  rootCause: /^(nguyên nhân gốc|nguyen nhan goc|root cause)$/i,
+  status: /^(trạng thái|trang thai|status)$/i
+};
+var SEVERITY_WORDS = [
+  ["critical", /\b(critical|blocker)\b|nghiêm trọng|nghiem trong/i],
+  ["high", /\bhigh\b|\bcao\b/i],
+  ["medium", /\bmedium\b|trung bình|trung binh/i],
+  ["low", /\blow\b|thấp|\bthap\b/i]
+];
+var CLOSED = /(fixed|closed|resolved|done|verified|accepted|won'?t ?fix|đã fix|da fix|đã sửa|da sua|đã đóng|da dong|đã xong|da xong|chấp nhận|chap nhan|không sửa|khong sua|hoàn tất|hoan tat)/i;
+var OPEN = /(open|pending|blocked|in progress|reopen|mở|\bmo\b|đang|dang|chưa|chua|bị chặn|bi chan|cần sửa|can sua)/i;
+function severityOf(cell) {
+  const found = SEVERITY_WORDS.filter(([, re]) => re.test(cell)).map(([s]) => s);
+  return found.length === 1 ? found[0] : null;
+}
+function statusOf(cell) {
+  const t = String(cell || "").trim();
+  if (CLOSED.test(t)) return "closed";
+  if (OPEN.test(t)) return "open";
+  return "unknown";
+}
+function splitRow(line) {
+  return line.split("|").slice(1, -1).map((c) => c.trim().replace(/^`|`$/g, ""));
+}
+function sectionTable(markdown, headingRe) {
+  const lines = String(markdown || "").split(/\r?\n/);
+  const start = lines.findIndex((l) => /^#{2,3}\s/.test(l) && headingRe.test(l));
+  if (start < 0) return null;
+  const table = [];
+  for (const line of lines.slice(start + 1)) {
+    if (/^#{1,3}\s/.test(line)) break;
+    if (/^\s*\|/.test(line)) table.push(line);
+    else if (table.length) break;
+  }
+  if (table.length < 2) return null;
+  const header = splitRow(table[0]);
+  const rows = table.slice(1).filter((l) => !/^\s*\|\s*:?-+/.test(l)).map(splitRow);
+  return { header, rows };
+}
+function columnIndex(header) {
+  const index = {};
+  header.forEach((name, i) => {
+    for (const [key, re] of Object.entries(COLUMN_ALIASES)) {
+      if (index[key] === void 0 && re.test(name)) index[key] = i;
+    }
+  });
+  return index;
+}
+function parseIssueTable(markdown, headingRe) {
+  const table = sectionTable(markdown, headingRe);
+  if (!table) return { rows: [], confident: true };
+  const col = columnIndex(table.header);
+  const confident = col.id !== void 0 && col.severity !== void 0 && col.status !== void 0;
+  const rows = [];
+  for (const cells of table.rows) {
+    const id = cells[col.id ?? 0] || "";
+    if (!realCell(id)) continue;
+    const severity = severityOf(cells[col.severity ?? 1] || "");
+    if (!severity) continue;
+    rows.push({
+      id,
+      severity,
+      category: col.category !== void 0 ? cells[col.category] || "" : "",
+      rootCause: col.rootCause !== void 0 ? cells[col.rootCause] || "" : "",
+      status: statusOf(col.status !== void 0 ? cells[col.status] : ""),
+      hasCategory: col.category !== void 0,
+      hasRootCause: col.rootCause !== void 0
+    });
+  }
+  return { rows, confident: rows.length === 0 || confident };
+}
+function statusOverrides(reviewBugsMd) {
+  const table = sectionTable(reviewBugsMd, /Trạng thái sau bugfix|Status after bugfix/i);
+  const map2 = /* @__PURE__ */ new Map();
+  if (!table) return map2;
+  const col = columnIndex(table.header);
+  for (const cells of table.rows) {
+    const id = cells[col.id ?? 0] || "";
+    const status = statusOf(cells[col.status ?? 1]);
+    if (realCell(id) && status !== "unknown") map2.set(id, status);
+  }
+  return map2;
+}
+function countOpenIssuesBySeverity(reviewBugsMd = "", reviewReportMd = "") {
+  const bugs = parseIssueTable(reviewBugsMd, /Bug cần xử lý|Bugs?\b/i);
+  const report = parseIssueTable(reviewReportMd, /Issue phát hiện|Issues?\b/i);
+  const byId = /* @__PURE__ */ new Map();
+  for (const row of [...report.rows, ...bugs.rows]) byId.set(row.id, row);
+  const overrides = statusOverrides(reviewBugsMd);
+  const result = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    openIds: { critical: [], high: [], medium: [], low: [] },
+    unknownStatusIds: [],
+    unknownCategoryIds: [],
+    unknownRootCauseIds: [],
+    confident: bugs.confident && report.confident
+  };
+  const categories = new Set(ISSUE_CATEGORIES);
+  const rootCauses = new Set(ISSUE_ROOT_CAUSES);
+  for (const row of byId.values()) {
+    const status = overrides.get(row.id) || row.status;
+    if (status === "open") {
+      result[row.severity] += 1;
+      result.openIds[row.severity].push(row.id);
+    } else if (status === "unknown") {
+      result.unknownStatusIds.push(row.id);
+    }
+    if (row.hasCategory && !categories.has(row.category.toLowerCase())) result.unknownCategoryIds.push(row.id);
+    if (row.hasRootCause && !rootCauses.has(row.rootCause.toLowerCase())) result.unknownRootCauseIds.push(row.id);
+  }
+  return result;
+}
+function countOpenIssuesInTask(read) {
+  return countOpenIssuesBySeverity(read("tracking/review-bugs.md"), read("output/review-report.md"));
+}
+
+// packages/validators/src/gates.mjs
+function norm2(v) {
+  return String(v ?? "").trim().toLowerCase();
+}
+function bool2(v) {
+  return v === true || norm2(v) === "true";
+}
+function countOpenBlockingQuestions(questionsMarkdown) {
+  const text = questionsMarkdown || "";
+  const section = text.match(
+    /##\s+Câu hỏi blocking[\s\S]*?(?=\n##\s+Câu hỏi non-blocking|\n##\s+Quyết định|$)/i
+  );
+  if (!section) return 0;
+  let count = 0;
+  for (const line of section[0].split(/\r?\n/)) {
+    if (!/^\s*\|/.test(line)) continue;
+    if (/^\s*\|\s*-+\s*\|/.test(line)) continue;
+    if (/\|\s*ID\s*\|/i.test(line)) continue;
+    const cells = line.split("|").slice(1, -1).map((c) => c.trim());
+    if (cells.length < 9) continue;
+    const status = cells[cells.length - 1] || "";
+    const isOpen = /(open|pending|blocked|chưa trả lời|chua tra loi|bị chặn|bi chan|chưa rõ|chua ro)/i.test(
+      status
+    ) && !/(resolved|closed|answered|done|đã trả lời|da tra loi|đã đóng|da dong|không áp dụng|khong ap dung)/i.test(
+      status
+    );
+    const hasContent = [cells[0], cells[5], cells[6], cells[7], cells[8]].some(realCell);
+    if (isOpen && hasContent) count += 1;
+  }
+  return count;
+}
+var RAN_YES = /^(có|co|yes|y|true|đã chạy|da chay|ran)(?=$|[\s(,.:;-])/i;
+var RAN_NO = /^(không|khong|no|n|false|chưa chạy|chua chay|not run)(?=$|[\s(,.:;-])/i;
+var RESULT_NOT_RUN = /^(not run|chưa chạy|chua chay|skipped|bỏ qua|bo qua)(?=$|[\s(,.:;-])/i;
+var RESULT_FAIL = /(fail|lỗi|không đạt|khong dat|error)/i;
+var RESULT_PASS = /(pass|đạt|\bdat\b|\bok\b|success|thành công|thanh cong)/i;
+function templateChoiceCell(v) {
+  return /\S\s*\/\s*(không|khong|no|failed|not run)\b/i.test(v);
+}
+function commandEvidenceRows(testSummaryMarkdown) {
+  const text = String(testSummaryMarkdown || "");
+  const section = text.match(
+    /^##\s+(?:\d+\.\s*)?Command evidence log[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
+  );
+  if (!section) return [];
+  const rows = [];
+  for (const line of section[1].split(/\r?\n/)) {
+    if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
+    const cells = line.split("|").slice(1, -1).map((c) => c.trim().replace(/^`|`$/g, ""));
+    if (/^command$/i.test(cells[0] || "")) continue;
+    if (!realCell(cells[0])) continue;
+    rows.push({ command: cells[0], ran: cells[1] || "", result: cells[2] || "", time: cells[3] || "" });
+  }
+  return rows;
+}
+function summarizeCommandEvidence(testSummaryMarkdown) {
+  const out = { ran: [], notRun: [], incomplete: [], missingTime: [], latestFailed: [] };
+  const latest = /* @__PURE__ */ new Map();
+  for (const row of commandEvidenceRows(testSummaryMarkdown)) {
+    const ranCell = templateChoiceCell(row.ran) ? "" : row.ran;
+    const resultCell = templateChoiceCell(row.result) ? "" : row.result;
+    if (RAN_NO.test(ranCell) || !ranCell && RESULT_NOT_RUN.test(resultCell)) {
+      out.notRun.push(row.command);
+      continue;
+    }
+    const outcome = RESULT_NOT_RUN.test(resultCell) ? "" : RESULT_FAIL.test(resultCell) ? "failed" : RESULT_PASS.test(resultCell) ? "passed" : "";
+    if (!RAN_YES.test(ranCell) || !outcome) {
+      out.incomplete.push(row.command);
+      continue;
+    }
+    out.ran.push(row.command);
+    if (!realCell(row.time)) out.missingTime.push(row.command);
+    latest.set(row.command, outcome);
+  }
+  for (const [command, outcome] of latest) if (outcome === "failed") out.latestFailed.push(command);
+  return out;
+}
+function hasCommandEvidence(testSummaryMarkdown) {
+  return summarizeCommandEvidence(testSummaryMarkdown).ran.length > 0;
+}
+function commandEvidenceWarnings(testSummaryMarkdown) {
+  const s = summarizeCommandEvidence(testSummaryMarkdown);
+  const warnings = [];
+  if (s.incomplete.length) {
+    warnings.push(
+      `Command evidence log c\xF3 d\xF2ng thi\u1EBFu d\u1EEF li\u1EC7u, kh\xF4ng \u0111\u01B0\u1EE3c t\xEDnh l\xE0 \u0111\xE3 ch\u1EA1y: ${s.incomplete.join(", ")}. Ghi r\xF5 "C\xF3" k\xE8m k\u1EBFt qu\u1EA3 Passed/Failed, ho\u1EB7c "Kh\xF4ng" k\xE8m l\xFD do.`
+    );
+  }
+  if (s.missingTime.length) {
+    warnings.push(`Command evidence log thi\u1EBFu th\u1EDDi \u0111i\u1EC3m ch\u1EA1y: ${s.missingTime.join(", ")}.`);
+  }
+  if (s.latestFailed.length) {
+    warnings.push(`L\u1EA7n ch\u1EA1y g\u1EA7n nh\u1EA5t \u0111ang Failed: ${s.latestFailed.join(", ")}. Route FE bugfix ho\u1EB7c ghi r\xF5 l\xFD do ch\u1EA5p nh\u1EADn.`);
+  }
+  return warnings;
+}
+var SEVERITY_LABEL = { critical: "Critical", high: "High" };
+function effectiveOpenIssues(data, computed) {
+  const pick2 = (sev) => Math.max(Number(data[`${sev}_issues_open`] || 0), computed?.confident ? computed[sev] : 0);
+  return { critical: pick2("critical"), high: pick2("high") };
+}
+function issueTableWarnings(computed) {
+  const warnings = [];
+  if (computed.unknownStatusIds.length) {
+    warnings.push(`Issue ch\u01B0a r\xF5 tr\u1EA1ng th\xE1i (ghi Open, Fixed, Closed...): ${computed.unknownStatusIds.join(", ")}.`);
+  }
+  if (computed.unknownCategoryIds.length) {
+    warnings.push(`Issue c\xF3 c\u1ED9t Nh\xF3m ngo\xE0i danh s\xE1ch c\u1EE7a review-bug-contract.md: ${computed.unknownCategoryIds.join(", ")}.`);
+  }
+  if (computed.unknownRootCauseIds.length) {
+    warnings.push(`Issue c\xF3 c\u1ED9t Nguy\xEAn nh\xE2n g\u1ED1c ngo\xE0i danh s\xE1ch c\u1EE7a review-bug-contract.md: ${computed.unknownRootCauseIds.join(", ")}.`);
+  }
+  return warnings;
+}
+var MD_FILES_WITHOUT_NEXT_PROMPT = [
+  "task.md",
+  "planning/implementation-plan.md",
+  "planning/build-checklist.md",
+  "planning/questions.md",
+  "tracking/input-sync-report.md",
+  "output/review-report.md",
+  "output/test-summary.md",
+  "output/pr-summary.md",
+  "output/figma-extraction-summary.md",
+  "output/ui-figma-review-report.md",
+  "tracking/review-bugs.md"
+];
+function evaluateWorkflowGates({ data, body, exists, read, scope }) {
+  const issues = [];
+  const warnings = [];
+  const fail = (code, message) => issues.push({ code, message });
+  for (const rel of REQUIRED_TASK_DOCS) {
+    if (!exists(rel)) fail("TASK_FILE_MISSING", `Thi\u1EBFu ${rel}`);
+  }
+  if (!/^##\s+Prompt bước tiếp theo/im.test(body)) {
+    fail("STATUS_NEXT_PROMPT_SECTION_MISSING", "workflow-status.md thi\u1EBFu m\u1EE5c Prompt b\u01B0\u1EDBc ti\u1EBFp theo.");
+  }
+  if (!/^##\s+Input ledger bắt buộc cho FE plan/im.test(body)) {
+    fail("STATUS_INPUT_LEDGER_SECTION_MISSING", "workflow-status.md thi\u1EBFu m\u1EE5c Input ledger b\u1EAFt bu\u1ED9c cho FE plan.");
+  }
+  const planDone = bool2(data.build_ready) || norm2(data.next_mode) === "cook" || /FE\s+cook/i.test(String(data.next_prompt || ""));
+  const questionsText = read("planning/questions.md");
+  const openBlockingQuestions = Math.max(
+    Number(data.blocking_questions_open || 0),
+    countOpenBlockingQuestions(questionsText)
+  );
+  const computedIssues = countOpenIssuesInTask(read);
+  const openIssues = effectiveOpenIssues(data, computedIssues);
+  const questionGate = norm2(data.questions_resolution_gate_status);
+  const questionStatus = norm2(data.questions_status);
+  const questionBlocked = openBlockingQuestions > 0 || ["open", "blocked", "pending", "needs_answer", "needs_answers"].includes(questionStatus) || ["open", "blocked", "pending", "needs_input_sync"].includes(questionGate) || bool2(data.input_sync_required) || bool2(data.plan_recheck_required_after_input_sync);
+  if (planDone) {
+    if (!["completed", "documented", "passed"].includes(norm2(data.input_inventory_status))) {
+      fail("PLAN_INPUT_INVENTORY_INCOMPLETE", "Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng input_inventory_status ch\u01B0a completed/documented/passed.");
+    }
+    if (!["completed", "documented", "passed"].includes(norm2(data.plan_input_ledger_status))) {
+      fail("PLAN_INPUT_LEDGER_INCOMPLETE", "Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng plan_input_ledger_status ch\u01B0a completed/documented/passed.");
+    }
+    if (Number(data.missing_input_count || 0) > 0) {
+      fail("PLAN_INPUTS_MISSING", "Plan input ledger c\xF2n missing_input_count > 0. C\u1EA7n h\u1ECFi/input-sync tr\u01B0\u1EDBc khi cook.");
+    }
+    if (!["passed", "not_required"].includes(questionGate)) {
+      fail("PLAN_QUESTION_GATE_OPEN", "Plan \u0111\xE3 route sang cook/build_ready nh\u01B0ng questions_resolution_gate_status ch\u01B0a passed/not_required.");
+    }
+  }
+  if (questionBlocked) {
+    if (bool2(data.build_ready)) {
+      fail("QUESTIONS_BUILD_READY_CONFLICT", "Kh\xF4ng \u0111\u01B0\u1EE3c build_ready=true khi c\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required.");
+    }
+    if (norm2(data.next_mode) !== "input-sync") {
+      fail("QUESTIONS_NEXT_MODE_NOT_INPUT_SYNC", "C\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required th\xEC next_mode ph\u1EA3i l\xE0 input-sync.");
+    }
+    if (!/FE\s+input-sync/i.test(String(data.next_prompt || ""))) {
+      fail("QUESTIONS_NEXT_PROMPT_NOT_INPUT_SYNC", "C\xF2n c\xE2u h\u1ECFi blocking/open ho\u1EB7c input-sync required th\xEC next_prompt ph\u1EA3i l\xE0 FE input-sync <task-folder> <answer-or-cr>.");
+    }
+    if (!bool2(data.input_sync_required)) {
+      fail("QUESTIONS_INPUT_SYNC_FLAG_MISSING", "C\xF2n c\xE2u h\u1ECFi blocking/open th\xEC input_sync_required ph\u1EA3i true.");
+    }
+    if (openBlockingQuestions > 0 && !bool2(data.plan_recheck_required_after_input_sync)) {
+      fail("QUESTIONS_PLAN_RECHECK_FLAG_MISSING", "C\xF2n c\xE2u h\u1ECFi blocking/open th\xEC plan_recheck_required_after_input_sync ph\u1EA3i true.");
+    }
+  }
+  for (const rel of MD_FILES_WITHOUT_NEXT_PROMPT) {
+    if (exists(rel) && /^##\s+Prompt bước tiếp theo/im.test(read(rel))) {
+      fail("NEXT_PROMPT_OUTSIDE_STATUS", `${rel} kh\xF4ng \u0111\u01B0\u1EE3c ch\u1EE9a Prompt b\u01B0\u1EDBc ti\u1EBFp theo.`);
+    }
+  }
+  const mode = norm2(data.current_mode);
+  const tokenBudget = norm2(data.token_budget_status);
+  const requiredRead = norm2(data.required_files_read_status);
+  const scopeDiff = norm2(data.scope_diff_status);
+  const commandEvidence = norm2(data.command_evidence_status);
+  const playwrightDiff = norm2(data.playwright_screenshot_diff_status);
+  const reviewRun = exists("output/review-report.md") || mode === "review-mode" || ["passed", "needs_bugfix", "blocked", "insufficient_evidence"].includes(norm2(data.review_status));
+  if (mode === "input-sync-mode" && !exists("tracking/input-sync-report.md")) {
+    fail("ARTIFACT_INPUT_SYNC_REPORT_MISSING", "FE input-sync ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt tracking/input-sync-report.md.");
+  }
+  if (mode === "figma-extraction-mode" || bool2(data.figma_required) && ["passed", "completed"].includes(norm2(data.figma_gate_status))) {
+    if (!exists("output/figma-extraction-summary.md")) {
+      fail("ARTIFACT_FIGMA_SUMMARY_MISSING", "FE figma/Figma required ph\u1EA3i c\xF3 output/figma-extraction-summary.md.");
+    }
+  }
+  if (reviewRun) {
+    if (!exists("output/review-report.md")) {
+      fail("ARTIFACT_REVIEW_REPORT_MISSING", "FE review ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/review-report.md.");
+    }
+    const needBug = bool2(data.bugfix_required) || openIssues.critical > 0 || openIssues.high > 0 || ["open", "blocked"].includes(norm2(data.review_bug_status));
+    if (needBug && !exists("tracking/review-bugs.md")) {
+      fail("ARTIFACT_REVIEW_BUGS_MISSING", "Review c\xF3 bug/Critical/High ph\u1EA3i c\xF3 tracking/review-bugs.md.");
+    }
+  }
+  if (mode === "testing-mode" && !exists("output/test-summary.md")) {
+    fail("ARTIFACT_TEST_SUMMARY_MISSING", "FE test ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/test-summary.md.");
+  }
+  if ((mode === "figma-review-mode" || norm2(data.ui_match_review_status) === "passed") && bool2(data.figma_required) && !exists("output/ui-figma-review-report.md")) {
+    fail("ARTIFACT_UI_REVIEW_REPORT_MISSING", "FE figma-review/UI passed ph\u1EA3i c\xF3 output/ui-figma-review-report.md.");
+  }
+  if (mode === "pr-ready-mode" && !exists("output/pr-summary.md")) {
+    fail("ARTIFACT_PR_SUMMARY_MISSING", "FE pr ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt output/pr-summary.md.");
+  }
+  if (bool2(data.build_ready)) {
+    if (openBlockingQuestions > 0) {
+      fail("BUILD_READY_OPEN_QUESTIONS", "build_ready=true nh\u01B0ng c\xF2n blocking question.");
+    }
+    if (["failed", "blocked"].includes(tokenBudget) || ["failed", "blocked"].includes(requiredRead)) {
+      fail("BUILD_READY_BUDGET_FAILED", "build_ready=true nh\u01B0ng token_budget_status/required_files_read_status \u0111ang failed/blocked.");
+    }
+    if (bool2(data.srs_required) && !["completed", "passed", "not_required"].includes(norm2(data.srs_trace_matrix_status))) {
+      fail("BUILD_READY_SRS_TRACE_INCOMPLETE", "build_ready=true y\xEAu c\u1EA7u SRS trace completed/passed/not_required.");
+    }
+    if (bool2(data.figma_required) && !["passed", "not_required", "waived", "substituted"].includes(norm2(data.figma_gate_status))) {
+      fail("BUILD_READY_FIGMA_GATE_OPEN", "build_ready=true y\xEAu c\u1EA7u Figma gate passed/waived/not_required/substituted.");
+    }
+  }
+  if (["failed", "blocked"].includes(scopeDiff)) {
+    fail("SCOPE_DIFF_DECLARED_FAILED", "scope_diff_status=failed/blocked. C\u1EA7n update plan/input-sync ho\u1EB7c s\u1EEDa diff.");
+  }
+  if (["failed", "blocked"].includes(commandEvidence)) {
+    fail("COMMAND_EVIDENCE_DECLARED_FAILED", "command_evidence_status=failed/blocked. Kh\xF4ng \u0111\u01B0\u1EE3c claim pass khi thi\u1EBFu evidence.");
+  }
+  if (bool2(data.figma_required) && ["failed", "blocked"].includes(playwrightDiff)) {
+    fail("PLAYWRIGHT_DIFF_FAILED", "playwright_screenshot_diff_status=failed/blocked cho task Figma/UI.");
+  }
+  if (scope && !scope.plannedEmpty && scope.outOfPlan?.length) {
+    fail(
+      "SCOPE_OUT_OF_PLAN",
+      `Scope diff: c\xF3 file s\u1EEDa ngo\xE0i b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" c\u1EE7a plan: ${scope.outOfPlan.join(", ")}. C\u1EADp nh\u1EADt plan/input-sync ho\u1EB7c ho\xE0n t\xE1c.`
+    );
+  }
+  if (["passed", "completed"].includes(commandEvidence) && exists("output/test-summary.md") && !hasCommandEvidence(read("output/test-summary.md"))) {
+    fail("COMMAND_EVIDENCE_UNPROVEN", "command_evidence_status=passed/completed nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.");
+  }
+  if (exists("output/test-summary.md")) warnings.push(...commandEvidenceWarnings(read("output/test-summary.md")));
+  for (const sev of ["critical", "high"]) {
+    const field = `${sev}_issues_open`;
+    const declared = Number(data[field] || 0);
+    if (computedIssues[sev] <= declared) continue;
+    const message = `B\u1EA3ng issue (tracking/review-bugs.md, output/review-report.md) c\xF2n ${computedIssues[sev]} issue ${SEVERITY_LABEL[sev]} \u0111ang m\u1EDF (${computedIssues.openIds[sev].join(", ")}) nh\u01B0ng ${field}=${declared}. C\u1EADp nh\u1EADt ${field} ho\u1EB7c tr\u1EA1ng th\xE1i issue.`;
+    if (computedIssues.confident) fail("ISSUES_COUNT_MISMATCH", message);
+    else warnings.push(`${message} B\u1EA3ng issue thi\u1EBFu c\u1ED9t ID/Severity/Tr\u1EA1ng th\xE1i n\xEAn ch\u1EC9 c\u1EA3nh b\xE1o.`);
+  }
+  const openCriticalHigh = computedIssues.confident ? [...computedIssues.openIds.critical, ...computedIssues.openIds.high] : [];
+  if (openCriticalHigh.length && ["none", "closed", "resolved", "fixed", "waived"].includes(norm2(data.review_bug_status))) {
+    fail(
+      "REVIEW_BUG_STATUS_MISMATCH",
+      `review_bug_status=${norm2(data.review_bug_status)} nh\u01B0ng c\xF2n issue Critical/High \u0111ang m\u1EDF: ${openCriticalHigh.join(", ")}.`
+    );
+  }
+  warnings.push(...issueTableWarnings(computedIssues));
+  const criticalOrHigh = openIssues.critical > 0 || openIssues.high > 0;
+  if (criticalOrHigh && ["test", "pr"].includes(normalizeCommand(data.next_mode))) {
+    fail("NEXT_MODE_WITH_CRITICAL_HIGH", "C\xF2n issue Critical/High th\xEC next_mode kh\xF4ng \u0111\u01B0\u1EE3c l\xE0 test/pr; route sang bugfix, input-sync ho\u1EB7c figma-review.");
+  }
+  warnings.push(...checkRecordedNextMode({ currentMode: data.current_mode, nextMode: data.next_mode }).warnings);
+  const errors = issues.map((i) => i.message);
+  return { ok: errors.length === 0, errors, warnings, issues };
+}
+
 // packages/validators/src/scope.mjs
 var DEFAULT_SCOPE_IGNORE = ["docs/frontend-tasks/", "docs/frontend-context/", ".frontend-delivery/", ...LOCKFILE_IGNORE];
 var PLANNED_FILES_HEADING = "File s\u1EBD t\u1EA1o\\s*\\/\\s*c\u1EADp nh\u1EADt";
@@ -23476,6 +23665,10 @@ function parsePlannedFiles2(planMarkdown) {
 function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
   return computeScopeDiff({ plannedFiles, changedFiles, ignore: ignore ?? DEFAULT_SCOPE_IGNORE });
 }
+
+// packages/validators/src/workflow.mjs
+import fs6 from "node:fs";
+import path7 from "node:path";
 
 // packages/validators/src/resolve.mjs
 var TASKS_ROOT = "docs/frontend-tasks";
@@ -23489,27 +23682,22 @@ function loadProjectConfig2(repoRoot) {
   return loadProjectConfig(repoRoot, { file: PROJECT_CONFIG_FILE });
 }
 
-// packages/validators/src/runlog.mjs
-function appendRunLog2(taskDir, record2) {
-  return appendRunLog(taskDir, { pack: "fe", ...record2 });
-}
-
-// packages/validators/src/index.mjs
+// packages/validators/src/workflow.mjs
 function taskIo(taskDir) {
-  const exists = (rel) => fs4.existsSync(path5.join(taskDir, rel));
+  const exists = (rel) => fs6.existsSync(path7.join(taskDir, rel));
   const read = (rel) => {
-    const p = path5.join(taskDir, rel);
-    return fs4.existsSync(p) ? fs4.readFileSync(p, "utf8") : "";
+    const p = path7.join(taskDir, rel);
+    return fs6.existsSync(p) ? fs6.readFileSync(p, "utf8") : "";
   };
   return { exists, read };
 }
 function loadWorkflow(taskDir) {
-  const workflowPath = path5.join(taskDir, "tracking", "workflow-status.md");
-  if (!fs4.existsSync(workflowPath)) {
+  const workflowPath = path7.join(taskDir, "tracking", "workflow-status.md");
+  if (!fs6.existsSync(workflowPath)) {
     const errors = ["Thi\u1EBFu tracking/workflow-status.md"];
     return { ok: false, errors, issues: [{ code: "STATUS_MISSING", message: errors[0] }] };
   }
-  const parsed = parseWorkflowStatus(fs4.readFileSync(workflowPath, "utf8"));
+  const parsed = parseWorkflowStatus(fs6.readFileSync(workflowPath, "utf8"));
   if (parsed.ok) return parsed;
   return { ...parsed, issues: parsed.errors.map((message) => ({ code: "STATUS_SCHEMA_INVALID", message })) };
 }
@@ -23533,96 +23721,22 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   return { ...result, plannedFiles };
 }
 function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
-  if (!fs4.existsSync(tasksRoot)) return [];
+  if (!fs6.existsSync(tasksRoot)) return [];
   const planned = [];
-  for (const ent of fs4.readdirSync(tasksRoot, { withFileTypes: true })) {
+  for (const ent of fs6.readdirSync(tasksRoot, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === exclude) continue;
-    const plan = path5.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
-    if (fs4.existsSync(plan)) planned.push(...parsePlannedFiles2(fs4.readFileSync(plan, "utf8")));
+    const plan = path7.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
+    if (fs6.existsSync(plan)) planned.push(...parsePlannedFiles2(fs6.readFileSync(plan, "utf8")));
   }
   return planned;
 }
 function plannedFilesOfSiblingTasks(taskDir) {
-  return plannedFilesOfTasksIn(path5.dirname(taskDir), path5.basename(taskDir));
+  return plannedFilesOfTasksIn(path7.dirname(taskDir), path7.basename(taskDir));
 }
 function validateWorkflow(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
   if (!parsed.ok) return parsed;
   return evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...taskIo(taskDir), scope });
-}
-function evaluateModeCompletion({ taskDir, taskRef, command, startedAt, scope, repoRoot, base, extraIssues = [] }) {
-  const done = (issues2, refused = false) => ({
-    ok: issues2.length === 0,
-    refused,
-    issues: issues2,
-    errors: issues2.map((i) => i.message)
-  });
-  const { read } = taskIo(taskDir);
-  const workflowPath = path5.join(taskDir, "tracking", "workflow-status.md");
-  const raw = read("tracking/workflow-status.md");
-  if (!raw) return done([{ code: "END_STATUS_MISSING", message: `Ch\u01B0a c\xF3 ${taskRef}/tracking/workflow-status.md.` }]);
-  const loose = parseFrontMatterLoose(raw);
-  if (!loose.hasFrontMatter || loose.error) {
-    return done([
-      {
-        code: "END_STATUS_UNPARSEABLE",
-        message: `tracking/workflow-status.md kh\xF4ng parse \u0111\u01B0\u1EE3c YAML frontmatter${loose.error ? `: ${loose.error}` : "."}`
-      }
-    ]);
-  }
-  const data = loose.data;
-  const entry = evaluateModeEntry({
-    requested: command,
-    data,
-    openBlockingQuestions: countOpenBlockingQuestions(read("planning/questions.md")),
-    openIssues: effectiveOpenIssues(data, countOpenIssuesInTask(read)),
-    taskRef
-  });
-  if (!entry.allowed) {
-    const refused = validateWorkflow(taskDir);
-    if (refused.ok) return done([], true);
-    return done(
-      [
-        {
-          code: "END_REFUSED_ROUTE_INVALID",
-          message: `FE ${command} \u0111ang b\u1ECB gate ch\u1EB7n (${entry.reasons.join(" ")}) n\xEAn kh\xF4ng c\u1EA7n artifact c\u1EE7a mode. Gi\u1EEF nguy\xEAn current_mode; ch\u1EC9 s\u1EEDa workflow-status.md cho h\u1EE3p l\u1EC7 v\xE0 route sang: ${entry.redirect}`
-        },
-        ...refused.issues
-      ],
-      true
-    );
-  }
-  const issues = [];
-  if (startedAt !== void 0) {
-    let mtime = 0;
-    try {
-      mtime = fs4.statSync(workflowPath).mtimeMs;
-    } catch {
-    }
-    if (mtime + 1e3 < startedAt) {
-      issues.push({
-        code: "END_STATUS_NOT_UPDATED",
-        message: "tracking/workflow-status.md ch\u01B0a \u0111\u01B0\u1EE3c c\u1EADp nh\u1EADt trong l\u01B0\u1EE3t n\xE0y (kh\xF4ng mode n\xE0o \u0111\u01B0\u1EE3c k\u1EBFt th\xFAc ch\u1EC9 b\u1EB1ng chat)."
-      });
-    }
-  }
-  const expected = COMMAND_TO_MODE[command];
-  if (String(data.current_mode || "") !== expected) {
-    issues.push({
-      code: "END_CURRENT_MODE_MISMATCH",
-      message: `current_mode trong workflow-status.md ph\u1EA3i l\xE0 ${expected} (\u0111ang l\xE0 "${data.current_mode || ""}").`
-    });
-  }
-  for (const rel of MODE_REQUIRED_ARTIFACTS[command] || []) {
-    if (!fs4.existsSync(path5.join(taskDir, rel))) {
-      issues.push({ code: "END_ARTIFACT_MISSING", message: `Thi\u1EBFu artifact b\u1EAFt bu\u1ED9c c\u1EE7a FE ${command}: ${rel}` });
-    }
-  }
-  issues.push(...extraIssues);
-  const gates = repoRoot && !scope ? validateWorkflowAtGate(taskDir, { repoRoot, base }) : validateWorkflow(taskDir, { scope });
-  if (!gates.ok) issues.push(...gates.issues);
-  const seen = /* @__PURE__ */ new Set();
-  return done(issues.filter((i) => !seen.has(i.message) && seen.add(i.message)));
 }
 var SCOPE_CHECKED_MODES = ["review-mode", "testing-mode", "pr-ready-mode"];
 function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
@@ -23650,6 +23764,34 @@ function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
   return { ...res, warnings: [...res.warnings, ...warnings], scopeSource, base: usedBase };
 }
 
+// packages/validators/src/pack.mjs
+var fePack = {
+  id: "fe",
+  statusFile: "tracking/workflow-status.md",
+  label: (command) => `FE ${command}`,
+  commandToMode: COMMAND_TO_MODE,
+  requiredArtifacts: MODE_REQUIRED_ARTIFACTS,
+  agentFor: AGENT_FOR_COMMAND,
+  readInputsHint: 'Input c\u1EA7n \u0111\u1ECDc: m\u1EE5c "Input ledger b\u1EAFt bu\u1ED9c cho FE plan" trong tracking/workflow-status.md.',
+  parseStatus: parseWorkflowStatus,
+  rulesFor: (command, data) => rulesForMode(command, { figmaRequired: data.figma_required === true }),
+  /** Số câu hỏi blocking và issue Critical/High đang mở, đếm từ file của task. */
+  entryInputs: ({ data, read }) => ({
+    openBlockingQuestions: countOpenBlockingQuestions(read("planning/questions.md")),
+    openIssues: effectiveOpenIssues(data, countOpenIssuesInTask(read))
+  }),
+  evaluateModeEntry,
+  validateWorkflow,
+  validateWorkflowAtGate
+};
+var evaluateModeCompletion = createModeCompletion(fePack);
+var modeBriefing = createModeBriefing(fePack);
+
+// packages/validators/src/runlog.mjs
+function appendRunLog2(taskDir, record2) {
+  return appendRunLog(taskDir, { pack: "fe", ...record2 });
+}
+
 // core/hooks/fe-hook.mjs
 var KIT_VERSION = true ? "2.3.0" : "dev";
 var DEFAULT_LEVEL = "warn";
@@ -23660,15 +23802,15 @@ function level() {
   return ["off", "warn", "enforce"].includes(v) ? v : DEFAULT_LEVEL;
 }
 function stateDir() {
-  const base = process.env.CLAUDE_PLUGIN_DATA || path6.join(os.tmpdir(), "fe-kit-hooks");
-  return path6.join(base, "sessions");
+  const base = process.env.CLAUDE_PLUGIN_DATA || path8.join(os.tmpdir(), "fe-kit-hooks");
+  return path8.join(base, "sessions");
 }
 function markerPath(sessionId) {
-  return path6.join(stateDir(), `${String(sessionId || "unknown").replace(/[^A-Za-z0-9_.-]/g, "_")}.json`);
+  return path8.join(stateDir(), `${String(sessionId || "unknown").replace(/[^A-Za-z0-9_.-]/g, "_")}.json`);
 }
 function readMarker(sessionId) {
   try {
-    const m = JSON.parse(fs5.readFileSync(markerPath(sessionId), "utf8"));
+    const m = JSON.parse(fs7.readFileSync(markerPath(sessionId), "utf8"));
     if (Date.now() - Number(m.startedAt || 0) > MARKER_TTL_MS) return null;
     return m;
   } catch {
@@ -23676,8 +23818,8 @@ function readMarker(sessionId) {
   }
 }
 function writeMarker(sessionId, marker) {
-  fs5.mkdirSync(stateDir(), { recursive: true });
-  fs5.writeFileSync(markerPath(sessionId), JSON.stringify(marker, null, 2));
+  fs7.mkdirSync(stateDir(), { recursive: true });
+  fs7.writeFileSync(markerPath(sessionId), JSON.stringify(marker, null, 2));
 }
 function kitAgentName(agentType) {
   const name = String(agentType || "").replace(/^fe:/, "");
@@ -23691,7 +23833,7 @@ function warn(message) {
 }
 function readFileSafe(p) {
   try {
-    return fs5.readFileSync(p, "utf8");
+    return fs7.readFileSync(p, "utf8");
   } catch {
     return "";
   }
@@ -23711,15 +23853,15 @@ function logEvent(payload, taskDir, event, fields = {}) {
   }
 }
 function loadTask(taskDir) {
-  const workflowPath = path6.join(taskDir, "tracking", "workflow-status.md");
+  const workflowPath = path8.join(taskDir, "tracking", "workflow-status.md");
   const raw = readFileSafe(workflowPath);
   const loose = parseFrontMatterLoose(raw);
   const openBlockingQuestions = countOpenBlockingQuestions(
-    readFileSafe(path6.join(taskDir, "planning", "questions.md"))
+    readFileSafe(path8.join(taskDir, "planning", "questions.md"))
   );
   const openIssues = effectiveOpenIssues(
     loose.data,
-    countOpenIssuesInTask((rel) => readFileSafe(path6.join(taskDir, rel)))
+    countOpenIssuesInTask((rel) => readFileSafe(path8.join(taskDir, rel)))
   );
   return { workflowPath, raw, loose, data: loose.data, openBlockingQuestions, openIssues };
 }
@@ -23767,7 +23909,7 @@ function replacedMessage(replaced) {
 function onPrompt(payload) {
   const parsed = parseFePrompt(payload.prompt);
   if (!parsed) return;
-  const workspace = path6.resolve(payload.cwd || process.cwd());
+  const workspace = path8.resolve(payload.cwd || process.cwd());
   const begun = beginMode(payload, { ...parsed, workspace });
   if (!begun) return;
   const { marker, replaced } = begun;
@@ -23787,7 +23929,7 @@ function onBeginModeTool(payload) {
   const input2 = payload.tool_input || {};
   const command = normalizeCommand(input2.mode);
   if (!command || !input2.task_folder) return;
-  const workspace = path6.resolve(input2.workspace_root || payload.cwd || process.cwd());
+  const workspace = path8.resolve(input2.workspace_root || payload.cwd || process.cwd());
   const begun = beginMode(payload, { command, taskArg: input2.task_folder, workspace });
   if (begun?.replaced) emit({ systemMessage: replacedMessage(begun.replaced) });
 }
@@ -23832,11 +23974,11 @@ function onPreEdit(payload) {
   const rawPath = toolInput.file_path || toolInput.notebook_path;
   if (!rawPath) return;
   const marker = readMarker(payload.session_id);
-  const workspace = marker?.workspace || path6.resolve(payload.cwd || process.cwd());
-  const filePath = path6.resolve(workspace, rawPath);
+  const workspace = marker?.workspace || path8.resolve(payload.cwd || process.cwd());
+  const filePath = path8.resolve(workspace, rawPath);
   if (!isPathInside(workspace, filePath)) return;
   if (turnsOnHumanOverride(filePath, toolInput)) {
-    logEvent(payload, path6.dirname(path6.dirname(filePath)), "override_requested", {
+    logEvent(payload, path8.dirname(path8.dirname(filePath)), "override_requested", {
       mode: marker?.status === "pending" ? marker.command : void 0
     });
     decide(
@@ -23996,7 +24138,7 @@ var HANDLERS = {
 };
 function readStdin() {
   try {
-    return fs5.readFileSync(0, "utf8");
+    return fs7.readFileSync(0, "utf8");
   } catch {
     return "";
   }
@@ -24004,7 +24146,7 @@ function readStdin() {
 try {
   const raw = readStdin();
   if (process.env.FE_KIT_HOOKS_DEBUG) {
-    fs5.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, raw.trim() + "\n");
+    fs7.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, raw.trim() + "\n");
   }
   if (level() !== "off") {
     const payload = JSON.parse(raw || "{}");
@@ -24013,7 +24155,7 @@ try {
   }
 } catch (err) {
   if (process.env.FE_KIT_HOOKS_DEBUG) {
-    fs5.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, `ERROR ${err.stack || err}
+    fs7.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, `ERROR ${err.stack || err}
 `);
   }
 }

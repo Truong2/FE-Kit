@@ -27,3 +27,7 @@ export {
 export { summarizeRunLog, buildReport, renderReport } from './report.mjs';
 export { loadProjectConfig, PROJECT_CONFIG_DEFAULTS } from './project-config.mjs';
 export { scaffoldTask, isValidTaskName } from './scaffold.mjs';
+export { createStateMachine } from './state-machine.mjs';
+export { parseFrontMatterLoose, realCell } from './frontmatter.mjs';
+export { createModeCompletion } from './completion.mjs';
+export { createModeBriefing } from './briefing.mjs';
