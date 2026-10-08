@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { REQUIRED_TASK_FILES } from '@frontend-delivery-kit/validators';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const taskArg = process.argv[2];
@@ -13,14 +14,7 @@ if (!taskArg || !fs.existsSync(path.resolve(taskArg))) {
 const taskDir = path.resolve(taskArg);
 
 let ok = true;
-for (const rel of [
-  'task.md',
-  'planning/implementation-plan.md',
-  'planning/build-checklist.md',
-  'planning/questions.md',
-  'tracking/workflow-status.md',
-  'output/figma-reference-screenshots/.gitkeep',
-]) {
+for (const rel of REQUIRED_TASK_FILES) {
   const present = fs.existsSync(path.join(taskDir, rel));
   console.log((present ? 'OK' : 'MISSING') + ' ' + rel);
   if (!present) ok = false;

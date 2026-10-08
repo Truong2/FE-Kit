@@ -22674,6 +22674,50 @@ function evaluateModeEntry({ requested, data = {}, openBlockingQuestions = 0, ta
   return result;
 }
 
+// packages/validators/src/modes.mjs
+var STATUS = "tracking/workflow-status.md";
+var TASK_GITKEEP = "output/figma-reference-screenshots/.gitkeep";
+var REQUIRED_TASK_DOCS = [
+  "task.md",
+  "planning/implementation-plan.md",
+  "planning/build-checklist.md",
+  "planning/questions.md",
+  STATUS
+];
+var REQUIRED_TASK_FILES = [...REQUIRED_TASK_DOCS, TASK_GITKEEP];
+var MODE_REQUIRED_ARTIFACTS = {
+  plan: [
+    "task.md",
+    "planning/implementation-plan.md",
+    "planning/build-checklist.md",
+    "planning/questions.md",
+    STATUS
+  ],
+  quick: [STATUS],
+  "input-sync": ["tracking/input-sync-report.md", "planning/questions.md", STATUS],
+  figma: ["output/figma-extraction-summary.md", STATUS],
+  cook: ["planning/build-checklist.md", STATUS],
+  review: ["output/review-report.md", STATUS],
+  bugfix: ["tracking/review-bugs.md", STATUS],
+  test: ["output/test-summary.md", STATUS],
+  "figma-review": ["output/ui-figma-review-report.md", STATUS],
+  pr: ["output/pr-summary.md", STATUS]
+};
+var AGENT_FOR_COMMAND = {
+  plan: "frontend-planner",
+  "input-sync": "frontend-planner",
+  figma: "frontend-figma-specialist",
+  "figma-review": "frontend-figma-specialist",
+  cook: "frontend-developer",
+  bugfix: "frontend-developer",
+  review: "frontend-reviewer",
+  test: "frontend-tester",
+  pr: "frontend-release-manager",
+  quick: null
+};
+var SOURCE_EDIT_AGENT = "frontend-developer";
+var KIT_WRITABLE_PREFIXES = ["docs/frontend-tasks/", "docs/frontend-context/"];
+
 // packages/validators/src/gates.mjs
 function norm2(v) {
   return String(v ?? "").trim().toLowerCase();
@@ -22777,13 +22821,6 @@ function commandEvidenceWarnings(testSummaryMarkdown) {
   }
   return warnings;
 }
-var REQUIRED_TASK_FILES = [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  "tracking/workflow-status.md"
-];
 var MD_FILES_WITHOUT_NEXT_PROMPT = [
   "task.md",
   "planning/implementation-plan.md",
@@ -22800,7 +22837,7 @@ var MD_FILES_WITHOUT_NEXT_PROMPT = [
 function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   const errors = [];
   const warnings = [];
-  for (const rel of REQUIRED_TASK_FILES) {
+  for (const rel of REQUIRED_TASK_DOCS) {
     if (!exists(rel)) errors.push(`Thi\u1EBFu ${rel}`);
   }
   if (!/^##\s+Prompt bước tiếp theo/im.test(body)) {
@@ -23100,41 +23137,6 @@ function filesTouchedSince(cwd, snapshot, currentFiles) {
   return { touched, preDirtyTouched };
 }
 
-// packages/validators/src/modes.mjs
-var STATUS = "tracking/workflow-status.md";
-var MODE_REQUIRED_ARTIFACTS = {
-  plan: [
-    "task.md",
-    "planning/implementation-plan.md",
-    "planning/build-checklist.md",
-    "planning/questions.md",
-    STATUS
-  ],
-  quick: [STATUS],
-  "input-sync": ["tracking/input-sync-report.md", "planning/questions.md", STATUS],
-  figma: ["output/figma-extraction-summary.md", STATUS],
-  cook: ["planning/build-checklist.md", STATUS],
-  review: ["output/review-report.md", STATUS],
-  bugfix: ["tracking/review-bugs.md", STATUS],
-  test: ["output/test-summary.md", STATUS],
-  "figma-review": ["output/ui-figma-review-report.md", STATUS],
-  pr: ["output/pr-summary.md", STATUS]
-};
-var AGENT_FOR_COMMAND = {
-  plan: "frontend-planner",
-  "input-sync": "frontend-planner",
-  figma: "frontend-figma-specialist",
-  "figma-review": "frontend-figma-specialist",
-  cook: "frontend-developer",
-  bugfix: "frontend-developer",
-  review: "frontend-reviewer",
-  test: "frontend-tester",
-  pr: "frontend-release-manager",
-  quick: null
-};
-var SOURCE_EDIT_AGENT = "frontend-developer";
-var KIT_WRITABLE_PREFIXES = ["docs/frontend-tasks/", "docs/frontend-context/"];
-
 // packages/validators/src/index.mjs
 function taskIo(taskDir) {
   const exists = (rel) => fs2.existsSync(path3.join(taskDir, rel));
@@ -23193,7 +23195,7 @@ var DEFAULT_LEVEL = "warn";
 var MARKER_TTL_MS = 4 * 60 * 60 * 1e3;
 var KIT_AGENT_PREFIX = "frontend-";
 function level() {
-  const v = String(process.env.FE_KIT_HOOKS || "").trim().toLowerCase();
+  const v = String(process.env.FE_KIT_HOOKS || process.env.EVAL_FE_KIT_HOOKS || "").trim().toLowerCase();
   return ["off", "warn", "enforce"].includes(v) ? v : DEFAULT_LEVEL;
 }
 function stateDir() {

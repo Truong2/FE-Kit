@@ -3,7 +3,10 @@ name: Plugin behaviour evals
 # Eval hành vi của plugin `fe`: delegation, gate câu hỏi blocking, không sửa
 # source sai vai, gate bị lọt (evidence giả, file ngoài plan) và chặn nhầm.
 # Tốn chi phí API nên chỉ chạy tay hoặc trước release.
-# Cần secret ANTHROPIC_API_KEY. Chạy trên ubuntu vì scaffold script là bash.
+# Cần secret ANTHROPIC_API_KEY.
+#
+# Kết quả: artifact `eval-baselines` chứa `evals/baselines/` (JSON từng mức hook
+# + README có quyết định bật `enforce`). Tải về, chép vào repo và commit.
 
 on:
   workflow_dispatch:
@@ -13,17 +16,21 @@ on:
         default: claude-sonnet-5-5
       runs:
         description: Số lần chạy mỗi case
-        default: "3"
+        default: "5"
       hooks_level:
-        description: Mức hook của kit trong lúc eval (FE_KIT_HOOKS)
+        description: Mức hook của kit trong lúc eval. both = chạy cả warn và enforce để so sánh.
         type: choice
-        options: [enforce, warn]
-        default: enforce
+        options: [both, enforce, warn]
+        default: both
 
 jobs:
   evals:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        level: ${{ fromJSON(inputs.hooks_level == 'both' && '["warn","enforce"]' || format('["{0}"]', inputs.hooks_level)) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -31,11 +38,12 @@ jobs:
         with:
           node-version: 20
 
-      - name: Chạy eval
+      - name: Chạy eval (hook ${{ matrix.level }})
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Hook đọc biến này từ môi trường của phiên Claude Code mà eval dựng lên.
-          FE_KIT_HOOKS: ${{ inputs.hooks_level }}
+          # `plugin eval` chỉ chuyển biến EVAL_* (cùng một allowlist) vào phiên được
+          # đánh giá, nên đặt FE_KIT_HOOKS ở đây không tới được hook.
+          EVAL_FE_KIT_HOOKS: ${{ matrix.level }}
         run: |
           npx -y @anthropic-ai/claude-code plugin eval ./plugins/fe \
             --eval-dir evals \
@@ -53,27 +61,50 @@ jobs:
             --json eval-results.json \
             --output-dir eval-report
 
-      # Số liệu cho quyết định bật `enforce` mặc định: pass rate theo case và chi phí.
-      # Tên field chi tiết của file JSON chưa được tài liệu hoá nên in nguyên `aggregates`.
-      - name: Tóm tắt kết quả
+      - name: Ghi baseline
         if: always()
         run: |
-          {
-            echo "## Plugin eval — model ${{ inputs.model }}, FE_KIT_HOOKS=${{ inputs.hooks_level }}, runs=${{ inputs.runs }}"
-            echo
-            if [ -f eval-results.json ]; then
-              echo '```json'
-              jq '.aggregates // .' eval-results.json
-              echo '```'
-            else
-              echo "Không có eval-results.json (eval lỗi trước khi ghi kết quả)."
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -f eval-results.json ]; then
+            node evals/summarize.mjs --results eval-results.json --level "${{ matrix.level }}" --model "${{ inputs.model }}"
+          else
+            echo "Không có eval-results.json (eval lỗi trước khi ghi kết quả)." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: plugin-eval-results
+          name: plugin-eval-${{ matrix.level }}
           path: |
             eval-results.json
             eval-report/
+            evals/baselines/*/*.json
+
+  baseline:
+    needs: evals
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: plugin-eval-*
+          path: artifacts
+
+      - name: Gộp baseline và áp luật enforce
+        run: |
+          mkdir -p evals/baselines
+          for dir in artifacts/*/evals/baselines; do
+            [ -d "$dir" ] && cp -R "$dir/." evals/baselines/
+          done
+          node evals/summarize.mjs --readme-only
+          cat evals/baselines/README.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: eval-baselines
+          path: evals/baselines/

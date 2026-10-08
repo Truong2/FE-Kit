@@ -7,6 +7,36 @@
 
 const STATUS = 'tracking/workflow-status.md';
 
+/** Giữ chỗ cho thư mục screenshot Figma; mọi task đều có, kể cả task không có Figma. */
+export const TASK_GITKEEP = 'output/figma-reference-screenshots/.gitkeep';
+
+/** Artifact Markdown bắt buộc của mọi task. Gate workflow kiểm danh sách này. */
+export const REQUIRED_TASK_DOCS = [
+  'task.md',
+  'planning/implementation-plan.md',
+  'planning/build-checklist.md',
+  'planning/questions.md',
+  STATUS,
+];
+
+/**
+ * File bắt buộc của mọi task: bản duy nhất cho validate-task (CLI, MCP, gói
+ * ChatGPT skill). Khớp `required_task_files` trong `kit.yaml`.
+ */
+export const REQUIRED_TASK_FILES = [...REQUIRED_TASK_DOCS, TASK_GITKEEP];
+
+/** File chỉ có khi mode tương ứng đã chạy. Khớp `conditional_task_files` trong `kit.yaml`. */
+export const CONDITIONAL_TASK_FILES = [
+  'tracking/input-sync-report.md',
+  'tracking/cr-impact-report.md',
+  'tracking/review-bugs.md',
+  'output/figma-extraction-summary.md',
+  'output/review-report.md',
+  'output/test-summary.md',
+  'output/pr-summary.md',
+  'output/ui-figma-review-report.md',
+];
+
 /** Artifact phải tồn tại khi mode kết thúc (path tương đối trong task folder). */
 export const MODE_REQUIRED_ARTIFACTS = {
   plan: [
@@ -85,4 +115,9 @@ export function rulesForMode(command, { figmaRequired = false } = {}) {
     rules.push(FIGMA_RULE);
   }
   return rules;
+}
+
+/** Mọi file rule mà ít nhất một mode có thể nạp. `doctor` kiểm repo dự án có đủ các file này. */
+export function allRuleFiles() {
+  return [...ALWAYS_RULES, ...Object.keys(RULES_BY_COMMAND), FIGMA_RULE];
 }

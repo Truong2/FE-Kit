@@ -34,11 +34,16 @@ function addTask(fixture, name = 'FE-1') {
   return rel;
 }
 
-function runHook(payload, { level = 'enforce' } = {}) {
+/** `level: null` = không set FE_KIT_HOOKS; `env` thêm biến cho riêng lần gọi. */
+function runHook(payload, { level = 'enforce', env = {} } = {}) {
+  const base = { ...process.env, CLAUDE_PLUGIN_DATA: dataDir };
+  delete base.FE_KIT_HOOKS;
+  delete base.EVAL_FE_KIT_HOOKS;
+  if (level !== null) base.FE_KIT_HOOKS = level;
   const r = spawnSync(process.execPath, [HOOK, payload.hook_event_name], {
     input: JSON.stringify({ session_id: 'test-session', cwd: workspace, ...payload }),
     encoding: 'utf8',
-    env: { ...process.env, FE_KIT_HOOKS: level, CLAUDE_PLUGIN_DATA: dataDir },
+    env: { ...base, ...env },
   });
   expect(r.status).toBe(0); // hook không bao giờ được làm hỏng phiên
   return r.stdout ? JSON.parse(r.stdout) : null;
@@ -129,6 +134,20 @@ describe('PreToolUse: luật theo vai', () => {
     expect(warned.systemMessage).toMatch(/FE-Kit cảnh báo/);
     expect(warned.hookSpecificOutput).toBeUndefined();
     expect(edit('src/App.tsx', { agent_type: 'fe:frontend-tester' }, { level: 'off' })).toBeNull();
+  });
+
+  it('không set biến nào thì mặc định warn', () => {
+    const out = edit('src/App.tsx', { agent_type: 'fe:frontend-tester' }, { level: null });
+    expect(out.systemMessage).toMatch(/FE-Kit cảnh báo/);
+    expect(out.hookSpecificOutput).toBeUndefined();
+  });
+
+  it('phiên của claude plugin eval: đọc EVAL_FE_KIT_HOOKS, nhưng FE_KIT_HOOKS vẫn thắng', () => {
+    const enforced = edit('src/App.tsx', { agent_type: 'fe:frontend-tester' }, { level: null, env: { EVAL_FE_KIT_HOOKS: 'enforce' } });
+    expect(enforced.hookSpecificOutput.permissionDecision).toBe('deny');
+
+    const warned = edit('src/App.tsx', { agent_type: 'fe:frontend-tester' }, { level: 'warn', env: { EVAL_FE_KIT_HOOKS: 'enforce' } });
+    expect(warned.hookSpecificOutput).toBeUndefined();
   });
 });
 

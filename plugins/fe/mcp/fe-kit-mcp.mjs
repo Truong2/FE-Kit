@@ -33186,6 +33186,75 @@ function evaluateModeEntry({ requested, data = {}, openBlockingQuestions = 0, ta
   return result;
 }
 
+// packages/validators/src/modes.mjs
+var STATUS = "tracking/workflow-status.md";
+var TASK_GITKEEP = "output/figma-reference-screenshots/.gitkeep";
+var REQUIRED_TASK_DOCS = [
+  "task.md",
+  "planning/implementation-plan.md",
+  "planning/build-checklist.md",
+  "planning/questions.md",
+  STATUS
+];
+var REQUIRED_TASK_FILES = [...REQUIRED_TASK_DOCS, TASK_GITKEEP];
+var MODE_REQUIRED_ARTIFACTS = {
+  plan: [
+    "task.md",
+    "planning/implementation-plan.md",
+    "planning/build-checklist.md",
+    "planning/questions.md",
+    STATUS
+  ],
+  quick: [STATUS],
+  "input-sync": ["tracking/input-sync-report.md", "planning/questions.md", STATUS],
+  figma: ["output/figma-extraction-summary.md", STATUS],
+  cook: ["planning/build-checklist.md", STATUS],
+  review: ["output/review-report.md", STATUS],
+  bugfix: ["tracking/review-bugs.md", STATUS],
+  test: ["output/test-summary.md", STATUS],
+  "figma-review": ["output/ui-figma-review-report.md", STATUS],
+  pr: ["output/pr-summary.md", STATUS]
+};
+var AGENT_FOR_COMMAND = {
+  plan: "frontend-planner",
+  "input-sync": "frontend-planner",
+  figma: "frontend-figma-specialist",
+  "figma-review": "frontend-figma-specialist",
+  cook: "frontend-developer",
+  bugfix: "frontend-developer",
+  review: "frontend-reviewer",
+  test: "frontend-tester",
+  pr: "frontend-release-manager",
+  quick: null
+};
+var ALWAYS_RULES = [
+  "core.md",
+  "mode-output-contract.md",
+  "plan-input-ledger-contract.md",
+  "question-resolution-contract.md",
+  "vietnamese-output.md",
+  "efficiency-budget-contract.md"
+];
+var RULES_BY_COMMAND = {
+  "srs-api-contract.md": ["plan", "input-sync", "cook", "quick", "bugfix", "review"],
+  "clean-code-contract.md": ["cook", "quick", "bugfix", "review"],
+  "evidence-scope-contract.md": ["cook", "review", "test", "figma-review", "pr"],
+  "review-bug-contract.md": ["review", "bugfix", "pr"]
+};
+var FIGMA_RULE = "figma-ui-contract.md";
+var FIGMA_ALWAYS = ["figma", "figma-review"];
+var FIGMA_WHEN_REQUIRED = ["plan", "cook", "quick", "bugfix", "review", "pr"];
+function rulesForMode(command, { figmaRequired = false } = {}) {
+  const rules = [...ALWAYS_RULES];
+  for (const [rule, commands] of Object.entries(RULES_BY_COMMAND)) {
+    if (commands.includes(command)) rules.push(rule);
+  }
+  if (FIGMA_ALWAYS.includes(command) || figmaRequired && FIGMA_WHEN_REQUIRED.includes(command)) {
+    rules.push(FIGMA_RULE);
+  }
+  return rules;
+}
+
 // packages/validators/src/gates.mjs
 function norm2(v) {
   return String(v ?? "").trim().toLowerCase();
@@ -33289,13 +33358,6 @@ function commandEvidenceWarnings(testSummaryMarkdown) {
   }
   return warnings;
 }
-var REQUIRED_TASK_FILES = [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  "tracking/workflow-status.md"
-];
 var MD_FILES_WITHOUT_NEXT_PROMPT = [
   "task.md",
   "planning/implementation-plan.md",
@@ -33312,7 +33374,7 @@ var MD_FILES_WITHOUT_NEXT_PROMPT = [
 function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   const errors = [];
   const warnings = [];
-  for (const rel of REQUIRED_TASK_FILES) {
+  for (const rel of REQUIRED_TASK_DOCS) {
     if (!exists(rel)) errors.push(`Thi\u1EBFu ${rel}`);
   }
   if (!/^##\s+Prompt bước tiếp theo/im.test(body)) {
@@ -33578,14 +33640,8 @@ var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
 // packages/validators/src/scaffold.mjs
 import fs from "node:fs";
 import path2 from "node:path";
-var TASK_TEMPLATE_FILES = [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  "tracking/workflow-status.md"
-];
-var GITKEEP = "output/figma-reference-screenshots/.gitkeep";
+var TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
+var GITKEEP = TASK_GITKEEP;
 function isValidTaskName(name) {
   return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name || ""));
 }
@@ -33619,66 +33675,6 @@ function scaffoldTask({ workspaceRoot, name, templatesDir }) {
     created.push(GITKEEP);
   }
   return { ok: true, taskDir, taskRef, created, skipped };
-}
-
-// packages/validators/src/modes.mjs
-var STATUS = "tracking/workflow-status.md";
-var MODE_REQUIRED_ARTIFACTS = {
-  plan: [
-    "task.md",
-    "planning/implementation-plan.md",
-    "planning/build-checklist.md",
-    "planning/questions.md",
-    STATUS
-  ],
-  quick: [STATUS],
-  "input-sync": ["tracking/input-sync-report.md", "planning/questions.md", STATUS],
-  figma: ["output/figma-extraction-summary.md", STATUS],
-  cook: ["planning/build-checklist.md", STATUS],
-  review: ["output/review-report.md", STATUS],
-  bugfix: ["tracking/review-bugs.md", STATUS],
-  test: ["output/test-summary.md", STATUS],
-  "figma-review": ["output/ui-figma-review-report.md", STATUS],
-  pr: ["output/pr-summary.md", STATUS]
-};
-var AGENT_FOR_COMMAND = {
-  plan: "frontend-planner",
-  "input-sync": "frontend-planner",
-  figma: "frontend-figma-specialist",
-  "figma-review": "frontend-figma-specialist",
-  cook: "frontend-developer",
-  bugfix: "frontend-developer",
-  review: "frontend-reviewer",
-  test: "frontend-tester",
-  pr: "frontend-release-manager",
-  quick: null
-};
-var ALWAYS_RULES = [
-  "core.md",
-  "mode-output-contract.md",
-  "plan-input-ledger-contract.md",
-  "question-resolution-contract.md",
-  "vietnamese-output.md",
-  "efficiency-budget-contract.md"
-];
-var RULES_BY_COMMAND = {
-  "srs-api-contract.md": ["plan", "input-sync", "cook", "quick", "bugfix", "review"],
-  "clean-code-contract.md": ["cook", "quick", "bugfix", "review"],
-  "evidence-scope-contract.md": ["cook", "review", "test", "figma-review", "pr"],
-  "review-bug-contract.md": ["review", "bugfix", "pr"]
-};
-var FIGMA_RULE = "figma-ui-contract.md";
-var FIGMA_ALWAYS = ["figma", "figma-review"];
-var FIGMA_WHEN_REQUIRED = ["plan", "cook", "quick", "bugfix", "review", "pr"];
-function rulesForMode(command, { figmaRequired = false } = {}) {
-  const rules = [...ALWAYS_RULES];
-  for (const [rule, commands] of Object.entries(RULES_BY_COMMAND)) {
-    if (commands.includes(command)) rules.push(rule);
-  }
-  if (FIGMA_ALWAYS.includes(command) || figmaRequired && FIGMA_WHEN_REQUIRED.includes(command)) {
-    rules.push(FIGMA_RULE);
-  }
-  return rules;
 }
 
 // packages/validators/src/index.mjs
@@ -33755,15 +33751,7 @@ function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
 }
 
 // core/mcp/server.mjs
-var KIT_VERSION = true ? "2.1.0" : "dev";
-var REQUIRED_TASK_FILES2 = [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  "tracking/workflow-status.md",
-  "output/figma-reference-screenshots/.gitkeep"
-];
+var KIT_VERSION = true ? "2.1.1" : "dev";
 var SKILL_DIR_IN_PLUGIN = "skills/frontend-delivery-standard";
 function pluginRoot() {
   if (process.env.CLAUDE_PLUGIN_ROOT) return path4.resolve(process.env.CLAUDE_PLUGIN_ROOT);
@@ -33953,7 +33941,7 @@ var handlers = {
     if (!fs3.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
     const lines = [];
     let ok = true;
-    for (const rel of REQUIRED_TASK_FILES2) {
+    for (const rel of REQUIRED_TASK_FILES) {
       const present = fs3.existsSync(path4.join(taskDir, rel));
       lines.push(`${present ? "OK" : "THI\u1EBEU"} ${rel}`);
       if (!present) ok = false;

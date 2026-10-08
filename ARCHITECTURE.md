@@ -1,6 +1,6 @@
 # Kiến trúc Agent / Multi-Agent
 
-Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi nguyên tắc đều chỉ ra nơi nó được thực thi; nguyên tắc nào chỉ nằm trong prompt thì ghi rõ như vậy.
+Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi nguyên tắc đều chỉ ra nơi nó được thực thi; nguyên tắc nào chỉ nằm trong prompt thì ghi rõ như vậy. Hướng phát triển tiếp theo (engine + domain pack): [ROADMAP.md](ROADMAP.md).
 
 ## Mô hình: Orchestrator–Worker qua state file
 
@@ -85,7 +85,7 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
 | `SubagentStop` | Kiểm tra gate kết thúc khi đúng subagent của mode dừng. |
 | `Stop` | Kiểm tra gate kết thúc cho mode inline. |
 
-- Mức thực thi: `FE_KIT_HOOKS=off|warn|enforce`, mặc định `warn`. Chuyển mặc định sang `enforce` sau khi eval hành vi đạt ngưỡng.
+- Mức thực thi: `FE_KIT_HOOKS=off|warn|enforce`, mặc định `warn`. Trong phiên `claude plugin eval` hook đọc `EVAL_FE_KIT_HOOKS`, vì runner chỉ chuyển biến `EVAL_*` vào phiên; `FE_KIT_HOOKS` vẫn thắng nếu có. Chuyển mặc định sang `enforce` theo luật trong [ROADMAP.md](ROADMAP.md).
 - Chặn tối đa một lần mỗi lần dừng (`stop_hook_active`), sau đó thả kèm cảnh báo để không lặp vô hạn.
 - Mode bị gate từ chối chỉ cần `workflow-status.md` route đúng, không đòi artifact của mode.
 - Lỗi nội bộ của hook luôn thoát 0 và không in gì.
@@ -123,7 +123,7 @@ Khoảng 2–3,5 nghìn token mỗi mode. `tests/context-budget.test.mjs` đặt
 
 ## Eval hành vi
 
-`evals/` chạy bằng `claude plugin eval` qua workflow `plugin-evals.yml` (chạy tay, có input `hooks_level`).
+`evals/` chạy bằng `claude plugin eval` qua workflow `plugin-evals.yml` (chạy tay). Input `hooks_level: both` chạy cả `warn` và `enforce`, truyền mức hook qua `EVAL_FE_KIT_HOOKS`.
 
 | Nhóm | Case |
 |---|---|
@@ -134,6 +134,11 @@ Khoảng 2–3,5 nghìn token mỗi mode. `tests/context-budget.test.mjs` đặt
 | Bàn giao | grader `handoff-complete` trong plan và review |
 
 Quyết định đổi mặc định hook sang `enforce` dựa trên pass rate và chi phí của bộ này ở cả hai mức `warn` và `enforce`.
+
+- **Scaffold:** runner chỉ chạy bash, nên `scaffold.sh` của mỗi case chỉ gọi `node scaffold.mjs`; hàm dựng workspace nằm ở `evals/scaffold-lib.mjs`.
+- **Tự kiểm không tốn API:** `tests/evals.test.mjs` dựng lại workspace của từng case rồi kiểm gate lúc bắt đầu, kiểm grader kiềm chế pass và grader hành động fail khi agent chưa làm gì, và kiểm grader cấm sửa source có đủ Edit, Write, MultiEdit.
+- **Baseline:** `evals/summarize.mjs` ghi kết quả vào `evals/baselines/<version>/<model>-<level>.json` và sinh lại `evals/baselines/README.md`, kèm quyết định theo luật `enforce`. Baseline được commit.
+- **Ngữ nghĩa grader cần nhớ:** `file_exists` chỉ tính file tạo ra trong lượt chạy. Tài liệu không nói `tool_used` có thấy tool call bên trong subagent không, nên grader cấm sửa source luôn đi kèm grader theo trạng thái file.
 
 ## Luồng chuẩn một task
 

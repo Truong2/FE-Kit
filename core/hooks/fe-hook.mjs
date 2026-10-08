@@ -9,7 +9,8 @@
  *   - hỏi xác nhận người dùng khi agent tự bật `human_override: true`;
  *   - không cho mode kết thúc khi workflow-status.md chưa được cập nhật hợp lệ.
  *
- * Mức thực thi qua biến môi trường FE_KIT_HOOKS: `off` | `warn` | `enforce`.
+ * Mức thực thi qua biến môi trường FE_KIT_HOOKS: `off` | `warn` | `enforce`
+ * (khi chạy `claude plugin eval`: EVAL_FE_KIT_HOOKS, xem `level()`).
  *
  * Nguyên tắc an toàn: mọi lỗi nội bộ đều thoát 0 và không in gì — hook hỏng
  * không được làm hỏng phiên làm việc của người dùng.
@@ -49,8 +50,13 @@ const MARKER_TTL_MS = 4 * 60 * 60 * 1000;
 
 const KIT_AGENT_PREFIX = 'frontend-';
 
+/**
+ * `claude plugin eval` chỉ chuyển biến `EVAL_*` (cùng một allowlist) vào phiên
+ * được đánh giá, nên `FE_KIT_HOOKS` của workflow eval không tới được hook.
+ * `EVAL_FE_KIT_HOOKS` là kênh dành riêng cho eval; `FE_KIT_HOOKS` luôn thắng.
+ */
 function level() {
-  const v = String(process.env.FE_KIT_HOOKS || '').trim().toLowerCase();
+  const v = String(process.env.FE_KIT_HOOKS || process.env.EVAL_FE_KIT_HOOKS || '').trim().toLowerCase();
   return ['off', 'warn', 'enforce'].includes(v) ? v : DEFAULT_LEVEL;
 }
 

@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 import { createRequire as __fdkCreateRequire } from 'node:module';
 const require = __fdkCreateRequire(import.meta.url);
+import {
+  REQUIRED_TASK_FILES
+} from "./chunks/chunk-IK736FQT.mjs";
 
 // core/scripts/validate-task.mjs
 import fs from "node:fs";
@@ -15,14 +18,7 @@ if (!taskArg || !fs.existsSync(path.resolve(taskArg))) {
 }
 var taskDir = path.resolve(taskArg);
 var ok = true;
-for (const rel of [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  "tracking/workflow-status.md",
-  "output/figma-reference-screenshots/.gitkeep"
-]) {
+for (const rel of REQUIRED_TASK_FILES) {
   const present = fs.existsSync(path.join(taskDir, rel));
   console.log((present ? "OK" : "MISSING") + " " + rel);
   if (!present) ok = false;

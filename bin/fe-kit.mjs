@@ -13,6 +13,8 @@ import {
   detectBaseRef,
   resolveTaskDir,
   scaffoldTask,
+  REQUIRED_TASK_FILES,
+  allRuleFiles,
 } from '@frontend-delivery-kit/validators';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -365,45 +367,9 @@ function extractNextPrompt(workflowText) {
   return sec.replace(/^##\s+(Prompt bước tiếp theo|Prompt bước tiếp theo)\s*/,'').trim();
 }
 
-function hasOpenHighBug(text) {
-  const lower = text.toLowerCase();
-  return /(critical|high|nghiêm trọng|cao)/i.test(text) && !/(đã fix|fixed|closed|resolved|đã đóng|hoàn tất)/i.test(lower);
-}
-
 function checklistOpenItems(text) {
   const lines = text.split(/\r?\n/);
   return lines.filter(l => /\|/.test(l) && /(Chưa làm|Đang thực hiện|Bị chặn|Cần review|Cần sửa)/.test(l));
-}
-
-function validatePromptOnlyInWorkflow(taskDir) {
-  const md = walk(taskDir).filter(p => p.endsWith('.md'));
-  const offenders = [];
-  for (const f of md) {
-    const rel = path.relative(taskDir, f).replaceAll('\\\\','/');
-    const txt = read(f);
-    if (/^##\s+(Prompt bước tiếp theo|Prompt bước tiếp theo)/im.test(txt) && rel !== 'tracking/workflow-status.md') offenders.push(rel);
-  }
-  const workflow = path.join(taskDir, 'tracking', 'workflow-status.md');
-  if (!exists(workflow)) return { ok: false, offenders, missingWorkflow: true };
-  const workflowText = read(workflow);
-  const hasPrompt = /^##\s+(Prompt bước tiếp theo|Prompt bước tiếp theo)/im.test(workflowText);
-  const fm = parseFrontMatter(workflowText);
-  const requiredKeys = ['task_id','status','layout','current_mode','step_status','blocker','next_mode','next_prompt','updated_by','updated_at','human_override','srs_required','srs_source_status','srs_reference_status','srs_trace_matrix_status','srs_logic_coverage_status','api_contract_source','api_contract_mapping_status','api_error_mapping_status','fe_error_display_status','error_component_decision_status','source_context_status','source_pattern_contract_status','rule_contract_application_status','clean_code_gate_status','source_srs_conflict_status','questions_status','blocking_questions_open','nonblocking_questions_open','figma_required','figma_access_status','figma_extraction_status','figma_gate_status','figma_decision_source','figma_link','figma_reference_screenshots_status','asset_gate_status','ui_implementation_contract_status','figma_node_matrix_status','figma_component_binding_status','figma_visual_source_status','ui_deviation_status','ui_match_review_status','implementation_screenshot_status','ui_match_severity_status','implementation_plan_status','build_checklist_status','plan_checklist_sync_status','plan_version','plan_version_status','last_plan_update_reason','last_plan_updated_at','input_sync_status','last_input_sync_at','latest_cr_id','latest_cr_status','answers_sync_status','review_status','review_report_status','review_bug_status','critical_issues_open','high_issues_open','medium_issues_open','low_issues_open','bugfix_required','pr_status','build_ready'];
-  const missingKeys = fm.hasFrontMatter ? requiredKeys.filter(k => !(k in fm.data)) : requiredKeys;
-  return { ok: offenders.length === 0 && hasPrompt && fm.hasFrontMatter && missingKeys.length === 0, offenders, missingWorkflow: false, missingPrompt: !hasPrompt, missingFrontMatter: !fm.hasFrontMatter, missingKeys };
-}
-
-function validateNoPdfExport(taskDir) {
-  const files = walk(taskDir);
-  const pdfFiles = files.filter(p => p.toLowerCase().endsWith('.pdf')).map(p => path.relative(taskDir, p));
-  const md = files.filter(p => p.endsWith('.md'));
-  const mentions = [];
-  for (const f of md) {
-    const txt = read(f);
-    const lines = txt.split(/\r?\n/);
-    if (lines.some(line => /(export|xuất|xuat|tạo|tao).{0,40}(pdf|\.pdf)/i.test(line) && !/(không|khong|no|not|never|đừng|dung|cấm|cam|do not|must not).{0,80}(export|xuất|xuat|tạo|tao|pdf|\.pdf)/i.test(line))) mentions.push(path.relative(taskDir, f));
-  }
-  return { ok: pdfFiles.length === 0 && mentions.length === 0, pdfFiles, mentions };
 }
 
 function boolValue(v) {
@@ -414,9 +380,6 @@ function normValue(v) {
   return String(v || '').trim().replace(/^['"]|['"]$/g, '').toLowerCase();
 }
 
-function hasFeCookPrompt(text) {
-  return /\b(FE\s+cook|cook-mode|implementation-mode)\b/i.test(text);
-}
 
 
 function imageFiles(dir, out = []) {
@@ -657,7 +620,7 @@ function doctor() {
   const commonRequired = [
     'bin/fe-kit.mjs',
     'docs/frontend-context/project-source-context.md','docs/frontend-context/feature-source-context.md','docs/frontend-context/design-context.md',
-    '.frontend-delivery/rules/core.md','.frontend-delivery/rules/mode-output-contract.md','.frontend-delivery/rules/plan-input-ledger-contract.md','.frontend-delivery/rules/question-resolution-contract.md','.frontend-delivery/rules/efficiency-budget-contract.md','.frontend-delivery/rules/srs-api-contract.md','.frontend-delivery/rules/clean-code-contract.md','.frontend-delivery/rules/evidence-scope-contract.md','.frontend-delivery/rules/vietnamese-output.md',
+    ...allRuleFiles().map(rule => '.frontend-delivery/rules/' + rule),
     '.frontend-delivery/templates/tracking/workflow-status.md',
     '.frontend-delivery/templates/task.md','.frontend-delivery/templates/planning/implementation-plan.md','.frontend-delivery/templates/planning/build-checklist.md','.frontend-delivery/templates/planning/questions.md',
     '.frontend-delivery/standard.yaml','.frontend-delivery/install.json'
@@ -1013,7 +976,7 @@ function validateTaskLean() {
   const taskDir = resolveTask(taskArg(), target);
   if (!taskDir || !exists(taskDir)) { console.error('Task folder not found.'); process.exit(1); }
   let ok = true;
-  for (const rel of ['task.md','planning/implementation-plan.md','planning/build-checklist.md','planning/questions.md','tracking/workflow-status.md','output/figma-reference-screenshots/.gitkeep']) {
+  for (const rel of REQUIRED_TASK_FILES) {
     const present = exists(path.join(taskDir, rel));
     console.log(`${present ? 'OK' : 'MISSING'} ${rel}`);
     if (!present) ok = false;

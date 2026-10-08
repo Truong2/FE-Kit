@@ -22619,6 +22619,36 @@ function checkRecordedNextMode({ currentMode, nextMode }) {
   return { warnings };
 }
 
+// packages/validators/src/modes.mjs
+var STATUS = "tracking/workflow-status.md";
+var TASK_GITKEEP = "output/figma-reference-screenshots/.gitkeep";
+var REQUIRED_TASK_DOCS = [
+  "task.md",
+  "planning/implementation-plan.md",
+  "planning/build-checklist.md",
+  "planning/questions.md",
+  STATUS
+];
+var REQUIRED_TASK_FILES = [...REQUIRED_TASK_DOCS, TASK_GITKEEP];
+var ALWAYS_RULES = [
+  "core.md",
+  "mode-output-contract.md",
+  "plan-input-ledger-contract.md",
+  "question-resolution-contract.md",
+  "vietnamese-output.md",
+  "efficiency-budget-contract.md"
+];
+var RULES_BY_COMMAND = {
+  "srs-api-contract.md": ["plan", "input-sync", "cook", "quick", "bugfix", "review"],
+  "clean-code-contract.md": ["cook", "quick", "bugfix", "review"],
+  "evidence-scope-contract.md": ["cook", "review", "test", "figma-review", "pr"],
+  "review-bug-contract.md": ["review", "bugfix", "pr"]
+};
+var FIGMA_RULE = "figma-ui-contract.md";
+function allRuleFiles() {
+  return [...ALWAYS_RULES, ...Object.keys(RULES_BY_COMMAND), FIGMA_RULE];
+}
+
 // packages/validators/src/gates.mjs
 function norm2(v) {
   return String(v ?? "").trim().toLowerCase();
@@ -22722,13 +22752,6 @@ function commandEvidenceWarnings(testSummaryMarkdown) {
   }
   return warnings;
 }
-var REQUIRED_TASK_FILES = [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  "tracking/workflow-status.md"
-];
 var MD_FILES_WITHOUT_NEXT_PROMPT = [
   "task.md",
   "planning/implementation-plan.md",
@@ -22745,7 +22768,7 @@ var MD_FILES_WITHOUT_NEXT_PROMPT = [
 function evaluateWorkflowGates({ data, body, exists: exists2, read: read2, scope }) {
   const errors = [];
   const warnings = [];
-  for (const rel of REQUIRED_TASK_FILES) {
+  for (const rel of REQUIRED_TASK_DOCS) {
     if (!exists2(rel)) errors.push(`Thi\u1EBFu ${rel}`);
   }
   if (!/^##\s+Prompt bước tiếp theo/im.test(body)) {
@@ -23069,14 +23092,8 @@ var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
 // packages/validators/src/scaffold.mjs
 import fs from "node:fs";
 import path2 from "node:path";
-var TASK_TEMPLATE_FILES = [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  "tracking/workflow-status.md"
-];
-var GITKEEP = "output/figma-reference-screenshots/.gitkeep";
+var TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
+var GITKEEP = TASK_GITKEEP;
 function isValidTaskName(name) {
   return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name || ""));
 }
@@ -23202,7 +23219,7 @@ function validatePr(taskDir, { scope } = {}) {
 // bin/fe-kit.mjs
 var __filename = fileURLToPath(import.meta.url);
 var kitRoot = path4.resolve(path4.dirname(__filename), "..");
-var BUNDLED_VERSION = true ? "2.1.0" : "";
+var BUNDLED_VERSION = true ? "2.1.1" : "";
 var PLUGIN_ID = "fe@frontend-delivery";
 var MARKETPLACE_NAME = "frontend-delivery";
 var args = process.argv.slice(2);
@@ -23736,15 +23753,7 @@ function doctor() {
     "docs/frontend-context/project-source-context.md",
     "docs/frontend-context/feature-source-context.md",
     "docs/frontend-context/design-context.md",
-    ".frontend-delivery/rules/core.md",
-    ".frontend-delivery/rules/mode-output-contract.md",
-    ".frontend-delivery/rules/plan-input-ledger-contract.md",
-    ".frontend-delivery/rules/question-resolution-contract.md",
-    ".frontend-delivery/rules/efficiency-budget-contract.md",
-    ".frontend-delivery/rules/srs-api-contract.md",
-    ".frontend-delivery/rules/clean-code-contract.md",
-    ".frontend-delivery/rules/evidence-scope-contract.md",
-    ".frontend-delivery/rules/vietnamese-output.md",
+    ...allRuleFiles().map((rule) => ".frontend-delivery/rules/" + rule),
     ".frontend-delivery/templates/tracking/workflow-status.md",
     ".frontend-delivery/templates/task.md",
     ".frontend-delivery/templates/planning/implementation-plan.md",
@@ -24121,7 +24130,7 @@ function validateTaskLean() {
     process.exit(1);
   }
   let ok = true;
-  for (const rel of ["task.md", "planning/implementation-plan.md", "planning/build-checklist.md", "planning/questions.md", "tracking/workflow-status.md", "output/figma-reference-screenshots/.gitkeep"]) {
+  for (const rel of REQUIRED_TASK_FILES) {
     const present = exists(path4.join(taskDir, rel));
     console.log(`${present ? "OK" : "MISSING"} ${rel}`);
     if (!present) ok = false;

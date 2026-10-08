@@ -5,9 +5,36 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.1.1] — 2026-10-08
+
+Phase 0 của [ROADMAP.md](ROADMAP.md): bộ eval chạy được và đo đúng mức hook, danh sách file/rule về một nguồn. Không đổi gate, schema hay prompt.
+
+### Có thể ảnh hưởng repo dự án
+
+- `fe-kit doctor` kiểm đủ 11 file rule trong `.frontend-delivery/rules/`. Trước đây danh sách viết tay thiếu `figma-ui-contract.md` và `review-bug-contract.md`. Repo init từ bản cũ thiếu hai file này cần chạy lại `fe-kit init`.
+
+### Eval
+
+- **Sửa: mức hook trong eval chưa bao giờ được áp dụng.** `claude plugin eval` chỉ chuyển biến `EVAL_*` vào phiên được đánh giá, nên `FE_KIT_HOOKS` đặt trong workflow không tới được hook; mọi lượt eval trước đây đều chạy ở `warn`. Hook nay đọc thêm `EVAL_FE_KIT_HOOKS`; `FE_KIT_HOOKS` vẫn thắng.
+- **Sửa: scaffold của `review-writes-report` luôn lỗi.** Fixture đã đúng trạng thái nên bước commit thứ hai không có gì để commit, và `set -e` làm script dừng.
+- Scaffold viết lại bằng Node (`evals/scaffold-lib.mjs` + `scaffold.mjs` của từng case; `scaffold.sh` chỉ gọi node). Bỏ phụ thuộc GNU `sed -i`, chạy được trên Windows và macOS. Xoá `evals/scaffold-task.sh`, `evals/cancel-order-task.sh`.
+- Grader cấm sửa source bổ sung `Write`, `MultiEdit` (trước chỉ bắt `Edit`); `cook-refuses-when-blocked` và `review-writes-report` thêm grader `source-unchanged` để bắt cả thay đổi qua shell.
+- `tests/evals.test.mjs` tự kiểm bộ eval mà không gọi API.
+- `evals/summarize.mjs` ghi baseline vào `evals/baselines/` và áp luật bật `enforce` mặc định. Workflow `plugin-evals.yml` chạy matrix `warn`/`enforce` (`hooks_level: both`), mặc định 5 run mỗi case, xuất artifact `eval-baselines`.
+- Bộ eval vẫn chưa chạy thật cho bản này; baseline sẽ được commit sau lượt chạy đầu tiên.
+
+### Nguồn duy nhất
+
+- `REQUIRED_TASK_FILES`, `REQUIRED_TASK_DOCS`, `CONDITIONAL_TASK_FILES`, `allRuleFiles()` export từ `packages/validators/src/modes.mjs`. Gate, MCP `fe_validate_task`, CLI `validate-task`/`doctor`, `scaffoldTask` và script của gói ChatGPT skill dùng chung thay cho bốn bản sao viết tay. `tests/single-source.test.mjs` giữ `kit.yaml`, `standard.yaml` và `core/rules/` khớp với các hằng này.
+- Xoá code chết trong `bin/fe-kit.mjs`: `validatePromptOnlyInWorkflow`, `validateNoPdfExport`, `hasOpenHighBug`, `hasFeCookPrompt`.
+
+### Tài liệu
+
+- Thêm [ROADMAP.md](ROADMAP.md): đích đến engine + domain pack, các phase, luật bật `enforce`.
+
 ## [2.1.0] — 2026-10-05
 
-Củng cố bằng chứng và gate của bản 2.0 theo `output/fe-kit-architecture-evolution.md` (bước 1–2 của lộ trình). Không thêm agent, hook event hay field schema.
+Củng cố bằng chứng và gate của bản 2.0 (bước 1–2 của lộ trình; file lộ trình gốc `output/fe-kit-architecture-evolution.md` chưa từng được commit, nay thay bằng [ROADMAP.md](ROADMAP.md)). Không thêm agent, hook event hay field schema.
 
 ### Có thể ảnh hưởng task đang chạy
 

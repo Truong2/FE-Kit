@@ -2,7 +2,7 @@
 
 Bộ chuẩn frontend delivery tiếng Việt cho ChatGPT Skill, Claude Code, Codex, Cursor và GitHub Copilot.
 
-Version: 2.1.0
+Version: 2.1.1
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 

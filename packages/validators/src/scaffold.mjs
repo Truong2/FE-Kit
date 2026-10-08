@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { TASKS_ROOT, isPathInside, toPosix } from './resolve.mjs';
+import { REQUIRED_TASK_DOCS, TASK_GITKEEP } from './modes.mjs';
 
 /**
  * Tạo task folder chuẩn từ templates. Bản DUY NHẤT cho `fe-kit new-task` và
@@ -8,15 +9,10 @@ import { TASKS_ROOT, isPathInside, toPosix } from './resolve.mjs';
  * template bằng tay, không làm được khi template nằm trong cache của plugin).
  */
 
-export const TASK_TEMPLATE_FILES = [
-  'task.md',
-  'planning/implementation-plan.md',
-  'planning/build-checklist.md',
-  'planning/questions.md',
-  'tracking/workflow-status.md',
-];
+/** Template copy vào task mới: đúng các artifact Markdown bắt buộc. */
+export const TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
 
-const GITKEEP = 'output/figma-reference-screenshots/.gitkeep';
+const GITKEEP = TASK_GITKEEP;
 
 /** Tên task hợp lệ: không có dấu phân cách thư mục, không bắt đầu bằng dấu chấm. */
 export function isValidTaskName(name) {

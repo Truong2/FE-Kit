@@ -3536,6 +3536,18 @@ var require_gray_matter = __commonJS({
   }
 });
 
+// packages/validators/src/modes.mjs
+var STATUS = "tracking/workflow-status.md";
+var TASK_GITKEEP = "output/figma-reference-screenshots/.gitkeep";
+var REQUIRED_TASK_DOCS = [
+  "task.md",
+  "planning/implementation-plan.md",
+  "planning/build-checklist.md",
+  "planning/questions.md",
+  STATUS
+];
+var REQUIRED_TASK_FILES = [...REQUIRED_TASK_DOCS, TASK_GITKEEP];
+
 // packages/validators/src/scope.mjs
 import { spawnSync } from "node:child_process";
 
@@ -22814,13 +22826,6 @@ function commandEvidenceWarnings(testSummaryMarkdown) {
   }
   return warnings;
 }
-var REQUIRED_TASK_FILES = [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  "tracking/workflow-status.md"
-];
 var MD_FILES_WITHOUT_NEXT_PROMPT = [
   "task.md",
   "planning/implementation-plan.md",
@@ -22837,7 +22842,7 @@ var MD_FILES_WITHOUT_NEXT_PROMPT = [
 function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   const errors = [];
   const warnings = [];
-  for (const rel of REQUIRED_TASK_FILES) {
+  for (const rel of REQUIRED_TASK_DOCS) {
     if (!exists(rel)) errors.push(`Thi\u1EBFu ${rel}`);
   }
   if (!/^##\s+Prompt bước tiếp theo/im.test(body)) {
@@ -23109,6 +23114,7 @@ function validatePr(taskDir, { scope } = {}) {
 }
 
 export {
+  REQUIRED_TASK_FILES,
   detectBaseRef,
   scopeDiffForTask,
   validateWorkflowAtGate,

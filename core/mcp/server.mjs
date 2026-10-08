@@ -36,19 +36,11 @@ import {
   AGENT_FOR_COMMAND,
   COMMANDS,
   TASKS_ROOT,
+  REQUIRED_TASK_FILES,
 } from '@frontend-delivery-kit/validators';
 
 // esbuild `define` thay hằng này khi bundle; chạy trực tiếp từ source thì là 'dev'.
 const KIT_VERSION = typeof __FE_KIT_VERSION__ !== 'undefined' ? __FE_KIT_VERSION__ : 'dev';
-
-const REQUIRED_TASK_FILES = [
-  'task.md',
-  'planning/implementation-plan.md',
-  'planning/build-checklist.md',
-  'planning/questions.md',
-  'tracking/workflow-status.md',
-  'output/figma-reference-screenshots/.gitkeep',
-];
 
 const SKILL_DIR_IN_PLUGIN = 'skills/frontend-delivery-standard';
 

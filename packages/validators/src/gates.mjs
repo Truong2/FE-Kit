@@ -12,6 +12,7 @@
  * mode, và kiểm tra scope diff tính từ git thay vì tin field tự khai.
  */
 import { checkRecordedNextMode, normalizeCommand } from './transitions.mjs';
+import { REQUIRED_TASK_DOCS } from './modes.mjs';
 
 function norm(v) {
   return String(v ?? '').trim().toLowerCase();
@@ -166,14 +167,6 @@ function commandEvidenceWarnings(testSummaryMarkdown) {
   return warnings;
 }
 
-const REQUIRED_TASK_FILES = [
-  'task.md',
-  'planning/implementation-plan.md',
-  'planning/build-checklist.md',
-  'planning/questions.md',
-  'tracking/workflow-status.md',
-];
-
 const MD_FILES_WITHOUT_NEXT_PROMPT = [
   'task.md',
   'planning/implementation-plan.md',
@@ -204,7 +197,7 @@ export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   const errors = [];
   const warnings = [];
 
-  for (const rel of REQUIRED_TASK_FILES) {
+  for (const rel of REQUIRED_TASK_DOCS) {
     if (!exists(rel)) errors.push(`Thiếu ${rel}`);
   }
 

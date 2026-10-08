@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
+# Runner của `claude plugin eval` chỉ chạy bash; logic nằm trong scaffold.mjs.
 set -euo pipefail
-bash "$(dirname "${BASH_SOURCE[0]}")/../scaffold-task.sh" task-blocked-question FE-30-cancel
+exec node "$(dirname "${BASH_SOURCE[0]}")/scaffold.mjs"

@@ -24,7 +24,13 @@ npm test             # validators + hook + CLI bundle (cần build trước)
 claude plugin validate ./plugins/fe --strict
 ```
 
-Trước khi mở PR, các lệnh trên và CLI smoke test trong `.github/workflows/kit-ci.yml` phải xanh. Thay đổi prompt của command/agent/skill nên chạy thêm eval hành vi (`.github/workflows/plugin-evals.yml`, chạy tay vì tốn chi phí API).
+Trước khi mở PR, các lệnh trên và CLI smoke test trong `.github/workflows/kit-ci.yml` phải xanh. Thay đổi prompt của command/agent/skill nên chạy thêm eval hành vi (`.github/workflows/plugin-evals.yml`, chạy tay vì tốn chi phí API), rồi commit baseline từ artifact `eval-baselines` vào `evals/baselines/`.
+
+## Thêm hoặc sửa case eval
+
+- Mỗi case có `prompt.md`, `case.yaml`, `graders/`, `scaffold.mjs` và `scaffold.sh`. `scaffold.sh` chỉ gọi `node scaffold.mjs` (copy từ case có sẵn); hàm dựng workspace nằm ở `evals/scaffold-lib.mjs`.
+- Case đo gate bị chặn thì thêm tên vào `ENTRY_BLOCKED` của `tests/evals.test.mjs`.
+- Cấm sửa source thì cấm đủ `Edit`, `Write`, `MultiEdit` và thêm grader theo trạng thái file. `npm test` kiểm cả hai điều này.
 
 ## Thay đổi schema `workflow-status.md`
 
