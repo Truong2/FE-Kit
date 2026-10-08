@@ -6,6 +6,10 @@
  * một phiên Claude Code đầy đủ (main thread + subagent). Hook gần như không tốn
  * token (chỉ chèn vài dòng cảnh báo), nên đòn bẩy là số lượt, model và số turn.
  *
+ * Model: chỉ dùng Sonnet và Opus, không dùng Haiku. Profile kiểm dây chuyền
+ * (`pilot`, `smoke`) chạy Sonnet; profile ra quyết định (`gate`, `full`) chạy
+ * Opus bản cao nhất.
+ *
  * - `levels`: mỗi phần tử là một mức hook; `tag` (nếu có) chỉ chạy case mang
  *   tag đó ở mức này. Luật bật `enforce` chỉ xét case `gate`, nên `full` chạy
  *   case không phải gate ở một mức.
@@ -13,26 +17,29 @@
  *   chạy quá ít lần để áp luật `enforce`, nên chỉ in tóm tắt.
  * - `maxCostUsd`: trần cứng cho mỗi mức (`--max-cost-usd`).
  */
+export const SONNET = 'claude-sonnet-5-5';
+export const OPUS = 'claude-opus-5-5';
+
 export const PROFILES = {
   pilot: {
     description: 'Đo chi phí thật của một lượt: 1 case, 1 lần, mức enforce.',
-    model: 'claude-sonnet-5-5',
+    model: SONNET,
     runs: 1,
     levels: [{ level: 'enforce', cases: 'cook-refuses-when-blocked' }],
     maxCostUsd: 1,
     baseline: false,
   },
   smoke: {
-    description: 'Mọi case chạy 1 lần trên Haiku ở mức warn: kiểm scaffold và grader còn chạy đúng.',
-    model: 'claude-haiku-4-5',
+    description: 'Mọi case chạy 1 lần trên Sonnet ở mức warn: kiểm scaffold và grader còn chạy đúng.',
+    model: SONNET,
     runs: 1,
     levels: [{ level: 'warn' }],
     maxCostUsd: 5,
     baseline: false,
   },
   gate: {
-    description: 'Case gate × 3 lần × warn và enforce: đủ để áp luật bật enforce.',
-    model: 'claude-sonnet-5-5',
+    description: 'Case gate × 3 lần × warn và enforce trên Opus: đủ để áp luật bật enforce.',
+    model: OPUS,
     runs: 3,
     levels: [
       { level: 'warn', tag: 'gate' },
@@ -42,8 +49,8 @@ export const PROFILES = {
     baseline: true,
   },
   full: {
-    description: 'Trước release: mọi case × 5 lần ở warn, case gate × 5 lần ở enforce.',
-    model: 'claude-sonnet-5-5',
+    description: 'Trước release, trên Opus: mọi case × 5 lần ở warn, case gate × 5 lần ở enforce.',
+    model: OPUS,
     runs: 5,
     levels: [{ level: 'warn' }, { level: 'enforce', tag: 'gate' }],
     maxCostUsd: 30,
@@ -51,7 +58,8 @@ export const PROFILES = {
   },
 };
 
-export const JUDGE_MODEL = 'claude-haiku-4-5';
+/** Model chấm grader `llm`. */
+export const JUDGE_MODEL = SONNET;
 
 /** Tool được cấp cho phiên eval; case tự giới hạn thêm bằng `allowed_tools`. */
 export const ALLOW_TOOLS = ['Write', 'Edit', 'mcp__plugin_fe_frontend-delivery__*'];

@@ -186,9 +186,11 @@ Chi phí tỉ lệ với số lượt chạy (case × số lần × số mức h
 | Profile | Chạy | Model | Trần | Ghi baseline |
 |---|---|---|---|---|
 | `pilot` | `cook-refuses-when-blocked` × 1, enforce | Sonnet | 1 USD | Không |
-| `smoke` | mọi case × 1, warn | Haiku | 5 USD | Không |
-| `gate` | case `gate` × 3, warn và enforce | Sonnet | 10 USD/mức | Có |
-| `full` | mọi case × 5 ở warn, case `gate` × 5 ở enforce | Sonnet | 30 USD/mức | Có |
+| `smoke` | mọi case × 1, warn | Sonnet | 5 USD | Không |
+| `gate` | case `gate` × 3, warn và enforce | Opus | 10 USD/mức | Có |
+| `full` | mọi case × 5 ở warn, case `gate` × 5 ở enforce | Opus | 30 USD/mức | Có |
+
+Kit chỉ eval trên Sonnet và Opus (bản cao nhất), không dùng Haiku; grader `llm` chấm bằng Sonnet. Model khác chạy được qua `--model` (máy) hoặc input `model` (CI).
 
 Luật `enforce` chỉ xét case `gate`, nên không chạy case khác ở cả hai mức. Baseline cần ≥ 3 run mỗi case gate mới được dùng để quyết định.
 

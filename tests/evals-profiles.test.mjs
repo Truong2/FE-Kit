@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PROFILES, evalArgs, getProfile, plannedRuns } from '../evals/profiles.mjs';
+import { PROFILES, JUDGE_MODEL, evalArgs, getProfile, plannedRuns } from '../evals/profiles.mjs';
 import { countCasesFor, renderLegSummary } from '../evals/run.mjs';
 import { ENFORCE_RULE, caseTags, summarizeResults } from '../evals/summarize.mjs';
 
@@ -38,9 +38,21 @@ describe('profile eval', () => {
     expect(PROFILES.pilot.maxCostUsd).toBe(1);
   });
 
-  it('smoke chạy mọi case một lần trên Haiku, trần 5 USD, không ghi baseline', () => {
+  it('chỉ dùng Sonnet và Opus: kiểm dây chuyền trên Sonnet, ra quyết định trên Opus, chấm bằng Sonnet', () => {
+    for (const [name, p] of Object.entries(PROFILES)) {
+      for (const { level } of p.levels) {
+        const args = evalArgs(name, { level });
+        expect(flag(args, '--model'), name).toMatch(/^claude-(sonnet|opus)-/);
+        expect(flag(args, '--judge-model')).toBe(JUDGE_MODEL);
+      }
+    }
+    expect(JUDGE_MODEL).toMatch(/^claude-sonnet-/);
+    for (const name of ['pilot', 'smoke']) expect(PROFILES[name].model, name).toMatch(/^claude-sonnet-/);
+    for (const name of ['gate', 'full']) expect(PROFILES[name].model, name).toMatch(/^claude-opus-/);
+  });
+
+  it('smoke chạy mọi case một lần, trần 5 USD, không ghi baseline', () => {
     expect(plannedRuns('smoke', (l) => countCasesFor(l, CASES))).toBe(CASES.length);
-    expect(flag(evalArgs('smoke', { level: 'warn' }), '--model')).toBe('claude-haiku-4-5');
     expect(PROFILES.smoke).toMatchObject({ maxCostUsd: 5, baseline: false });
   });
 

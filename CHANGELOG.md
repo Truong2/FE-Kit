@@ -9,7 +9,7 @@ Nhật ký phát triển nội bộ trước bản phát hành đầu tiên đư
 
 ### Eval rẻ hơn
 
-- Profile chạy eval trong `evals/profiles.mjs`, dùng chung cho máy và CI: `pilot` (1 lượt, trần 1 USD), `smoke` (mọi case 1 lần trên Haiku, trần 5 USD), `gate` (case gate × 3 × warn/enforce, trần 10 USD/mức), `full` (mọi case × 5 ở warn, case gate × 5 ở enforce). Trước đây mỗi lượt baseline là 10 case × 5 × 2 mức = 100 phiên; `full` còn 80, `gate` 36.
+- Profile chạy eval trong `evals/profiles.mjs`, dùng chung cho máy và CI: `pilot` (1 lượt, trần 1 USD) và `smoke` (mọi case 1 lần, trần 5 USD) chạy Sonnet; `gate` (case gate × 3 × warn/enforce, trần 10 USD/mức) và `full` (mọi case × 5 ở warn, case gate × 5 ở enforce) chạy Opus bản cao nhất. Không dùng Haiku nữa: grader `llm` chấm bằng Sonnet. Trước đây mỗi lượt baseline là 10 case × 5 × 2 mức = 100 phiên; `full` còn 80, `gate` 36.
 - `node evals/run.mjs <profile>` và `npm run eval:pilot|smoke|gate|full`: chạy trên máy bằng tài khoản `claude` đang đăng nhập, in điểm và chi phí mỗi run.
 - `plugin-evals.yml` chọn `profile` thay cho `runs`/`hooks_level`; input truyền qua biến môi trường.
 - Baseline ghi thêm `profile`, `total_runs`, `cost_per_run_usd`. Luật `enforce` thêm điều kiện mỗi case gate chạy ≥ 3 lần.

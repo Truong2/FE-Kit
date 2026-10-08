@@ -5,10 +5,10 @@ name: Plugin behaviour evals
 # Tốn chi phí API nên chỉ chạy tay. Cần secret ANTHROPIC_API_KEY.
 #
 # Profile (định nghĩa ở evals/profiles.mjs, rẻ → đắt):
-#   pilot  1 case × 1 lần, trần 1 USD — đo chi phí thật của một lượt
-#   smoke  mọi case × 1 lần trên Haiku, trần 5 USD — kiểm scaffold và grader
-#   gate   case gate × 3 lần × warn + enforce, trần 10 USD/mức — áp luật enforce
-#   full   mọi case × 5 lần ở warn, case gate × 5 lần ở enforce — trước release
+#   pilot  Sonnet, 1 case × 1 lần, trần 1 USD — đo chi phí thật của một lượt
+#   smoke  Sonnet, mọi case × 1 lần, trần 5 USD — kiểm scaffold và grader
+#   gate   Opus, case gate × 3 lần × warn + enforce, trần 10 USD/mức — áp luật enforce
+#   full   Opus, mọi case × 5 lần ở warn, case gate × 5 lần ở enforce — trước release
 #
 # Chạy trên máy (dùng tài khoản claude đang đăng nhập): `npm run eval:pilot` …
 #

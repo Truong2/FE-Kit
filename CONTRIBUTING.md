@@ -25,7 +25,7 @@ npm test             # validators + hook + CLI bundle (cần build trước)
 claude plugin validate ./plugins/fe --strict
 ```
 
-Trước khi mở PR, các lệnh trên và CLI smoke test trong `.github/workflows/kit-ci.yml` phải xanh. Thay đổi prompt của command/agent/skill nên chạy thêm eval hành vi, từ rẻ đến đắt: `npm run eval:smoke` (mọi case 1 lần trên Haiku, trần 5 USD) trước, `npm run eval:gate` khi đổi gate hoặc hook. Chạy trên máy dùng tài khoản `claude` đang đăng nhập; trên CI dùng workflow `plugin-evals.yml` (chạy tay, chọn `profile`). Profile `gate`/`full` ghi baseline vào `evals/baselines/`, commit cùng PR.
+Trước khi mở PR, các lệnh trên và CLI smoke test trong `.github/workflows/kit-ci.yml` phải xanh. Thay đổi prompt của command/agent/skill nên chạy thêm eval hành vi, từ rẻ đến đắt: `npm run eval:smoke` (mọi case 1 lần trên Sonnet, trần 5 USD) trước, `npm run eval:gate` khi đổi gate hoặc hook. Chạy trên máy dùng tài khoản `claude` đang đăng nhập; trên CI dùng workflow `plugin-evals.yml` (chạy tay, chọn `profile`). Profile `gate`/`full` ghi baseline vào `evals/baselines/`, commit cùng PR.
 
 ## Thêm hoặc sửa case eval
 

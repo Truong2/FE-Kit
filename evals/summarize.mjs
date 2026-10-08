@@ -2,7 +2,7 @@
 /**
  * Ghi baseline eval vào repo và áp luật quyết định mức hook mặc định.
  *
- *   node evals/summarize.mjs --results eval-results.json --level enforce --model claude-sonnet-5-5 [--version 2.1.1]
+ *   node evals/summarize.mjs --results eval-results.json --level enforce --model claude-opus-5-5 [--version 2.1.1]
  *   node evals/summarize.mjs --readme-only
  *
  * `--results` là file `--json` của `claude plugin eval`. Script đọc các field
