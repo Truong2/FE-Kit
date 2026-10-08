@@ -74,11 +74,12 @@ export function getProfile(name) {
  * Tham số cho `claude plugin eval` ở một mức hook của profile.
  * @returns {string[]}
  */
-export function evalArgs(name, { level, model, json, outputDir, maxCostUsd } = {}) {
+export function evalArgs(name, { level, model, json, outputDir, maxCostUsd, keepTemp = false, plugin = './plugins/fe' } = {}) {
   const profile = getProfile(name);
   const leg = profile.levels.find((l) => l.level === level);
   if (!leg) throw new Error(`Profile "${name}" không chạy mức "${level}".`);
-  const args = ['plugin', 'eval', './plugins/fe', '--eval-dir', 'evals', '--ablation', 'none', '--scaffold'];
+  // `--eval-dir` phải nằm trong thư mục plugin: run.mjs truyền `plugin` là bản sao tạm có kèm evals/.
+  const args = ['plugin', 'eval', plugin, '--eval-dir', 'evals', '--ablation', 'none', '--scaffold'];
   args.push('--allow-tools', ...ALLOW_TOOLS);
   args.push('--allow-real-servers', '--trust-plugin');
   if (leg.cases) args.push('--case', leg.cases);
@@ -89,6 +90,7 @@ export function evalArgs(name, { level, model, json, outputDir, maxCostUsd } = {
   args.push('--threshold', '0');
   args.push('--max-cost-usd', String(maxCostUsd ?? profile.maxCostUsd));
   args.push('--no-publish');
+  if (keepTemp) args.push('--keep-temp');
   if (json) args.push('--json', json);
   if (outputDir) args.push('--output-dir', outputDir);
   return args;

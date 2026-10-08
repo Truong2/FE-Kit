@@ -82,6 +82,8 @@ describe('profile eval', () => {
     const args = evalArgs('pilot', { level: 'enforce', model: 'x', maxCostUsd: 0.5 });
     expect(flag(args, '--model')).toBe('x');
     expect(flag(args, '--max-cost-usd')).toBe('0.5');
+    expect(args).not.toContain('--keep-temp');
+    expect(evalArgs('pilot', { level: 'enforce', keepTemp: true })).toContain('--keep-temp');
   });
 
   it('tóm tắt in điểm và chi phí mỗi run', () => {
@@ -90,6 +92,22 @@ describe('profile eval', () => {
       { level: 'warn', model: 'm', version: 'v', profile: 'smoke', tagsOf: () => [] },
     );
     expect(renderLegSummary('smoke', b)).toMatch(/Chi phí 0\.60 USD cho 2 run \(0\.30 USD\/run\)/);
+    expect(renderLegSummary('smoke', b)).not.toMatch(/run lỗi/);
+  });
+
+  it('run lỗi được báo rõ kèm lý do, vì grader kiềm chế tự pass khi agent không chạy', () => {
+    const b = summarizeResults(
+      {
+        costUsd: 0,
+        aggregates: { overallScore: 0.86 },
+        cases: [{ name: 'a', aggregates: { score: 0.86 }, arms: { with: [{ error: 'exit 1: API Error: 400 model not supported' }] } }],
+      },
+      { level: 'enforce', model: 'm', version: 'v', profile: 'pilot', tagsOf: () => [] },
+    );
+    expect(b.run_errors).toEqual([{ case: 'a', error: 'exit 1: API Error: 400 model not supported' }]);
+    const md = renderLegSummary('pilot', b);
+    expect(md).toMatch(/1 run lỗi — điểm của các run này không có nghĩa/);
+    expect(md).toMatch(/`a`: exit 1: API Error: 400 model not supported/);
   });
 
   it('workflow CI chạy qua evals/run.mjs với profile', () => {

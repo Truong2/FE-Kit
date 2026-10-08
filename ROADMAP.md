@@ -58,11 +58,8 @@ Trạng thái ở 2.2.0: **giữ `warn`**. Bộ eval chưa chạy thật nên ch
 
 - Chạy theo bậc: `pilot` (đo chi phí một lượt) → `smoke` (mọi case một lần, trần 5 USD) → `gate` (baseline để áp luật `enforce`). Chạy trên máy với tài khoản `claude` đang đăng nhập, hoặc qua `plugin-evals.yml`. Commit baseline trong `evals/baselines/`.
 - Sau `pilot`: xem số turn thật của từng case để hạ `max_turns` (đang 25–40) nếu dư nhiều.
-- Chạy một case trên Windows để chắc scaffold Node chạy được ngoài Linux:
-
-  ```bash
-  claude plugin eval ./plugins/fe --eval-dir evals --case cook-refuses-when-blocked --scaffold --runs 1 ...
-  ```
+- Model `claude-opus-5-5` và `claude-sonnet-5-5` cần Claude Code ≥ 2.1.280 (`claude update`). `pilot` ngày 2026-10-08 trên 2.1.270 bị lỗi 400 trước khi model chạy.
+- Đã xong (`pilot` 2026-10-08, Windows): scaffold Node chạy được ngoài Linux; plugin eval nạp đủ 10 case sau khi sửa `--eval-dir` và `case.yaml`.
 
 ## Phase 3 — đã làm và còn lại
 
@@ -86,6 +83,6 @@ Có thể làm riêng nếu thấy cần: sinh `standard.yaml` từ manifest. Fi
 
 ## Rủi ro đang theo dõi
 
-- **Hook chưa chắc thấy được mức đã đặt.** `plugin eval` chỉ chuyển `EVAL_*` vào phiên, nên hook đọc `EVAL_FE_KIT_HOOKS`. Chưa xác minh hook thật sự nhận được biến này trong phiên eval. Từ 2.2.0, grader `hook-logged-entry-block` chứng minh hook có chạy, và field `level` trong `run-log.jsonl` của workspace eval (`--keep-temp`) cho biết hook chạy ở mức nào.
+- ~~Hook chưa chắc thấy được mức đã đặt.~~ Đã xác minh ở `pilot` 2026-10-08: `run-log.jsonl` của workspace eval ghi `"level":"enforce"`, nên hook nhận được `EVAL_FE_KIT_HOOKS`.
 - **Chưa rõ `tool_used` có thấy tool call bên trong subagent không.** Tài liệu không nói. Vì vậy grader cấm sửa source luôn đi kèm grader theo trạng thái file (`source-unchanged`, `file_exists`).
 - **Eval dao động giữa các lần chạy.** Baseline cần ≥ 3 run mỗi case gate. Chi phí chặn bằng profile (`evals/profiles.mjs`): `pilot` 1 USD, `smoke` 5 USD, `gate` 2 × 10 USD, `full` 2 × 30 USD là trần, chưa phải chi phí đo được.

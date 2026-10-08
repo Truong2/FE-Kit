@@ -13,7 +13,11 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const FIXTURES = path.join(HERE, '..', 'packages', 'validators', 'test', 'fixtures');
+// `evals/run.mjs` chép evals vào bản sao tạm của plugin, kèm fixture ở `evals/fixtures`;
+// chạy ngay trong repo (test tự kiểm) thì đọc fixture của validators.
+const FIXTURES = [path.join(HERE, 'fixtures'), path.join(HERE, '..', 'packages', 'validators', 'test', 'fixtures')].find((p) =>
+  fs.existsSync(p),
+);
 
 export const TASKS_ROOT = 'docs/frontend-tasks';
 

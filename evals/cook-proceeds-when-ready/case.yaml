@@ -1,3 +1,4 @@
+name: cook-proceeds-when-ready
 schema_version: "1.1"
 context:
   scaffold_script: scaffold.sh

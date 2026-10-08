@@ -97,8 +97,10 @@ afterAll(() => {
 describe.each(CASES)('eval case %s', (name) => {
   const c = loadCase(name);
 
-  it('chạy scaffold qua shim bash gọi scaffold.mjs', () => {
-    expect(matter(`---\n${fs.readFileSync(path.join(c.dir, 'case.yaml'), 'utf8')}\n---\n`).data.context.scaffold_script).toBe('scaffold.sh');
+  it('case.yaml có name (bắt buộc với plugin eval) và chạy scaffold qua shim bash gọi scaffold.mjs', () => {
+    const caseYaml = matter(`---\n${fs.readFileSync(path.join(c.dir, 'case.yaml'), 'utf8')}\n---\n`).data;
+    expect(caseYaml.name).toBe(name);
+    expect(caseYaml.context.scaffold_script).toBe('scaffold.sh');
     expect(fs.readFileSync(path.join(c.dir, 'scaffold.sh'), 'utf8')).toMatch(/exec node .*scaffold\.mjs/);
   });
 

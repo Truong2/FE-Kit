@@ -11,6 +11,12 @@ Nhật ký phát triển nội bộ trước bản phát hành đầu tiên đư
 
 - `check-input-sync-report` kiểm theo template hiện tại (4 mục: Nguồn input, Kết quả phân tích impact, File đã cập nhật, Kết luận sync). Trước đây gate vẫn đòi 11 mục của template cũ nên report viết đúng template luôn bị báo lỗi. Gate mới còn kiểm ba dòng đã được chọn giá trị, không để trống hay để nguyên chuỗi lựa chọn: `Loại input`, `UI/Figma`, `Impact`. Report viết theo template cũ (`# Báo cáo đồng bộ input`) vẫn được kiểm như trước, nên repo dự án không phải viết lại report cũ.
 
+- Bộ eval hành vi chưa từng chạy được case nào, kể cả qua `plugin-evals.yml`, vì hai lỗi phát hiện ở lần chạy `pilot` đầu tiên (chưa tốn chi phí):
+  - `claude plugin eval` chỉ nhận `--eval-dir` nằm trong thư mục plugin, còn case nằm ở `evals/` của repo. `evals/run.mjs` giờ dựng bản sao tạm của `plugins/fe` kèm `evals/` và fixture rồi chạy trên bản đó. Plugin phát hành vẫn không mang evals.
+  - `case.yaml` thiếu field bắt buộc `name`, nên cả 10 case không nạp được. Đã thêm; `tests/evals.test.mjs` kiểm field này.
+- `run.mjs` báo lỗi khi không case nào chạy, thay vì báo tổng 0 USD như một lần chạy thành công. Run lỗi (ví dụ model không chạy được) được in kèm lý do và làm lệnh thoát với mã lỗi: grader kiềm chế tự pass khi agent không làm gì, nên điểm của run lỗi không có nghĩa. Baseline ghi thêm `run_errors`. Thêm cờ `--keep-temp` để giữ workspace của từng run.
+- Hook ghi `entry_blocked` hai lần cho một lần gõ lệnh slash bị chặn, vì cả `UserPromptExpansion` lẫn `UserPromptSubmit` đều chạy, làm `fe-kit report` đếm số lần bị chặn gấp đôi. Giờ chỉ ghi một bản; gõ lại lệnh sau đó vẫn được ghi. Cả hai lần vẫn đưa verdict vào ngữ cảnh.
+
 ### Eval rẻ hơn
 
 - Profile chạy eval trong `evals/profiles.mjs`, dùng chung cho máy và CI: `pilot` (1 lượt, trần 1 USD) và `smoke` (mọi case 1 lần, trần 5 USD) chạy Sonnet; `gate` (case gate × 3 × warn/enforce, trần 10 USD/mức) và `full` (mọi case × 5 ở warn, case gate × 5 ở enforce) chạy Opus bản cao nhất. Không dùng Haiku nữa: grader `llm` chấm bằng Sonnet. Trước đây mỗi lượt baseline là 10 case × 5 × 2 mức = 100 phiên; `full` còn 80, `gate` 36.

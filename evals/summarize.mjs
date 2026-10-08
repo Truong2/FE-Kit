@@ -51,6 +51,10 @@ export function summarizeResults(results, { level, model, version, profile = nul
       skipped_paid_graders: runs.filter((r) => r.skippedPaidGraders).length,
     };
   });
+  // Lý do lỗi (không đưa vào từng case để giữ shape bản ghi case ổn định).
+  const runErrors = (results.cases || []).flatMap((c) =>
+    (c.arms?.with || []).filter((r) => r.error || r.aborted).map((r) => ({ case: c.name, error: String(r.error || 'aborted').slice(0, 300) })),
+  );
   const totalRuns = cases.reduce((s, c) => s + c.runs, 0);
   const cost = typeof results.costUsd === 'number' ? results.costUsd : null;
   return {
@@ -71,6 +75,7 @@ export function summarizeResults(results, { level, model, version, profile = nul
     cases_passed: results.aggregates?.casesPassed ?? null,
     cases_total: results.aggregates?.casesTotal ?? cases.length,
     cases,
+    run_errors: runErrors,
     raw_aggregates: results.aggregates ?? null,
   };
 }
