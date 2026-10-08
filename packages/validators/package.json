@@ -2,7 +2,7 @@
   "name": "@frontend-delivery-kit/validators",
   "version": "2.3.0",
   "private": true,
-  "description": "Schema + parser + gate logic dùng chung cho fe-kit CLI, standalone scripts và test suite. Nguồn duy nhất cho mọi rule liên quan workflow-status.md.",
+  "description": "Tên package cũ của API FE, giữ để tương thích: re-export @frontend-delivery-kit/pack-fe. Test của gate FE và fixture dùng chung nằm ở đây.",
   "type": "module",
   "main": "./src/index.mjs",
   "exports": {
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@frontend-delivery-kit/engine": "*",
+    "@frontend-delivery-kit/pack-fe": "*",
     "gray-matter": "^4.0.3",
     "zod": "^4.5.4"
   },

@@ -33,3 +33,4 @@ export { createModeCompletion } from './completion.mjs';
 export { createModeBriefing } from './briefing.mjs';
 export { createHookHandlers, runHook } from './hook-core.mjs';
 export { createMcpTools } from './mcp-core.mjs';
+export { PackManifestSchema, validateManifest, commandToModeOf, rulesForManifest, allRuleFilesOf } from './pack.mjs';

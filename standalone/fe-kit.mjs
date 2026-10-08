@@ -21,8 +21,8 @@ var __commonJS = (cb, mod) => function __require2() {
   }
 };
 var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
+  for (var name2 in all)
+    __defProp(target, name2, { get: all[name2], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -135,8 +135,8 @@ var require_kind_of = __commonJS({
       if (val instanceof RegExp) return true;
       return typeof val.flags === "string" && typeof val.ignoreCase === "boolean" && typeof val.multiline === "boolean" && typeof val.global === "boolean";
     }
-    function isGeneratorFn(name, val) {
-      return ctorName(name) === "GeneratorFunction";
+    function isGeneratorFn(name2, val) {
+      return ctorName(name2) === "GeneratorFunction";
     }
     function isGeneratorObj(val) {
       return typeof val.throw === "function" && typeof val.return === "function" && typeof val.next === "function";
@@ -390,8 +390,8 @@ var require_mark = __commonJS({
   "node_modules/js-yaml/lib/js-yaml/mark.js"(exports2, module2) {
     "use strict";
     var common = require_common();
-    function Mark(name, buffer, position, line, column) {
-      this.name = name;
+    function Mark(name2, buffer, position, line, column) {
+      this.name = name2;
       this.buffer = buffer;
       this.position = position;
       this.line = line;
@@ -476,9 +476,9 @@ var require_type = __commonJS({
     }
     function Type(tag, options2) {
       options2 = options2 || {};
-      Object.keys(options2).forEach(function(name) {
-        if (TYPE_CONSTRUCTOR_OPTIONS.indexOf(name) === -1) {
-          throw new YAMLException('Unknown option "' + name + '" is met in definition of "' + tag + '" YAML type.');
+      Object.keys(options2).forEach(function(name2) {
+        if (TYPE_CONSTRUCTOR_OPTIONS.indexOf(name2) === -1) {
+          throw new YAMLException('Unknown option "' + name2 + '" is met in definition of "' + tag + '" YAML type.');
         }
       });
       this.tag = tag;
@@ -509,12 +509,12 @@ var require_schema = __commonJS({
     var common = require_common();
     var YAMLException = require_exception();
     var Type = require_type();
-    function compileList(schema, name, result) {
+    function compileList(schema, name2, result) {
       var exclude = [];
       schema.include.forEach(function(includedSchema) {
-        result = compileList(includedSchema, name, result);
+        result = compileList(includedSchema, name2, result);
       });
-      schema[name].forEach(function(currentType) {
+      schema[name2].forEach(function(currentType) {
         result.forEach(function(previousType, previousIndex) {
           if (previousType.tag === currentType.tag && previousType.kind === currentType.kind) {
             exclude.push(previousIndex);
@@ -1553,7 +1553,7 @@ var require_loader = __commonJS({
       }
     }
     var directiveHandlers = {
-      YAML: function handleYamlDirective(state, name, args2) {
+      YAML: function handleYamlDirective(state, name2, args2) {
         var match, major, minor;
         if (state.version !== null) {
           throwError(state, "duplication of %YAML directive");
@@ -1576,7 +1576,7 @@ var require_loader = __commonJS({
           throwWarning(state, "unsupported YAML version of the document");
         }
       },
-      TAG: function handleTagDirective(state, name, args2) {
+      TAG: function handleTagDirective(state, name2, args2) {
         var handle, prefix;
         if (args2.length !== 2) {
           throwError(state, "TAG directive accepts exactly two arguments");
@@ -3108,9 +3108,9 @@ var require_js_yaml = __commonJS({
     "use strict";
     var loader = require_loader();
     var dumper = require_dumper();
-    function deprecated(name) {
+    function deprecated(name2) {
       return function() {
-        throw new Error("Function " + name + " is deprecated and cannot be used.");
+        throw new Error("Function " + name2 + " is deprecated and cannot be used.");
       };
     }
     module2.exports.Type = require_type();
@@ -3260,18 +3260,18 @@ var require_defaults = __commonJS({
 var require_engine = __commonJS({
   "node_modules/gray-matter/lib/engine.js"(exports2, module2) {
     "use strict";
-    module2.exports = function(name, options2) {
-      let engine = options2.engines[name] || options2.engines[aliase(name)];
+    module2.exports = function(name2, options2) {
+      let engine = options2.engines[name2] || options2.engines[aliase(name2)];
       if (typeof engine === "undefined") {
-        throw new Error('gray-matter engine "' + name + '" is not registered');
+        throw new Error('gray-matter engine "' + name2 + '" is not registered');
       }
       if (typeof engine === "function") {
         engine = { parse: engine };
       }
       return engine;
     };
-    function aliase(name) {
-      switch (name.toLowerCase()) {
+    function aliase(name2) {
+      switch (name2.toLowerCase()) {
         case "js":
         case "javascript":
           return "javascript";
@@ -3283,7 +3283,7 @@ var require_engine = __commonJS({
         case "yml":
           return "yaml";
         default: {
-          return name;
+          return name2;
         }
       }
     }
@@ -3543,7 +3543,7 @@ import path10 from "node:path";
 import { fileURLToPath } from "node:url";
 import readline from "node:readline/promises";
 
-// packages/validators/src/parse.mjs
+// packages/pack-fe/src/parse.mjs
 var import_gray_matter3 = __toESM(require_gray_matter(), 1);
 
 // node_modules/zod/v4/classic/external.js
@@ -4616,12 +4616,12 @@ function merge(a, b) {
   });
   return clone(a, def);
 }
-function partial(Class2, schema, mask, name = "partial") {
+function partial(Class2, schema, mask, name2 = "partial") {
   const currDef = schema._zod.def;
   const checks = currDef.checks;
   const hasChecks = checks && checks.length > 0;
   if (hasChecks) {
-    throw new Error(`.${name}() cannot be used on object schemas containing refinements`);
+    throw new Error(`.${name2}() cannot be used on object schemas containing refinements`);
   }
   const def = mergeDefs(schema._zod.def, {
     get shape() {
@@ -4975,7 +4975,7 @@ function newError(Definition) {
   return new Definition();
 }
 // @__NO_SIDE_EFFECTS__
-function $constructor(name, initializer3, proto, params) {
+function $constructor(name2, initializer3, proto, params) {
   const zodProto = {};
   function Internals(def) {
     this.def = def;
@@ -4994,10 +4994,10 @@ function $constructor(name, initializer3, proto, params) {
         _zodDesc.value = void 0;
       }
     }
-    if (inst._zod.traits.has(name)) {
+    if (inst._zod.traits.has(name2)) {
       return;
     }
-    inst._zod.traits.add(name);
+    inst._zod.traits.add(name2);
     initializer3(inst, def);
     if (initialized) {
       const own2 = Object.getPrototypeOf(inst);
@@ -5023,7 +5023,7 @@ function $constructor(name, initializer3, proto, params) {
   const Parent = params?.Parent ?? Object;
   class Definition extends Parent {
   }
-  Object.defineProperty(Definition, "name", { value: name });
+  Object.defineProperty(Definition, "name", { value: name2 });
   function _(def) {
     const inst = params?.Parent ? newError(Definition) : this;
     init2(inst, def);
@@ -5044,10 +5044,10 @@ function $constructor(name, initializer3, proto, params) {
     value: (inst) => {
       if (params?.Parent && inst instanceof params.Parent)
         return true;
-      return inst?._zod?.traits?.has(name);
+      return inst?._zod?.traits?.has(name2);
     }
   });
-  Object.defineProperty(_, "name", { value: name });
+  Object.defineProperty(_, "name", { value: name2 });
   return _;
 }
 var $brand = /* @__PURE__ */ Symbol("zod_brand");
@@ -5057,8 +5057,8 @@ var $ZodAsyncError = class extends Error {
   }
 };
 var $ZodEncodeError = class extends Error {
-  constructor(name) {
-    super(`Encountered unidirectional transform during encode: ${name}`);
+  constructor(name2) {
+    super(`Encountered unidirectional transform during encode: ${name2}`);
     this.name = "ZodEncodeError";
   }
 };
@@ -16168,13 +16168,13 @@ ${code}
   return fn;
 }
 function addConstant(ctx, value) {
-  for (const [name2, v] of ctx.constants) {
+  for (const [name3, v] of ctx.constants) {
     if (v === value)
-      return name2;
+      return name3;
   }
-  const name = `c${ctx.constantCounter++}`;
-  ctx.constants.set(name, value);
-  return name;
+  const name2 = `c${ctx.constantCounter++}`;
+  ctx.constants.set(name2, value);
+  return name2;
 }
 function newVar(ctx) {
   return `v${ctx.varCounter++}`;
@@ -18932,7 +18932,7 @@ function foldIntersection(json2) {
   for (const key of FOLDABLE_KEYS)
     if (key in json2)
       return;
-  const unions = allOf.filter((m) => UNION_KEYS.some((k) => Array.isArray(m[k])));
+  const unions = allOf.filter((m2) => UNION_KEYS.some((k) => Array.isArray(m2[k])));
   let folded = null;
   if (!unions.length) {
     folded = foldObjects(allOf);
@@ -18941,7 +18941,7 @@ function foldIntersection(json2) {
     const keyword = UNION_KEYS.find((k) => Array.isArray(union2[k]));
     if (Object.keys(union2).length !== 1)
       return;
-    const rest = allOf.filter((m) => m !== union2);
+    const rest = allOf.filter((m2) => m2 !== union2);
     const branches = union2[keyword].map((branch) => foldObjects([...rest, branch]));
     if (branches.some((b) => !b))
       return;
@@ -19371,7 +19371,7 @@ var fileProcessor = (schema, _ctx, json2, _params) => {
       Object.assign(_json, file2);
     } else {
       Object.assign(_json, file2);
-      _json.anyOf = mime.map((m) => ({ contentMediaType: m }));
+      _json.anyOf = mime.map((m2) => ({ contentMediaType: m2 }));
     }
   } else {
     Object.assign(_json, file2);
@@ -22412,7 +22412,7 @@ function date4(params) {
   return _coercedDate(ZodDate, params);
 }
 
-// packages/validators/src/schema.mjs
+// packages/pack-fe/src/schema.mjs
 var GateStatus = external_exports.enum([
   "not_started",
   "in_progress",
@@ -22601,7 +22601,7 @@ function parsePlannedFiles(planMarkdown, { heading }) {
     if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
     const first = (line.split("|")[1] || "").trim();
     if (/^file$/i.test(first) || isPlaceholder(first)) continue;
-    const ticked = [...first.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+    const ticked = [...first.matchAll(/`([^`]+)`/g)].map((m2) => m2[1]);
     const candidates = ticked.length ? ticked : first.split(/[,;]|<br\s*\/?>/i);
     for (const c of candidates) {
       const p = cleanPath(c).split(/\s+/)[0] || "";
@@ -22885,9 +22885,9 @@ function modeTable(summary) {
     "| Mode | B\u1EAFt \u0111\u1EA7u | Ho\xE0n t\u1EA5t | Pass ngay l\u1EA7n \u0111\u1EA7u | B\u1ECB ch\u1EB7n khi k\u1EBFt th\xFAc | Th\u1EA3 k\xE8m v\u1EA5n \u0111\u1EC1 | Th\u1EDDi gian (trung v\u1ECB) |",
     "|---|---|---|---|---|---|---|"
   ];
-  for (const [mode, m] of rows) {
+  for (const [mode, m2] of rows) {
     lines.push(
-      `| ${mode} | ${m.starts} | ${m.completed} | ${m.firstPass} (${pct(m.firstPass, m.completed)}) | ${m.blocked + m.failed} | ${m.released} | ${minutes(median(m.durationsMs))} |`
+      `| ${mode} | ${m2.starts} | ${m2.completed} | ${m2.firstPass} (${pct(m2.firstPass, m2.completed)}) | ${m2.blocked + m2.failed} | ${m2.released} | ${minutes(median(m2.durationsMs))} |`
     );
   }
   return lines;
@@ -22924,9 +22924,9 @@ function renderReport(report2, { title, tasksRoot }) {
     lines.push("", "## Theo task", "", "| Task | S\u1EF1 ki\u1EC7n | L\u01B0\u1EE3t ho\xE0n t\u1EA5t | Pass ngay l\u1EA7n \u0111\u1EA7u | V\xF2ng b\u1ECB ch\u1EB7n |", "|---|---|---|---|---|");
     for (const { task, summary } of report2.tasks) {
       const modes = Object.values(summary.modes);
-      const completed = modes.reduce((a, m) => a + m.completed, 0);
-      const first = modes.reduce((a, m) => a + m.firstPass, 0);
-      const loops = modes.reduce((a, m) => a + m.blocked + m.failed, 0);
+      const completed = modes.reduce((a, m2) => a + m2.completed, 0);
+      const first = modes.reduce((a, m2) => a + m2.firstPass, 0);
+      const loops = modes.reduce((a, m2) => a + m2.blocked + m2.failed, 0);
       lines.push(`| ${task} | ${summary.events} | ${completed} | ${first} (${pct(first, completed)}) | ${loops} |`);
     }
   }
@@ -22979,18 +22979,18 @@ ${raw}
 // packages/engine/src/scaffold.mjs
 import fs4 from "node:fs";
 import path5 from "node:path";
-function isValidTaskName(name) {
-  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name || ""));
+function isValidTaskName(name2) {
+  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name2 || ""));
 }
-function scaffoldTask({ workspaceRoot, name, templatesDir, tasksRoot, templateFiles, emptyFiles = [], nameHint }) {
-  if (!isValidTaskName(name)) {
-    return { ok: false, error: `T\xEAn task kh\xF4ng h\u1EE3p l\u1EC7: "${name}". D\xF9ng d\u1EA1ng ${nameHint}, ch\u1EC9 g\u1ED3m ch\u1EEF, s\u1ED1, d\u1EA5u ch\u1EA5m, g\u1EA1ch d\u01B0\u1EDBi, g\u1EA1ch ngang.` };
+function scaffoldTask({ workspaceRoot, name: name2, templatesDir, tasksRoot, templateFiles, emptyFiles = [], nameHint }) {
+  if (!isValidTaskName(name2)) {
+    return { ok: false, error: `T\xEAn task kh\xF4ng h\u1EE3p l\u1EC7: "${name2}". D\xF9ng d\u1EA1ng ${nameHint}, ch\u1EC9 g\u1ED3m ch\u1EEF, s\u1ED1, d\u1EA5u ch\u1EA5m, g\u1EA1ch d\u01B0\u1EDBi, g\u1EA1ch ngang.` };
   }
   const root = path5.resolve(workspaceRoot);
-  const taskDir = path5.join(root, tasksRoot, name);
+  const taskDir = path5.join(root, tasksRoot, name2);
   if (!isPathInside(root, taskDir)) return { ok: false, error: "Task path n\u1EB1m ngo\xE0i workspace." };
   const taskRef = toPosix(path5.relative(root, taskDir));
-  const fill = (text) => text.replaceAll("<task-folder>", taskRef).replaceAll("<task-id>", name).replaceAll("<TASK_ID>", name);
+  const fill = (text) => text.replaceAll("<task-folder>", taskRef).replaceAll("<task-id>", name2).replaceAll("<TASK_ID>", name2);
   const created = [];
   const skipped = [];
   for (const rel of templateFiles) {
@@ -23240,7 +23240,112 @@ function createModeBriefing(pack) {
 // packages/engine/src/hook-core.mjs
 var MARKER_TTL_MS = 4 * 60 * 60 * 1e3;
 
-// packages/validators/src/parse.mjs
+// packages/engine/src/pack.mjs
+var name = external_exports.string().min(1);
+var list = external_exports.array(name);
+var ModeSchema = external_exports.object({
+  /** Giá trị `current_mode` trong file trạng thái. */
+  state: name,
+  /** Subagent đảm nhận; `null` = main thread. */
+  agent: name.nullable(),
+  /** Artifact phải tồn tại khi mode kết thúc (tương đối task folder). */
+  artifacts: list,
+  /** `next_mode` hợp lý sau mode này; lệch chỉ cảnh báo. */
+  next: list
+});
+var PackManifestSchema = external_exports.object({
+  id: external_exports.string().regex(/^[a-z][a-z0-9-]*$/, "id ch\u1EC9 g\u1ED3m ch\u1EEF th\u01B0\u1EDDng, s\u1ED1, g\u1EA1ch ngang"),
+  display_name: name,
+  plugin: name,
+  prompt_prefix: name,
+  env_prefix: external_exports.string().regex(/^[A-Z][A-Z0-9_]*$/, "env_prefix ch\u1EC9 g\u1ED3m ch\u1EEF hoa, s\u1ED1, g\u1EA1ch d\u01B0\u1EDBi"),
+  agent_prefix: name,
+  tasks_root: name,
+  config_dir: name,
+  project_config_file: name,
+  status_file: name,
+  writable_prefixes: list,
+  scope_ignore: list,
+  planned_files_heading: name,
+  task_name_hint: name,
+  task_files: external_exports.object({
+    required_docs: list.min(1),
+    empty: list.default([]),
+    conditional: list.default([])
+  }),
+  modes: external_exports.record(name, ModeSchema),
+  aliases: external_exports.record(name, name).default({}),
+  terminal_next: list,
+  always_allowed: list,
+  source_edit_modes: list,
+  source_edit_agent: name,
+  source_fix_route: name,
+  plan_update_route: name,
+  read_inputs_hint: name,
+  rules: external_exports.object({
+    always: list,
+    by_mode: external_exports.record(name, list).default({}),
+    /** Rule nạp cho `always`, hoặc cho `modes` khi field `when_field` của file trạng thái là true. */
+    conditional: external_exports.array(external_exports.object({ rule: name, always: list.default([]), modes: list.default([]), when_field: name })).default([])
+  }),
+  mcp: external_exports.object({
+    server_name: name,
+    tool_prefix: external_exports.string().regex(/^[a-z][a-z0-9]*$/),
+    skill_dir: name,
+    next_prompt_heading: name,
+    first_command: name,
+    task_prop_description: name,
+    task_name_description: name,
+    scope_self_reported: name,
+    scope_unavailable: name,
+    planned_files_missing: name,
+    status_fields: list,
+    descriptions: external_exports.object({
+      begin_mode: name,
+      new_task: name,
+      validate_task: name,
+      validate_workflow: name,
+      scope_diff: name,
+      next_step: name,
+      task_status: name
+    })
+  })
+}).superRefine((m2, ctx) => {
+  const commands = Object.keys(m2.modes);
+  const known = new Set(commands);
+  const check2 = (values, where) => {
+    for (const v of values) {
+      if (!known.has(v)) ctx.addIssue({ code: "custom", message: `${where}: mode "${v}" kh\xF4ng c\xF3 trong modes` });
+    }
+  };
+  for (const [cmd, mode] of Object.entries(m2.modes)) check2(mode.next, `modes.${cmd}.next`);
+  check2(Object.values(m2.aliases), "aliases");
+  check2(m2.always_allowed, "always_allowed");
+  check2(m2.source_edit_modes, "source_edit_modes");
+  check2([m2.mcp.first_command], "mcp.first_command");
+  for (const [rule, modes] of Object.entries(m2.rules.by_mode)) check2(modes, `rules.by_mode.${rule}`);
+  m2.rules.conditional.forEach((c, i) => check2([...c.always, ...c.modes], `rules.conditional[${i}]`));
+  const states = commands.map((c) => m2.modes[c].state);
+  if (new Set(states).size !== states.length) ctx.addIssue({ code: "custom", message: "modes: hai mode tr\xF9ng state" });
+});
+function commandToModeOf(manifest) {
+  return Object.fromEntries(Object.entries(manifest.modes).map(([cmd, m2]) => [cmd, m2.state]));
+}
+function rulesForManifest(manifest, command2, data = {}) {
+  const rules = [...manifest.rules.always];
+  for (const [rule, commands] of Object.entries(manifest.rules.by_mode)) {
+    if (commands.includes(command2)) rules.push(rule);
+  }
+  for (const c of manifest.rules.conditional) {
+    if (c.always.includes(command2) || data[c.when_field] === true && c.modes.includes(command2)) rules.push(c.rule);
+  }
+  return rules;
+}
+function allRuleFilesOf(manifest) {
+  return [...manifest.rules.always, ...Object.keys(manifest.rules.by_mode), ...manifest.rules.conditional.map((c) => c.rule)];
+}
+
+// packages/pack-fe/src/parse.mjs
 function parseWorkflowStatus(raw) {
   let frontMatter;
   let body;
@@ -23261,36 +23366,329 @@ function parseWorkflowStatus(raw) {
   return { ok: true, data: result.data, body };
 }
 
-// packages/validators/src/transitions.mjs
-var COMMAND_TO_MODE = {
-  plan: "planning-mode",
-  quick: "quick-mode",
-  "input-sync": "input-sync-mode",
-  figma: "figma-extraction-mode",
-  "figma-review": "figma-review-mode",
-  cook: "implementation-mode",
-  bugfix: "bugfix-mode",
-  review: "review-mode",
-  test: "testing-mode",
-  pr: "pr-ready-mode"
+// packages/pack-fe/src/manifest.gen.mjs
+var manifest_gen_default = {
+  "id": "fe",
+  "display_name": "FE-Kit",
+  "plugin": "fe",
+  "prompt_prefix": "FE",
+  "env_prefix": "FE_KIT",
+  "agent_prefix": "frontend-",
+  "tasks_root": "docs/frontend-tasks",
+  "config_dir": ".frontend-delivery",
+  "project_config_file": ".frontend-delivery/standard.yaml",
+  "status_file": "tracking/workflow-status.md",
+  "writable_prefixes": [
+    "docs/frontend-tasks/",
+    "docs/frontend-context/"
+  ],
+  "scope_ignore": [
+    "docs/frontend-tasks/",
+    "docs/frontend-context/",
+    ".frontend-delivery/"
+  ],
+  "planned_files_heading": "File s\u1EBD t\u1EA1o\\s*\\/\\s*c\u1EADp nh\u1EADt",
+  "task_name_hint": "FE-<id>-<slug>",
+  "task_files": {
+    "required_docs": [
+      "task.md",
+      "planning/implementation-plan.md",
+      "planning/build-checklist.md",
+      "planning/questions.md",
+      "tracking/workflow-status.md"
+    ],
+    "empty": [
+      "output/figma-reference-screenshots/.gitkeep"
+    ],
+    "conditional": [
+      "tracking/input-sync-report.md",
+      "tracking/cr-impact-report.md",
+      "tracking/review-bugs.md",
+      "output/figma-extraction-summary.md",
+      "output/review-report.md",
+      "output/test-summary.md",
+      "output/pr-summary.md",
+      "output/ui-figma-review-report.md"
+    ]
+  },
+  "modes": {
+    "plan": {
+      "state": "planning-mode",
+      "agent": "frontend-planner",
+      "artifacts": [
+        "task.md",
+        "planning/implementation-plan.md",
+        "planning/build-checklist.md",
+        "planning/questions.md",
+        "tracking/workflow-status.md"
+      ],
+      "next": [
+        "input-sync",
+        "figma",
+        "cook",
+        "plan",
+        "quick"
+      ]
+    },
+    "quick": {
+      "state": "quick-mode",
+      "agent": null,
+      "artifacts": [
+        "tracking/workflow-status.md"
+      ],
+      "next": [
+        "review",
+        "test",
+        "pr",
+        "plan",
+        "input-sync"
+      ]
+    },
+    "input-sync": {
+      "state": "input-sync-mode",
+      "agent": "frontend-planner",
+      "artifacts": [
+        "tracking/input-sync-report.md",
+        "planning/questions.md",
+        "tracking/workflow-status.md"
+      ],
+      "next": [
+        "plan",
+        "input-sync",
+        "figma",
+        "cook",
+        "bugfix",
+        "review"
+      ]
+    },
+    "figma": {
+      "state": "figma-extraction-mode",
+      "agent": "frontend-figma-specialist",
+      "artifacts": [
+        "output/figma-extraction-summary.md",
+        "tracking/workflow-status.md"
+      ],
+      "next": [
+        "cook",
+        "plan",
+        "input-sync",
+        "figma"
+      ]
+    },
+    "figma-review": {
+      "state": "figma-review-mode",
+      "agent": "frontend-figma-specialist",
+      "artifacts": [
+        "output/ui-figma-review-report.md",
+        "tracking/workflow-status.md"
+      ],
+      "next": [
+        "pr",
+        "bugfix",
+        "input-sync",
+        "figma-review",
+        "test"
+      ]
+    },
+    "cook": {
+      "state": "implementation-mode",
+      "agent": "frontend-developer",
+      "artifacts": [
+        "planning/build-checklist.md",
+        "tracking/workflow-status.md"
+      ],
+      "next": [
+        "review",
+        "cook",
+        "input-sync",
+        "plan"
+      ]
+    },
+    "bugfix": {
+      "state": "bugfix-mode",
+      "agent": "frontend-developer",
+      "artifacts": [
+        "tracking/review-bugs.md",
+        "tracking/workflow-status.md"
+      ],
+      "next": [
+        "review",
+        "bugfix",
+        "input-sync",
+        "test",
+        "figma-review"
+      ]
+    },
+    "review": {
+      "state": "review-mode",
+      "agent": "frontend-reviewer",
+      "artifacts": [
+        "output/review-report.md",
+        "tracking/workflow-status.md"
+      ],
+      "next": [
+        "bugfix",
+        "input-sync",
+        "figma-review",
+        "test",
+        "pr"
+      ]
+    },
+    "test": {
+      "state": "testing-mode",
+      "agent": "frontend-tester",
+      "artifacts": [
+        "output/test-summary.md",
+        "tracking/workflow-status.md"
+      ],
+      "next": [
+        "figma-review",
+        "pr",
+        "bugfix",
+        "input-sync",
+        "test"
+      ]
+    },
+    "pr": {
+      "state": "pr-ready-mode",
+      "agent": "frontend-release-manager",
+      "artifacts": [
+        "output/pr-summary.md",
+        "tracking/workflow-status.md"
+      ],
+      "next": [
+        "bugfix",
+        "input-sync",
+        "pr"
+      ]
+    }
+  },
+  "aliases": {
+    "build": "cook",
+    "figma-extract": "figma",
+    "implement": "cook"
+  },
+  "terminal_next": [
+    "none",
+    "done",
+    "completed",
+    "merged"
+  ],
+  "always_allowed": [
+    "plan",
+    "input-sync"
+  ],
+  "source_edit_modes": [
+    "cook",
+    "bugfix",
+    "quick"
+  ],
+  "source_edit_agent": "frontend-developer",
+  "source_fix_route": "FE bugfix/cook",
+  "plan_update_route": "input-sync",
+  "read_inputs_hint": 'Input c\u1EA7n \u0111\u1ECDc: m\u1EE5c "Input ledger b\u1EAFt bu\u1ED9c cho FE plan" trong tracking/workflow-status.md.',
+  "rules": {
+    "always": [
+      "core.md",
+      "mode-output-contract.md",
+      "plan-input-ledger-contract.md",
+      "question-resolution-contract.md",
+      "vietnamese-output.md",
+      "efficiency-budget-contract.md",
+      "untrusted-input-contract.md"
+    ],
+    "by_mode": {
+      "srs-api-contract.md": [
+        "plan",
+        "input-sync",
+        "cook",
+        "quick",
+        "bugfix",
+        "review"
+      ],
+      "clean-code-contract.md": [
+        "cook",
+        "quick",
+        "bugfix",
+        "review"
+      ],
+      "evidence-scope-contract.md": [
+        "cook",
+        "review",
+        "test",
+        "figma-review",
+        "pr"
+      ],
+      "review-bug-contract.md": [
+        "review",
+        "bugfix",
+        "pr"
+      ]
+    },
+    "conditional": [
+      {
+        "rule": "figma-ui-contract.md",
+        "always": [
+          "figma",
+          "figma-review"
+        ],
+        "modes": [
+          "plan",
+          "cook",
+          "quick",
+          "bugfix",
+          "review",
+          "pr"
+        ],
+        "when_field": "figma_required"
+      }
+    ]
+  },
+  "mcp": {
+    "server_name": "frontend-delivery",
+    "tool_prefix": "fe",
+    "skill_dir": "skills/frontend-delivery-standard",
+    "next_prompt_heading": "Prompt b\u01B0\u1EDBc ti\u1EBFp theo",
+    "first_command": "plan",
+    "task_prop_description": "T\xEAn task (FE-123-abc) ho\u1EB7c \u0111\u01B0\u1EDDng d\u1EABn task folder.",
+    "task_name_description": "T\xEAn task d\u1EA1ng FE-<id>-<slug>, vd FE-123-login-form.",
+    "scope_self_reported": "Scope: d\xF9ng scope_diff_status t\u1EF1 khai.",
+    "scope_unavailable": "Kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff (kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng diff \u0111\u01B0\u1EE3c base). Ghi scope_diff_status theo review th\u1EE7 c\xF4ng v\xE0 n\xEAu l\xFD do.",
+    "planned_files_missing": 'implementation-plan.md ch\u01B0a khai file n\xE0o \u1EDF m\u1EE5c "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" n\xEAn kh\xF4ng \u0111\u1ED1i chi\u1EBFu \u0111\u01B0\u1EE3c.',
+    "status_fields": [
+      "current_mode",
+      "next_mode",
+      "build_ready",
+      "questions_resolution_gate_status",
+      "blocking_questions_open",
+      "figma_required",
+      "figma_gate_status",
+      "review_status",
+      "critical_issues_open",
+      "high_issues_open",
+      "pr_status",
+      "human_override"
+    ],
+    "descriptions": {
+      "begin_mode": "G\u1ECCI \u0110\u1EA6U TI\xCAN khi b\u1EAFt \u0111\u1EA7u b\u1EA5t k\u1EF3 mode FE n\xE0o (plan/quick/input-sync/figma/cook/bugfix/review/test/figma-review/pr). Tr\u1EA3 v\u1EC1: mode c\xF3 \u0111\u01B0\u1EE3c ch\u1EA1y kh\xF4ng (gate c\xE2u h\u1ECFi blocking, build_ready, Figma, review), prompt ph\u1EA3i ch\u1EA1y thay th\u1EBF n\u1EBFu b\u1ECB ch\u1EB7n, artifact b\u1EAFt bu\u1ED9c c\u1EE7a mode v\xE0 nguy\xEAn v\u0103n c\xE1c rule \xE1p d\u1EE5ng cho mode (kh\xF4ng c\u1EA7n \u0111\u1ECDc file rule ri\xEAng).",
+      "new_task": "T\u1EA1o task folder chu\u1EA9n trong docs/frontend-tasks/<t\xEAn> t\u1EEB template c\u1EE7a kit (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). Kh\xF4ng ghi \u0111\xE8 file \u0111\xE3 c\xF3. D\xF9ng cho /fe:new-task thay v\xEC t\u1EF1 copy template.",
+      "validate_task": "Ki\u1EC3m tra task folder c\xF3 \u0111\u1EE7 file b\u1EAFt bu\u1ED9c theo chu\u1EA9n Frontend Delivery kh\xF4ng (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). D\xF9ng tr\u01B0\u1EDBc khi chuy\u1EC3n mode.",
+      "validate_workflow": "Ch\u1EA1y to\xE0n b\u1ED9 gate c\u1EE7a workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing h\u1EE3p l\u1EC7. Task \u1EDF review/test/pr-ready th\xEC \u0111\u1ED1i chi\u1EBFu th\xEAm file \u0111\xE3 s\u1EEDa (git) v\u1EDBi plan. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC m\u1ECDi mode; \u0111\xE2y l\xE0 gate ch\xEDnh ch\u1EB7n agent nh\u1EA3y mode sai.",
+      "scope_diff": 'So file th\u1EF1c s\u1EF1 thay \u0111\u1ED5i (git) v\u1EDBi b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" trong implementation-plan.md. D\xF9ng trong cook/bugfix/review/pr \u0111\u1EC3 ph\xE1t hi\u1EC7n file s\u1EEDa ngo\xE0i plan thay v\xEC t\u1EF1 khai scope_diff_status.',
+      "next_step": "Tr\u1EA3 v\u1EC1 prompt b\u01B0\u1EDBc ti\u1EBFp theo \u0111\u1ECDc tr\u1EF1c ti\u1EBFp t\u1EEB tracking/workflow-status.md c\u1EE7a task. D\xF9ng khi kh\xF4ng ch\u1EAFc mode k\u1EBF ti\u1EBFp l\xE0 g\xEC.",
+      "task_status": "\u0110\u1ECDc t\xF3m t\u1EAFt tr\u1EA1ng th\xE1i task: mode hi\u1EC7n t\u1EA1i, c\xE1c gate status ch\xEDnh, s\u1ED1 c\xE2u h\u1ECFi blocking, s\u1ED1 issue theo severity. Ch\u1EC9 \u0111\u1ECDc, kh\xF4ng s\u1EEDa file."
+    }
+  }
 };
+
+// packages/pack-fe/src/transitions.mjs
+var COMMAND_TO_MODE = commandToModeOf(manifest_gen_default);
 var COMMANDS = Object.keys(COMMAND_TO_MODE);
-var COMMAND_ALIASES = { build: "cook", "figma-extract": "figma", implement: "cook" };
-var TERMINAL_NEXT_MODES = ["none", "done", "completed", "merged"];
-var SOURCE_EDIT_COMMANDS = ["cook", "bugfix", "quick"];
-var ALWAYS_ALLOWED = ["plan", "input-sync"];
-var ALLOWED_NEXT = {
-  plan: ["input-sync", "figma", "cook", "plan", "quick"],
-  quick: ["review", "test", "pr", "plan", "input-sync"],
-  "input-sync": ["plan", "input-sync", "figma", "cook", "bugfix", "review"],
-  figma: ["cook", "plan", "input-sync", "figma"],
-  cook: ["review", "cook", "input-sync", "plan"],
-  bugfix: ["review", "bugfix", "input-sync", "test", "figma-review"],
-  review: ["bugfix", "input-sync", "figma-review", "test", "pr"],
-  test: ["figma-review", "pr", "bugfix", "input-sync", "test"],
-  "figma-review": ["pr", "bugfix", "input-sync", "figma-review", "test"],
-  pr: ["bugfix", "input-sync", "pr"]
-};
+var COMMAND_ALIASES = manifest_gen_default.aliases;
+var TERMINAL_NEXT_MODES = manifest_gen_default.terminal_next;
+var SOURCE_EDIT_COMMANDS = manifest_gen_default.source_edit_modes;
+var ALWAYS_ALLOWED = manifest_gen_default.always_allowed;
+var ALLOWED_NEXT = Object.fromEntries(Object.entries(manifest_gen_default.modes).map(([cmd, m2]) => [cmd, m2.next]));
 function feEntryRules({ command: command2, data, taskRef, alwaysAllowed, bool: bool3, norm: norm3, openBlockingQuestions = 0, openIssues }) {
   const rules = [];
   const blocking = Math.max(Number(data.blocking_questions_open || 0), Number(openBlockingQuestions || 0));
@@ -23337,90 +23735,31 @@ var machine = createStateMachine({
   aliases: COMMAND_ALIASES,
   terminalNext: TERMINAL_NEXT_MODES,
   alwaysAllowed: ALWAYS_ALLOWED,
-  commandPrefix: "fe[:\\s]+",
-  statusFileName: "workflow-status.md",
+  commandPrefix: `${manifest_gen_default.plugin}[:\\s]+`,
+  statusFileName: manifest_gen_default.status_file.split("/").pop(),
   entryRules: feEntryRules
 });
 var normalizeCommand = machine.normalizeCommand;
 var checkRecordedNextMode = machine.checkRecordedNextMode;
 var evaluateModeEntry = machine.evaluateModeEntry;
 
-// packages/validators/src/modes.mjs
-var STATUS = "tracking/workflow-status.md";
-var TASK_GITKEEP = "output/figma-reference-screenshots/.gitkeep";
-var REQUIRED_TASK_DOCS = [
-  "task.md",
-  "planning/implementation-plan.md",
-  "planning/build-checklist.md",
-  "planning/questions.md",
-  STATUS
-];
-var REQUIRED_TASK_FILES = [...REQUIRED_TASK_DOCS, TASK_GITKEEP];
-var MODE_REQUIRED_ARTIFACTS = {
-  plan: [
-    "task.md",
-    "planning/implementation-plan.md",
-    "planning/build-checklist.md",
-    "planning/questions.md",
-    STATUS
-  ],
-  quick: [STATUS],
-  "input-sync": ["tracking/input-sync-report.md", "planning/questions.md", STATUS],
-  figma: ["output/figma-extraction-summary.md", STATUS],
-  cook: ["planning/build-checklist.md", STATUS],
-  review: ["output/review-report.md", STATUS],
-  bugfix: ["tracking/review-bugs.md", STATUS],
-  test: ["output/test-summary.md", STATUS],
-  "figma-review": ["output/ui-figma-review-report.md", STATUS],
-  pr: ["output/pr-summary.md", STATUS]
-};
-var AGENT_FOR_COMMAND = {
-  plan: "frontend-planner",
-  "input-sync": "frontend-planner",
-  figma: "frontend-figma-specialist",
-  "figma-review": "frontend-figma-specialist",
-  cook: "frontend-developer",
-  bugfix: "frontend-developer",
-  review: "frontend-reviewer",
-  test: "frontend-tester",
-  pr: "frontend-release-manager",
-  quick: null
-};
-var SOURCE_EDIT_AGENT = "frontend-developer";
-var KIT_WRITABLE_PREFIXES = ["docs/frontend-tasks/", "docs/frontend-context/"];
-var ALWAYS_RULES = [
-  "core.md",
-  "mode-output-contract.md",
-  "plan-input-ledger-contract.md",
-  "question-resolution-contract.md",
-  "vietnamese-output.md",
-  "efficiency-budget-contract.md",
-  "untrusted-input-contract.md"
-];
-var RULES_BY_COMMAND = {
-  "srs-api-contract.md": ["plan", "input-sync", "cook", "quick", "bugfix", "review"],
-  "clean-code-contract.md": ["cook", "quick", "bugfix", "review"],
-  "evidence-scope-contract.md": ["cook", "review", "test", "figma-review", "pr"],
-  "review-bug-contract.md": ["review", "bugfix", "pr"]
-};
-var FIGMA_RULE = "figma-ui-contract.md";
-var FIGMA_ALWAYS = ["figma", "figma-review"];
-var FIGMA_WHEN_REQUIRED = ["plan", "cook", "quick", "bugfix", "review", "pr"];
+// packages/pack-fe/src/modes.mjs
+var TASK_GITKEEP = manifest_gen_default.task_files.empty[0];
+var REQUIRED_TASK_DOCS = manifest_gen_default.task_files.required_docs;
+var REQUIRED_TASK_FILES = [...REQUIRED_TASK_DOCS, ...manifest_gen_default.task_files.empty];
+var CONDITIONAL_TASK_FILES = manifest_gen_default.task_files.conditional;
+var MODE_REQUIRED_ARTIFACTS = Object.fromEntries(Object.entries(manifest_gen_default.modes).map(([cmd, m2]) => [cmd, m2.artifacts]));
+var AGENT_FOR_COMMAND = Object.fromEntries(Object.entries(manifest_gen_default.modes).map(([cmd, m2]) => [cmd, m2.agent]));
+var SOURCE_EDIT_AGENT = manifest_gen_default.source_edit_agent;
+var KIT_WRITABLE_PREFIXES = manifest_gen_default.writable_prefixes;
 function rulesForMode(command2, { figmaRequired = false } = {}) {
-  const rules = [...ALWAYS_RULES];
-  for (const [rule, commands] of Object.entries(RULES_BY_COMMAND)) {
-    if (commands.includes(command2)) rules.push(rule);
-  }
-  if (FIGMA_ALWAYS.includes(command2) || figmaRequired && FIGMA_WHEN_REQUIRED.includes(command2)) {
-    rules.push(FIGMA_RULE);
-  }
-  return rules;
+  return rulesForManifest(manifest_gen_default, command2, { figma_required: figmaRequired });
 }
 function allRuleFiles() {
-  return [...ALWAYS_RULES, ...Object.keys(RULES_BY_COMMAND), FIGMA_RULE];
+  return allRuleFilesOf(manifest_gen_default);
 }
 
-// packages/validators/src/review-bugs.mjs
+// packages/pack-fe/src/review-bugs.mjs
 var ISSUE_CATEGORIES = [
   "srs-logic",
   "api-contract",
@@ -23489,9 +23828,9 @@ function sectionTable(markdown, headingRe) {
 }
 function columnIndex(header) {
   const index = {};
-  header.forEach((name, i) => {
+  header.forEach((name2, i) => {
     for (const [key, re] of Object.entries(COLUMN_ALIASES)) {
-      if (index[key] === void 0 && re.test(name)) index[key] = i;
+      if (index[key] === void 0 && re.test(name2)) index[key] = i;
     }
   });
   return index;
@@ -23567,7 +23906,7 @@ function countOpenIssuesInTask(read3) {
   return countOpenIssuesBySeverity(read3("tracking/review-bugs.md"), read3("output/review-report.md"));
 }
 
-// packages/validators/src/gates.mjs
+// packages/pack-fe/src/gates.mjs
 function norm2(v) {
   return String(v ?? "").trim().toLowerCase();
 }
@@ -23910,9 +24249,9 @@ function evaluatePrGates({ data, exists: exists3, read: read3, scope }) {
   return { ok: errors.length === 0, errors, warnings, issues };
 }
 
-// packages/validators/src/scope.mjs
-var DEFAULT_SCOPE_IGNORE = ["docs/frontend-tasks/", "docs/frontend-context/", ".frontend-delivery/", ...LOCKFILE_IGNORE];
-var PLANNED_FILES_HEADING = "File s\u1EBD t\u1EA1o\\s*\\/\\s*c\u1EADp nh\u1EADt";
+// packages/pack-fe/src/scope.mjs
+var DEFAULT_SCOPE_IGNORE = [...manifest_gen_default.scope_ignore, ...LOCKFILE_IGNORE];
+var PLANNED_FILES_HEADING = manifest_gen_default.planned_files_heading;
 function parsePlannedFiles2(planMarkdown) {
   return parsePlannedFiles(planMarkdown, { heading: PLANNED_FILES_HEADING });
 }
@@ -23920,23 +24259,23 @@ function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
   return computeScopeDiff({ plannedFiles, changedFiles, ignore: ignore ?? DEFAULT_SCOPE_IGNORE });
 }
 
-// packages/validators/src/workflow.mjs
+// packages/pack-fe/src/workflow.mjs
 import fs7 from "node:fs";
 import path8 from "node:path";
 
-// packages/validators/src/resolve.mjs
-var TASKS_ROOT = "docs/frontend-tasks";
+// packages/pack-fe/src/resolve.mjs
+var TASKS_ROOT = manifest_gen_default.tasks_root;
 function resolveTaskDir2(workspaceRoot, taskFolder) {
   return resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot: TASKS_ROOT });
 }
 
-// packages/validators/src/project-config.mjs
-var PROJECT_CONFIG_FILE = ".frontend-delivery/standard.yaml";
+// packages/pack-fe/src/project-config.mjs
+var PROJECT_CONFIG_FILE = manifest_gen_default.project_config_file;
 function loadProjectConfig2(repoRoot) {
   return loadProjectConfig(repoRoot, { file: PROJECT_CONFIG_FILE });
 }
 
-// packages/validators/src/workflow.mjs
+// packages/pack-fe/src/workflow.mjs
 function taskIo(taskDir) {
   const exists3 = (rel) => fs7.existsSync(path8.join(taskDir, rel));
   const read3 = (rel) => {
@@ -24036,33 +24375,34 @@ function validatePr(taskDir, { scope } = {}) {
   return { ok: errors.length === 0, errors, issues, warnings: [...workflow.warnings, ...pr.warnings] };
 }
 
-// packages/validators/src/scaffold.mjs
+// packages/pack-fe/src/scaffold.mjs
 var TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
-function scaffoldTask2({ workspaceRoot, name, templatesDir }) {
+function scaffoldTask2({ workspaceRoot, name: name2, templatesDir }) {
   return scaffoldTask({
     workspaceRoot,
-    name,
+    name: name2,
     templatesDir,
     tasksRoot: TASKS_ROOT,
     templateFiles: TASK_TEMPLATE_FILES,
     emptyFiles: [TASK_GITKEEP],
-    nameHint: "FE-<id>-<slug>"
+    nameHint: manifest_gen_default.task_name_hint
   });
 }
 
-// packages/validators/src/pack.mjs
+// packages/pack-fe/src/pack.mjs
+var m = manifest_gen_default;
 var fePack = {
-  id: "fe",
-  displayName: "FE-Kit",
+  id: m.id,
+  displayName: m.display_name,
   /** Namespace slash command và agent của plugin: `/fe:<mode>`, `fe:<agent>`. */
-  pluginName: "fe",
+  pluginName: m.plugin,
   /** Tiền tố lệnh dạng chữ: `FE <mode> <task>`. */
-  promptPrefix: "FE",
+  promptPrefix: m.prompt_prefix,
   /** Tiền tố biến môi trường: `FE_KIT_HOOKS`, `FE_KIT_BASH_GUARD`, `FE_KIT_HOOKS_DEBUG`. */
-  envPrefix: "FE_KIT",
-  agentPrefix: "frontend-",
+  envPrefix: m.env_prefix,
+  agentPrefix: m.agent_prefix,
   tasksRoot: TASKS_ROOT,
-  statusFile: "tracking/workflow-status.md",
+  statusFile: m.status_file,
   writablePrefixes: KIT_WRITABLE_PREFIXES,
   commands: COMMANDS,
   commandToMode: COMMAND_TO_MODE,
@@ -24070,12 +24410,10 @@ var fePack = {
   sourceEditAgent: SOURCE_EDIT_AGENT,
   requiredArtifacts: MODE_REQUIRED_ARTIFACTS,
   agentFor: AGENT_FOR_COMMAND,
-  label: (command2) => `FE ${command2}`,
-  /** Mode nào sửa lỗi source mà mode chỉ đọc phát hiện. */
-  sourceFixRoute: "FE bugfix/cook",
-  /** Mode cập nhật plan khi phạm vi đổi. */
-  planUpdateRoute: "input-sync",
-  readInputsHint: 'Input c\u1EA7n \u0111\u1ECDc: m\u1EE5c "Input ledger b\u1EAFt bu\u1ED9c cho FE plan" trong tracking/workflow-status.md.',
+  label: (command2) => `${m.prompt_prefix} ${command2}`,
+  sourceFixRoute: m.source_fix_route,
+  planUpdateRoute: m.plan_update_route,
+  readInputsHint: m.read_inputs_hint,
   parseStatus: parseWorkflowStatus,
   rulesFor: (command2, data) => rulesForMode(command2, { figmaRequired: data.figma_required === true }),
   /** Số câu hỏi blocking và issue Critical/High đang mở, đếm từ file của task. */
@@ -24094,41 +24432,28 @@ var fePack = {
   validateWorkflowAtGate,
   /** Chuỗi và cấu hình riêng của FE cho MCP server (`createMcpTools` trong engine). */
   mcp: {
-    serverName: "frontend-delivery",
-    toolPrefix: "fe",
-    configDir: ".frontend-delivery",
-    skillDir: "skills/frontend-delivery-standard",
-    nextPromptHeading: "Prompt b\u01B0\u1EDBc ti\u1EBFp theo",
-    firstCommand: "plan",
-    afterNewTask: (taskRef) => [`Task nh\u1ECF, r\u1EE7i ro th\u1EA5p c\xF3 th\u1EC3 d\xF9ng: FE quick ${taskRef}`],
-    taskPropDescription: "T\xEAn task (FE-123-abc) ho\u1EB7c \u0111\u01B0\u1EDDng d\u1EABn task folder.",
-    taskNameDescription: "T\xEAn task d\u1EA1ng FE-<id>-<slug>, vd FE-123-login-form.",
-    scopeSelfReported: "Scope: d\xF9ng scope_diff_status t\u1EF1 khai.",
-    scopeUnavailable: "Kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff (kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng diff \u0111\u01B0\u1EE3c base). Ghi scope_diff_status theo review th\u1EE7 c\xF4ng v\xE0 n\xEAu l\xFD do.",
-    plannedFilesMissing: 'implementation-plan.md ch\u01B0a khai file n\xE0o \u1EDF m\u1EE5c "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" n\xEAn kh\xF4ng \u0111\u1ED1i chi\u1EBFu \u0111\u01B0\u1EE3c.',
-    statusFields: [
-      "current_mode",
-      "next_mode",
-      "build_ready",
-      "questions_resolution_gate_status",
-      "blocking_questions_open",
-      "figma_required",
-      "figma_gate_status",
-      "review_status",
-      "critical_issues_open",
-      "high_issues_open",
-      "pr_status",
-      "human_override"
-    ],
+    serverName: m.mcp.server_name,
+    toolPrefix: m.mcp.tool_prefix,
+    configDir: m.config_dir,
+    skillDir: m.mcp.skill_dir,
+    nextPromptHeading: m.mcp.next_prompt_heading,
+    firstCommand: m.mcp.first_command,
+    afterNewTask: (taskRef) => [`Task nh\u1ECF, r\u1EE7i ro th\u1EA5p c\xF3 th\u1EC3 d\xF9ng: ${m.prompt_prefix} quick ${taskRef}`],
+    taskPropDescription: m.mcp.task_prop_description,
+    taskNameDescription: m.mcp.task_name_description,
+    scopeSelfReported: m.mcp.scope_self_reported,
+    scopeUnavailable: m.mcp.scope_unavailable,
+    plannedFilesMissing: m.mcp.planned_files_missing,
+    statusFields: m.mcp.status_fields,
     statusExtras: (read3) => [`blocking_questions_open (\u0111\u1EBFm t\u1EEB questions.md): ${countOpenBlockingQuestions(read3("planning/questions.md"))}`],
     descriptions: {
-      beginMode: "G\u1ECCI \u0110\u1EA6U TI\xCAN khi b\u1EAFt \u0111\u1EA7u b\u1EA5t k\u1EF3 mode FE n\xE0o (plan/quick/input-sync/figma/cook/bugfix/review/test/figma-review/pr). Tr\u1EA3 v\u1EC1: mode c\xF3 \u0111\u01B0\u1EE3c ch\u1EA1y kh\xF4ng (gate c\xE2u h\u1ECFi blocking, build_ready, Figma, review), prompt ph\u1EA3i ch\u1EA1y thay th\u1EBF n\u1EBFu b\u1ECB ch\u1EB7n, artifact b\u1EAFt bu\u1ED9c c\u1EE7a mode v\xE0 nguy\xEAn v\u0103n c\xE1c rule \xE1p d\u1EE5ng cho mode (kh\xF4ng c\u1EA7n \u0111\u1ECDc file rule ri\xEAng).",
-      newTask: "T\u1EA1o task folder chu\u1EA9n trong docs/frontend-tasks/<t\xEAn> t\u1EEB template c\u1EE7a kit (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). Kh\xF4ng ghi \u0111\xE8 file \u0111\xE3 c\xF3. D\xF9ng cho /fe:new-task thay v\xEC t\u1EF1 copy template.",
-      validateTask: "Ki\u1EC3m tra task folder c\xF3 \u0111\u1EE7 file b\u1EAFt bu\u1ED9c theo chu\u1EA9n Frontend Delivery kh\xF4ng (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). D\xF9ng tr\u01B0\u1EDBc khi chuy\u1EC3n mode.",
-      validateWorkflow: "Ch\u1EA1y to\xE0n b\u1ED9 gate c\u1EE7a workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing h\u1EE3p l\u1EC7. Task \u1EDF review/test/pr-ready th\xEC \u0111\u1ED1i chi\u1EBFu th\xEAm file \u0111\xE3 s\u1EEDa (git) v\u1EDBi plan. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC m\u1ECDi mode; \u0111\xE2y l\xE0 gate ch\xEDnh ch\u1EB7n agent nh\u1EA3y mode sai.",
-      scopeDiff: 'So file th\u1EF1c s\u1EF1 thay \u0111\u1ED5i (git) v\u1EDBi b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" trong implementation-plan.md. D\xF9ng trong cook/bugfix/review/pr \u0111\u1EC3 ph\xE1t hi\u1EC7n file s\u1EEDa ngo\xE0i plan thay v\xEC t\u1EF1 khai scope_diff_status.',
-      nextStep: "Tr\u1EA3 v\u1EC1 prompt b\u01B0\u1EDBc ti\u1EBFp theo \u0111\u1ECDc tr\u1EF1c ti\u1EBFp t\u1EEB tracking/workflow-status.md c\u1EE7a task. D\xF9ng khi kh\xF4ng ch\u1EAFc mode k\u1EBF ti\u1EBFp l\xE0 g\xEC.",
-      taskStatus: "\u0110\u1ECDc t\xF3m t\u1EAFt tr\u1EA1ng th\xE1i task: mode hi\u1EC7n t\u1EA1i, c\xE1c gate status ch\xEDnh, s\u1ED1 c\xE2u h\u1ECFi blocking, s\u1ED1 issue theo severity. Ch\u1EC9 \u0111\u1ECDc, kh\xF4ng s\u1EEDa file."
+      beginMode: m.mcp.descriptions.begin_mode,
+      newTask: m.mcp.descriptions.new_task,
+      validateTask: m.mcp.descriptions.validate_task,
+      validateWorkflow: m.mcp.descriptions.validate_workflow,
+      scopeDiff: m.mcp.descriptions.scope_diff,
+      nextStep: m.mcp.descriptions.next_step,
+      taskStatus: m.mcp.descriptions.task_status
     }
   }
 };
@@ -24136,12 +24461,12 @@ var evaluateModeCompletion = createModeCompletion(fePack);
 fePack.evaluateModeCompletion = evaluateModeCompletion;
 var modeBriefing = createModeBriefing(fePack);
 
-// packages/validators/src/runlog.mjs
+// packages/pack-fe/src/runlog.mjs
 function appendRunLog2(taskDir, record2) {
-  return appendRunLog(taskDir, { pack: "fe", ...record2 });
+  return appendRunLog(taskDir, { pack: manifest_gen_default.id, ...record2 });
 }
 
-// packages/validators/src/report.mjs
+// packages/pack-fe/src/report.mjs
 function buildReport2({ repoRoot, task, since }) {
   return buildReport({ repoRoot, tasksRoot: TASKS_ROOT, task, since });
 }
@@ -24149,7 +24474,7 @@ function renderReport2(report2) {
   return renderReport(report2, { title: "B\xE1o c\xE1o run-log FE-Kit", tasksRoot: TASKS_ROOT });
 }
 
-// packages/validators/src/fe-checks.mjs
+// packages/pack-fe/src/fe-checks.mjs
 import fs8 from "node:fs";
 import path9 from "node:path";
 var parseFrontMatter = parseFrontMatterLoose;
@@ -24183,7 +24508,7 @@ function hasRealScreenshotReference(summary, taskDir) {
     if (!/(figma-reference-screenshots|screenshot|ảnh|anh|png|jpg|jpeg|webp)/i.test(line)) continue;
     if (/<frame|<state|\.\.\.png|`output\/figma-reference-screenshots\/\.\.\.png`|\|\s*\|\s*\|/i.test(line)) continue;
     const matches = line.match(/`?([A-Za-z0-9_\.\-\/]+\.(?:png|jpg|jpeg|webp))`?/ig) || [];
-    for (const m of matches) candidates.push(m.replace(/`/g, ""));
+    for (const m2 of matches) candidates.push(m2.replace(/`/g, ""));
     if (/user screenshot|manual screenshot|ảnh user|anh user|screenshot user|manual/i.test(line) && !/<|\.\.\./.test(line)) return true;
   }
   for (const rel of candidates) {
@@ -24444,10 +24769,10 @@ var AGENT_LABELS = {
   cursor: "Cursor",
   github: "GitHub Copilot"
 };
-function argValueFlexible(name, fallback = "") {
-  const eq = args.find((a) => a.startsWith(name + "="));
-  if (eq) return eq.slice(name.length + 1);
-  return argValue(name, fallback);
+function argValueFlexible(name2, fallback = "") {
+  const eq = args.find((a) => a.startsWith(name2 + "="));
+  if (eq) return eq.slice(name2.length + 1);
+  return argValue(name2, fallback);
 }
 function normalizeAgents(raw) {
   const input2 = String(raw || "").trim();
@@ -24546,8 +24871,8 @@ function agentsForDoctor(target) {
 function agentList(agents) {
   return agents.map((a) => a + " (" + AGENT_LABELS[a] + ")").join(", ");
 }
-function argValue(name, fallback) {
-  const i = args.indexOf(name);
+function argValue(name2, fallback) {
+  const i = args.indexOf(name2);
   if (i >= 0 && args[i + 1]) return args[i + 1];
   return fallback;
 }
@@ -24641,8 +24966,8 @@ function marketplaceRepo() {
   if (explicit) return explicit;
   try {
     const plugin = JSON.parse(fs9.readFileSync(path10.join(kitRoot, "core", "plugin.json"), "utf8"));
-    const m = String(plugin.repository || "").match(/github\.com[:/]([^/]+\/[^/.\s]+)/);
-    return m ? m[1] : "";
+    const m2 = String(plugin.repository || "").match(/github\.com[:/]([^/]+\/[^/.\s]+)/);
+    return m2 ? m2[1] : "";
   } catch {
     return "";
   }
@@ -24670,9 +24995,9 @@ function enableClaudePlugin(target) {
   return true;
 }
 function claudePluginEnabled(target) {
-  for (const name of ["settings.json", "settings.local.json"]) {
+  for (const name2 of ["settings.json", "settings.local.json"]) {
     try {
-      const settings = JSON.parse(fs9.readFileSync(path10.join(target, ".claude", name), "utf8"));
+      const settings = JSON.parse(fs9.readFileSync(path10.join(target, ".claude", name2), "utf8"));
       if (settings.enabledPlugins?.[PLUGIN_ID] === true) return true;
     } catch {
     }
@@ -24725,8 +25050,8 @@ function resolveTask(input2, target = process.cwd()) {
 function section(text, heading) {
   const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const re = new RegExp(`^##\\s+${escaped}[\\t ]*\\r?\\n[\\s\\S]*?(?=\\r?\\n##\\s+|(?![\\s\\S]))`, "m");
-  const m = text.match(re);
-  return m ? m[0].trim() : "";
+  const m2 = text.match(re);
+  return m2 ? m2[0].trim() : "";
 }
 function extractNextPrompt(workflowText) {
   const sec = section(workflowText, "Prompt b\u01B0\u1EDBc ti\u1EBFp theo") || section(workflowText, "Prompt b\u01B0\u1EDBc ti\u1EBFp theo");
@@ -24950,8 +25275,8 @@ var CHECKS = {
   "check-figma-evidence": [validateFigmaEvidence, "check-figma-evidence skipped: figma_required=false/not required."],
   "check-asset-gate": [validateAssetGate, "check-asset-gate skipped: no Figma summary and figma_required=false/not required."]
 };
-function checkCommand(name) {
-  const [check2, skippedMessage] = CHECKS[name];
+function checkCommand(name2) {
+  const [check2, skippedMessage] = CHECKS[name2];
   const target = path10.resolve(argValue("--target", process.cwd()));
   const taskDir = resolveTask(taskArg(), target);
   if (!taskDir || !exists2(taskDir)) {
@@ -24963,7 +25288,7 @@ function checkCommand(name) {
     for (const err of result.errors) console.error(err);
     process.exit(1);
   }
-  console.log(result.skipped ? skippedMessage : `${name} passed.`);
+  console.log(result.skipped ? skippedMessage : `${name2} passed.`);
 }
 function scopeForTask(taskDir, target) {
   if (args.includes("--no-scope")) return void 0;

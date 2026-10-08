@@ -17,8 +17,8 @@
     "@frontend-delivery-kit/validators": "*"
   },
   "scripts": {
-    "build": "node build/generate-adapters.mjs",
-    "build:check": "node build/generate-adapters.mjs --check",
+    "build": "node build/compile-packs.mjs && node build/generate-adapters.mjs",
+    "build:check": "node build/compile-packs.mjs --check && node build/generate-adapters.mjs --check",
     "pack:chatgpt": "npm run build && node build/pack-chatgpt-skill.mjs",
     "init": "node bin/fe-kit.mjs init",
     "doctor": "node bin/fe-kit.mjs doctor",
@@ -28,7 +28,7 @@
     "validate:task": "node bin/fe-kit.mjs validate-task",
     "validate:workflow": "node bin/fe-kit.mjs validate-workflow",
     "validate:pr": "node bin/fe-kit.mjs validate-pr",
-    "test": "npm run test --workspace=@frontend-delivery-kit/validators && npm run test:kit",
+    "test": "npm run test --workspaces --if-present && npm run test:kit",
     "test:kit": "vitest run --dir tests"
   },
   "devDependencies": {
