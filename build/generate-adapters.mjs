@@ -177,9 +177,12 @@ for (const file of listFiles(path.join(CORE, 'commands'))) {
 
 managedDirs.add(`${PLUGIN_ROOT}/agents`);
 const protocol = readCore('agents/_protocol.md');
+// Agent retro không làm mode của task nên không nhận giao thức mode (fe_begin_mode, workflow-status.md).
+const NO_PROTOCOL = new Set([feManifest.retro?.agent].filter(Boolean).map((a) => `${a}.md`));
 for (const file of listFiles(path.join(CORE, 'agents'))) {
   if (file.startsWith('_')) continue; // partial, không phải agent
-  emit(`${PLUGIN_ROOT}/agents/${file}`, `${readCore(`agents/${file}`).trimEnd()}\n\n${protocol}`);
+  const body = readCore(`agents/${file}`);
+  emit(`${PLUGIN_ROOT}/agents/${file}`, NO_PROTOCOL.has(file) ? body : `${body.trimEnd()}\n\n${protocol}`);
 }
 
 // --- 5. Bundle (esbuild) -----------------------------------------------------

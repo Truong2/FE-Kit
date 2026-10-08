@@ -21,6 +21,8 @@ function readIfExists(p) {
  * @param {Record<string, string[]>} pack.requiredArtifacts
  * @param {(command: string, data: object) => string[]} pack.rulesFor file rule cần nạp
  * @param {string} pack.readInputsHint câu hướng dẫn agent đọc input của task
+ * @param {(ctx: { workspaceRoot: string, command: string }) => { text: string, source: string, truncated: boolean } | null} [pack.teamRules]
+ *   rule riêng của team đã duyệt qua retro, nạp sau rule của pack
  */
 export function createModeBriefing(pack) {
   const statusName = path.posix.basename(pack.statusFile);
@@ -34,9 +36,10 @@ export function createModeBriefing(pack) {
    * @param {string} params.rulesLabel nguồn rule để in ra
    * @param {string} params.newTaskHint câu hướng dẫn tạo task khi chưa có file trạng thái
    * @param {string} params.finishHint câu hướng dẫn trước khi kết thúc mode
+   * @param {string} [params.workspaceRoot] repo dự án, để nạp rule của team
    * @returns {{ ok: boolean, entry: object | null, text: string }}
    */
-  return function modeBriefing({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint }) {
+  return function modeBriefing({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint, workspaceRoot }) {
     const lines = [];
 
     const statusPath = path.join(taskDir, pack.statusFile);
@@ -80,6 +83,10 @@ export function createModeBriefing(pack) {
       for (const file of pack.rulesFor(command, data)) {
         const body = readIfExists(path.join(rulesDir, file)).trim();
         if (body) lines.push('', `--- ${file} ---`, body);
+      }
+      const team = workspaceRoot && pack.teamRules ? pack.teamRules({ workspaceRoot, command }) : null;
+      if (team) {
+        lines.push('', `=== RULE CỦA TEAM (nguồn: ${team.source}${team.truncated ? ', đã cắt bớt vì vượt trần' : ''}) — đã duyệt qua retro ===`, team.text);
       }
     }
     return { ok: entry.allowed, entry, text: lines.join('\n') };

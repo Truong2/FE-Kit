@@ -1,6 +1,6 @@
 # Quickstart
 
-Version: 2.4.0
+Version: 2.5.0
 
 ## Cài Claude Code plugin
 
@@ -21,7 +21,7 @@ claude plugin marketplace add your-org/frontend-delivery-agent-kit --scope proje
 claude plugin install fe@frontend-delivery --scope project
 ```
 
-Cài xong là có 11 command namespace `fe`:
+Cài xong là có 12 command namespace `fe`:
 
 ```text
 /fe:new-task FE-123-task-name
@@ -29,6 +29,7 @@ Cài xong là có 11 command namespace `fe`:
 /fe:cook docs/frontend-tasks/FE-123-task-name
 /fe:review docs/frontend-tasks/FE-123-task-name
 /fe:pr docs/frontend-tasks/FE-123-task-name
+/fe:retro            # định kỳ: đề xuất cải tiến rule từ run-log và bug của các task
 ```
 
 Mỗi command được delegate cho subagent `fe:frontend-*` tương ứng; MCP tool `fe_begin_mode` kiểm tra gate trước khi làm. Hook mặc định ở mức `warn`; đặt `FE_KIT_HOOKS=enforce` để chặn thật.

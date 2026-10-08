@@ -158,12 +158,7 @@ function statusOverrides(reviewBugsMd) {
  * @returns {{ critical: number, high: number, medium: number, low: number, openIds: Record<string, string[]>, unknownStatusIds: string[], unknownCategoryIds: string[], unknownRootCauseIds: string[], confident: boolean }}
  */
 export function countOpenIssuesBySeverity(reviewBugsMd = '', reviewReportMd = '') {
-  const bugs = parseIssueTable(reviewBugsMd, /Bug cần xử lý|Bugs?\b/i);
-  const report = parseIssueTable(reviewReportMd, /Issue phát hiện|Issues?\b/i);
-  const byId = new Map();
-  for (const row of [...report.rows, ...bugs.rows]) byId.set(row.id, row); // review-bugs.md ghi sau nên thắng
-  const overrides = statusOverrides(reviewBugsMd);
-
+  const { rows, confident } = listIssues(reviewBugsMd, reviewReportMd);
   const result = {
     critical: 0,
     high: 0,
@@ -173,12 +168,12 @@ export function countOpenIssuesBySeverity(reviewBugsMd = '', reviewReportMd = ''
     unknownStatusIds: [],
     unknownCategoryIds: [],
     unknownRootCauseIds: [],
-    confident: bugs.confident && report.confident,
+    confident,
   };
   const categories = new Set(ISSUE_CATEGORIES);
   const rootCauses = new Set(ISSUE_ROOT_CAUSES);
-  for (const row of byId.values()) {
-    const status = overrides.get(row.id) || row.status;
+  for (const row of rows) {
+    const { status } = row;
     if (status === 'open') {
       result[row.severity] += 1;
       result.openIds[row.severity].push(row.id);
@@ -189,6 +184,28 @@ export function countOpenIssuesBySeverity(reviewBugsMd = '', reviewReportMd = ''
     if (row.hasRootCause && !rootCauses.has(row.rootCause.toLowerCase())) result.unknownRootCauseIds.push(row.id);
   }
   return result;
+}
+
+/**
+ * Mọi issue của task, gộp theo ID từ review-bugs.md (ưu tiên) và mục "Issue phát
+ * hiện" của review-report.md, với trạng thái sau khi áp bảng "Trạng thái sau
+ * bugfix". Retro dùng danh sách này để đếm theo nhóm và nguyên nhân gốc.
+ *
+ * @returns {{ rows: { id: string, severity: string, category: string, rootCause: string, status: 'open' | 'closed' | 'unknown', hasCategory: boolean, hasRootCause: boolean }[], confident: boolean }}
+ */
+export function listIssues(reviewBugsMd = '', reviewReportMd = '') {
+  const bugs = parseIssueTable(reviewBugsMd, /Bug cần xử lý|Bugs?\b/i);
+  const report = parseIssueTable(reviewReportMd, /Issue phát hiện|Issues?\b/i);
+  const byId = new Map();
+  for (const row of [...report.rows, ...bugs.rows]) byId.set(row.id, row); // review-bugs.md ghi sau nên thắng
+  const overrides = statusOverrides(reviewBugsMd);
+  const rows = [...byId.values()].map((row) => ({ ...row, status: overrides.get(row.id) || row.status }));
+  return { rows, confident: bugs.confident && report.confident };
+}
+
+/** `listIssues` đọc thẳng từ task folder qua hàm `read(rel)`. */
+export function listIssuesInTask(read) {
+  return listIssues(read('tracking/review-bugs.md'), read('output/review-report.md'));
 }
 
 /** `countOpenIssuesBySeverity` đọc thẳng từ task folder qua hàm `read(rel)`. */

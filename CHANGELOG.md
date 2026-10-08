@@ -5,6 +5,29 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.5.0] — 2026-10-08
+
+Phase 4 của [ROADMAP.md](ROADMAP.md): vòng tự học. Kit tổng hợp run-log và bug của các task thành đề xuất cải tiến có bằng chứng; người duyệt quyết định, kit không tự sửa rule.
+
+### Có thể ảnh hưởng repo dự án
+
+- Agent của kit được ghi thêm `docs/frontend-retro/` (thư mục này cũng không tính là sửa ngoài plan).
+- Sửa `docs/frontend-context/team-rules.md`, hoặc chuyển đề xuất trong `docs/frontend-retro/*/proposals.md` sang `Approved`/`Applied`, luôn hỏi người dùng xác nhận.
+- `team-rules.md` (nếu có) được nạp kèm khi mở mode, theo mục `## <mode>` hoặc `## Mọi mode`, tối đa 3.000 ký tự.
+
+### Retro
+
+- Lệnh `/fe:retro [--since] [--date]` và subagent `frontend-retro-analyst` (không có Bash, không nhận giao thức mode). Template `templates/retro/retro-report.md`, `templates/retro/proposals.md`.
+- Engine: `buildRetroData`, `renderRetroSummary`; approval guard cho hook (`pack.approvalGuards`: hỏi khi có mục mới được duyệt, hoặc với mọi thay đổi); rule của team trong nội dung mở mode (`pack.teamRules`); sự kiện run-log `approval_requested` và bộ đếm `approvals` trong report.
+- Pack FE: `parseProposals`, `validateProposals` (gate `RETRO_APPROVAL_INCOMPLETE`), `validateRetroFolder`, `exportUpstreamProposals`, `teamRulesFor`, `listIssues`; manifest có mục `retro`.
+- MCP: `fe_retro_data` (ghi `retro-data.json` theo ngày, trả tóm tắt), `fe_validate_retro`.
+- CLI: `fe-kit retro [--since] [--date] [--json] [--write]`, `fe-kit retro check <thư-mục>`, `fe-kit retro export <thư-mục>`.
+- Eval `retro-proposes-not-applies`.
+
+### Kiểm chứng
+
+- Golden chụp lại có chủ đích: thêm thư mục ghi được `docs/frontend-retro/`, 2 tool MCP, dòng help của `retro`, bộ đếm `approvals` trong JSON của report. Không đổi output nào khác.
+
 ## [2.4.0] — 2026-10-08
 
 Phase 3 của [ROADMAP.md](ROADMAP.md): tách engine dùng chung khỏi domain pack FE. Không đổi hành vi: output của validators, hook, MCP và CLI giống từng byte bản 2.3.0 (golden test), plugin `fe`, lệnh `/fe:*`, tool `fe_*`, đường dẫn và field giữ nguyên.

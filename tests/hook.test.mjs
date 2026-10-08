@@ -554,6 +554,51 @@ describe('mode chỉ đọc không được đổi source (kể cả qua shell)'
   });
 });
 
+describe('duyệt đề xuất retro và rule của team', () => {
+  const PROPOSALS = 'docs/frontend-retro/2026-10-08/proposals.md';
+  const row = (status, reviewer = '') => `| R-01 | 5 bug | team-rules.md#cook | Dùng apiClient | api-contract | project | ${status} | ${reviewer} |`;
+  const table = (status, reviewer) =>
+    `## Đề xuất\n\n| ID | Bằng chứng | Đích | Thay đổi đề xuất | Metric theo dõi | Phạm vi | Trạng thái | Người duyệt |\n|---|---|---|---|---|---|---|---|\n${row(status, reviewer)}\n`;
+
+  beforeEach(() => {
+    fs.mkdirSync(path.join(workspace, 'docs', 'frontend-retro', '2026-10-08'), { recursive: true });
+    fs.writeFileSync(path.join(workspace, PROPOSALS), table('Proposed'));
+  });
+
+  const editProposals = (oldString, newString, agent) =>
+    runHook({ hook_event_name: 'PreToolUse', tool_name: 'Edit', tool_input: { file_path: path.join(workspace, PROPOSALS), old_string: oldString, new_string: newString }, agent_type: agent });
+
+  it('chuyển đề xuất sang Approved thì hỏi người dùng, kể cả agent được ghi thư mục retro', () => {
+    const out = editProposals(row('Proposed'), row('Approved', 'Lan'), 'fe:frontend-retro-analyst');
+    expect(out.hookSpecificOutput.permissionDecision).toBe('ask');
+    expect(out.hookSpecificOutput.permissionDecisionReason).toMatch(/^Đề xuất R-01 đang được chuyển sang Approved/);
+  });
+
+  it('sửa đề xuất mà không duyệt thì cho qua; ghi đè cả file cũng được kiểm', () => {
+    expect(editProposals('Dùng apiClient', 'Dùng apiClient chung', 'fe:frontend-retro-analyst')).toBeNull();
+    const write = runHook({ hook_event_name: 'PreToolUse', tool_name: 'Write', tool_input: { file_path: path.join(workspace, PROPOSALS), content: table('Applied', 'Lan') } });
+    expect(write.hookSpecificOutput.permissionDecision).toBe('ask');
+  });
+
+  it('mọi thay đổi ở team-rules.md đều hỏi người dùng', () => {
+    const out = runHook({
+      hook_event_name: 'PreToolUse',
+      tool_name: 'Write',
+      tool_input: { file_path: path.join(workspace, 'docs', 'frontend-context', 'team-rules.md'), content: '## cook\n\n- x\n' },
+      agent_type: 'fe:frontend-retro-analyst',
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe('ask');
+    expect(out.hookSpecificOutput.permissionDecisionReason).toMatch(/team-rules\.md/);
+  });
+
+  it('ghi approval_requested vào run-log khi đang có mode', () => {
+    const task = addTask('task-ready-to-cook');
+    begin(`/fe:plan ${task}`);
+    editProposals(row('Proposed'), row('Approved', 'Lan'));
+    expect(runLog(task).at(-1)).toMatchObject({ event: 'approval_requested', mode: 'plan', file: PROPOSALS });
+  });
+});
+
 describe('an toàn', () => {
   it('payload hỏng hoặc sự kiện lạ không làm hook lỗi', () => {
     const r = spawnSync(process.execPath, [HOOK, 'Stop'], { input: 'không phải json', encoding: 'utf8', env: { ...process.env, CLAUDE_PLUGIN_DATA: dataDir } });

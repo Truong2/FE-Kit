@@ -1,6 +1,6 @@
 {
   "name": "@frontend-delivery-kit/validators",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "private": true,
   "description": "Tên package cũ của API FE, giữ để tương thích: re-export @frontend-delivery-kit/pack-fe. Test của gate FE và fixture dùng chung nằm ở đây.",
   "type": "module",

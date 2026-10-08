@@ -373,6 +373,39 @@ describe('CLI bundle trong repo dự án (không có node_modules)', () => {
     });
   });
 
+  describe('retro', () => {
+    it('retro in số liệu, --write ghi retro-data.json, check và export', () => {
+      project('new-task', 'FE-9-retro');
+      const summary = project('retro');
+      expect(summary.status).toBe(0);
+      expect(summary.out).toMatch(/^# Dữ liệu retro FE-Kit/);
+      expect(JSON.parse(project('retro', '--json').out)).toMatchObject({ schema: 1, tasks_total: 1 });
+
+      project('retro', '--write', '--date', '2026-10-08');
+      const dir = 'docs/frontend-retro/2026-10-08';
+      expect(exists(`${dir}/retro-data.json`)).toBe(true);
+      const check = project('retro', 'check', dir);
+      expect(check.status).toBe(1);
+      expect(check.out).toMatch(/Thiếu retro-report\.md/);
+
+      fs.writeFileSync(path.join(target, dir, 'retro-report.md'), '# Báo cáo retro\n');
+      fs.writeFileSync(
+        path.join(target, dir, 'proposals.md'),
+        '## Đề xuất\n\n| ID | Bằng chứng | Đích | Thay đổi đề xuất | Metric theo dõi | Phạm vi | Trạng thái | Người duyệt |\n|---|---|---|---|---|---|---|---|\n| R-01 | 3 lần SCOPE_OUT_OF_PLAN | template:implementation-plan.md | Bảng file có cột test | SCOPE_OUT_OF_PLAN | upstream | Approved |  |\n'
+      );
+      expect(project('retro', 'check', dir).out).toMatch(/Đề xuất R-01 đã duyệt nhưng thiếu Người duyệt/);
+      fs.writeFileSync(path.join(target, dir, 'proposals.md'), read(`${dir}/proposals.md`).replace('| Approved |  |', '| Approved | Lan |'));
+      expect(project('retro', 'check', dir).out).toMatch(/retro check passed/);
+      expect(project('retro', 'export', dir).out).toMatch(/## R-01: Bảng file có cột test/);
+    });
+
+    it('mode begin nạp rule của team', () => {
+      project('new-task', 'FE-9-team');
+      fs.writeFileSync(path.join(target, 'docs', 'frontend-context', 'team-rules.md'), '## Mọi mode\n\n- Ghi nguồn cho mọi quyết định.\n');
+      expect(project('mode', 'begin', 'FE-9-team', 'plan').out).toMatch(/=== RULE CỦA TEAM[^\n]*===\n## Mọi mode\n\n- Ghi nguồn cho mọi quyết định\./);
+    });
+  });
+
   it('in đúng version của kit, không đọc package.json của dự án', () => {
     fs.writeFileSync(path.join(target, 'package.json'), JSON.stringify({ name: 'app', version: '9.9.9' }));
     const kitVersion = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;

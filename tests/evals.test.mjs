@@ -24,6 +24,7 @@ import {
   parseFrontMatterLoose,
   countOpenBlockingQuestions,
   evaluateModeEntry,
+  COMMANDS,
 } from '../packages/validators/src/index.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -102,6 +103,7 @@ describe.each(CASES)('eval case %s', (name) => {
   });
 
   it('gate lúc bắt đầu đúng như case muốn đo', () => {
+    if (!COMMANDS.includes(c.command)) return; // lệnh cấp repo (vd retro), không có gate vào mode
     const ws = workspaces[name];
     const taskDir = path.join(ws, c.task);
     const status = parseFrontMatterLoose(fs.readFileSync(path.join(taskDir, 'tracking', 'workflow-status.md'), 'utf8'));

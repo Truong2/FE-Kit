@@ -49,8 +49,8 @@ Từ v2.4.0 kit tách làm hai tầng:
 | Lớp | Thành phần | Nguồn | Thực thi bởi |
 |---|---|---|---|
 | Hướng dẫn | Skill `frontend-delivery-standard`, rule, template | `core/SKILL.md`, `core/rules/`, `core/templates/` | Prompt (mềm) |
-| Điều phối | 11 slash command | `core/commands/` + đoạn delegation do generator chèn | Prompt (mềm) |
-| Vai trò | 6 subagent | `core/agents/` + `_protocol.md` | `disallowedTools` (cứng) + prompt |
+| Điều phối | 12 slash command | `core/commands/` + đoạn delegation do generator chèn | Prompt (mềm) |
+| Vai trò | 7 subagent | `core/agents/` + `_protocol.md` | `disallowedTools` (cứng) + prompt |
 | Gate khi bắt đầu mode | `fe_begin_mode`, `fe-kit mode begin` | `createModeBriefing` (engine) → `evaluateModeEntry` (luật FE trong `pack-fe/src/transitions.mjs`) | MCP tool / CLI trả verdict + nguyên văn rule |
 | Gate khi chạy | Hook | `runHook` (engine), gắn pack ở `core/hooks/fe-hook.mjs` | Claude Code hook (cứng ở mức `enforce`) |
 | Gate khi kết thúc mode | `evaluateModeCompletion` | `createModeCompletion` (engine) | Hook `SubagentStop`/`Stop`, CLI `fe-kit mode end` |
@@ -92,6 +92,18 @@ Từ v2.4.0 kit tách làm hai tầng:
      | `validate-pr` (CLI, CI) | Như trên | Luôn tính |
 
      Plan chưa có bảng file (task tạo từ v1.x) thì mọi điểm đều cảnh báo và dùng `scope_diff_status` tự khai. File thuộc plan của task khác cùng thư mục không bị tính là ngoài plan.
+
+## Vòng tự học (retro)
+
+`/fe:retro` là lệnh cấp repo, không phải mode của task.
+
+| Bước | Thành phần | Ghi chú |
+|---|---|---|
+| Số liệu | `buildRetroData` (engine), MCP `fe_retro_data`, CLI `fe-kit retro --write` | Gộp run-log và bảng bug (nhóm, nguyên nhân gốc) của mọi task; ghi `docs/frontend-retro/<ngày>/retro-data.json`. Tất định. |
+| Phân tích | Subagent `frontend-retro-analyst` | Không có Bash; viết `retro-report.md` và `proposals.md`; mọi đề xuất ở trạng thái `Proposed`. Không nhận giao thức mode. |
+| Duyệt | Hook (approval guard của pack) | Đổi đề xuất sang `Approved`/`Applied` và mọi thay đổi ở `docs/frontend-context/team-rules.md` đều hỏi người dùng (`ask`), ghi `approval_requested`. Gate `RETRO_APPROVAL_INCOMPLETE`: đã duyệt mà thiếu Người duyệt. |
+| Áp dụng | `team-rules.md`, `fe-kit retro export` | Đề xuất `project` đã duyệt thêm vào `team-rules.md` (mục `## <mode>` hoặc `## Mọi mode`), được nạp kèm khi mở mode với trần 3.000 ký tự. Đề xuất `upstream` xuất thành nội dung issue cho repo kit; kit không tự sửa rule lõi. |
+| Đóng vòng | Retro kỳ sau | So Metric theo dõi của đề xuất cũ trước/sau. |
 
 ## Input không tin cậy
 

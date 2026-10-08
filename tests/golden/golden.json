@@ -16815,6 +16815,13 @@
      "input-sync",
      "figma"
     ],
+    "figma-review": [
+     "pr",
+     "bugfix",
+     "input-sync",
+     "figma-review",
+     "test"
+    ],
     "cook": [
      "review",
      "cook",
@@ -16840,13 +16847,6 @@
      "pr",
      "bugfix",
      "input-sync",
-     "test"
-    ],
-    "figma-review": [
-     "pr",
-     "bugfix",
-     "input-sync",
-     "figma-review",
      "test"
     ],
     "pr": [
@@ -16880,24 +16880,24 @@
      "output/figma-extraction-summary.md",
      "tracking/workflow-status.md"
     ],
-    "cook": [
-     "planning/build-checklist.md",
+    "figma-review": [
+     "output/ui-figma-review-report.md",
      "tracking/workflow-status.md"
     ],
-    "review": [
-     "output/review-report.md",
+    "cook": [
+     "planning/build-checklist.md",
      "tracking/workflow-status.md"
     ],
     "bugfix": [
      "tracking/review-bugs.md",
      "tracking/workflow-status.md"
     ],
-    "test": [
-     "output/test-summary.md",
+    "review": [
+     "output/review-report.md",
      "tracking/workflow-status.md"
     ],
-    "figma-review": [
-     "output/ui-figma-review-report.md",
+    "test": [
+     "output/test-summary.md",
      "tracking/workflow-status.md"
     ],
     "pr": [
@@ -16907,6 +16907,7 @@
    },
    "AGENT_FOR_COMMAND": {
     "plan": "frontend-planner",
+    "quick": null,
     "input-sync": "frontend-planner",
     "figma": "frontend-figma-specialist",
     "figma-review": "frontend-figma-specialist",
@@ -16914,12 +16915,12 @@
     "bugfix": "frontend-developer",
     "review": "frontend-reviewer",
     "test": "frontend-tester",
-    "pr": "frontend-release-manager",
-    "quick": null
+    "pr": "frontend-release-manager"
    },
    "KIT_WRITABLE_PREFIXES": [
     "docs/frontend-tasks/",
-    "docs/frontend-context/"
+    "docs/frontend-context/",
+    "docs/frontend-retro/"
    ],
    "REQUIRED_TASK_FILES": [
     "task.md",
@@ -16973,6 +16974,8 @@
    "PROJECT_CONFIG_FILE",
    "REQUIRED_TASK_DOCS",
    "REQUIRED_TASK_FILES",
+   "RETRO_FILES",
+   "RETRO_ROOT",
    "RUNLOG_EVENTS",
    "RUNLOG_FILE",
    "RunLogRecordSchema",
@@ -16982,10 +16985,14 @@
    "TASKS_ROOT",
    "TASK_GITKEEP",
    "TASK_TEMPLATE_FILES",
+   "TEAM_RULES_FILE",
+   "TEAM_RULES_MAX_CHARS",
    "WorkflowStatusSchema",
    "allRuleFiles",
    "appendRunLog",
+   "approvedProposalIds",
    "buildReport",
+   "buildRetroData",
    "checkRecordedNextMode",
    "codesOf",
    "computeScopeDiff",
@@ -16998,6 +17005,7 @@
    "evaluateModeEntry",
    "evaluatePrGates",
    "evaluateWorkflowGates",
+   "exportUpstreamProposals",
    "fePack",
    "filesTouchedSince",
    "findUntrackedSourceChanges",
@@ -17007,17 +17015,21 @@
    "isPathInside",
    "isValidTaskName",
    "listChangedFiles",
+   "listIssues",
+   "listIssuesInTask",
    "loadProjectConfig",
    "modeBriefing",
    "normalizeCommand",
    "parseFrontMatterLoose",
    "parseIssueTable",
    "parsePlannedFiles",
+   "parseProposals",
    "parseWorkflowStatus",
    "readRunLog",
    "realQuestionCell",
    "relativePosix",
    "renderReport",
+   "renderRetroSummary",
    "resolveTaskDir",
    "rulesForMode",
    "scaffoldTask",
@@ -17025,6 +17037,7 @@
    "snapshotFiles",
    "summarizeCommandEvidence",
    "summarizeRunLog",
+   "teamRulesFor",
    "toPosix",
    "validateAssetGate",
    "validateFigmaEvidence",
@@ -17032,7 +17045,9 @@
    "validatePlanArchitecture",
    "validatePlanChecklistSync",
    "validatePr",
+   "validateProposals",
    "validateQuestionsRouting",
+   "validateRetroFolder",
    "validateSrsReference",
    "validateWorkflow",
    "validateWorkflowAtGate"
@@ -17325,6 +17340,51 @@
        "workspace_root"
       ]
      }
+    },
+    {
+     "name": "fe_retro_data",
+     "description": "Dùng cho /fe:retro. Gộp run-log và bảng bug của mọi task thành số liệu (pass ngay lần đầu, lý do bị chặn, issue theo nhóm và nguyên nhân gốc), ghi docs/frontend-retro/<ngày>/retro-data.json và trả bản tóm tắt. Không sửa rule hay task.",
+     "inputSchema": {
+      "type": "object",
+      "properties": {
+       "workspace_root": {
+        "type": "string",
+        "description": "Đường dẫn tuyệt đối tới repo dự án."
+       },
+       "since": {
+        "type": "string",
+        "description": "Chỉ tính task có hoạt động từ ngày này (YYYY-MM-DD). Bỏ trống = mọi task."
+       },
+       "date": {
+        "type": "string",
+        "description": "Tên thư mục retro (YYYY-MM-DD). Bỏ trống = hôm nay."
+       }
+      },
+      "required": [
+       "workspace_root"
+      ]
+     }
+    },
+    {
+     "name": "fe_validate_retro",
+     "description": "Kiểm một thư mục retro: đủ retro-data.json, retro-report.md, proposals.md; đề xuất đã duyệt phải có người duyệt. GỌI TRƯỚC KHI KẾT THÚC /fe:retro.",
+     "inputSchema": {
+      "type": "object",
+      "properties": {
+       "workspace_root": {
+        "type": "string",
+        "description": "Đường dẫn tuyệt đối tới repo dự án."
+       },
+       "retro_folder": {
+        "type": "string",
+        "description": "Thư mục retro, vd docs/frontend-retro/2026-10-08."
+       }
+      },
+      "required": [
+       "workspace_root",
+       "retro_folder"
+      ]
+     }
     }
    ]
   },
@@ -17431,7 +17491,7 @@
  "cli": {
   "help": {
    "status": 0,
-   "out": "Frontend Delivery Agent Kit CLI v<VERSION>\nRules folder + plan input ledger + blocking question input-sync gate + scope diff tính từ git + command evidence trước PR.\n\nCommands:\n  # Agent prompt mode: FE quick <task> is available for small, low-risk localized changes. FE figma-review <task> is available for UI/Figma visual review.\n  init [--target repo] [--agents all|codex,claude,cursor,github]\n                                      Install selected agent adapters into repo. In a TTY, prompts for agent selection.\n  doctor [--target repo] [--strict] [--agents ...]\n                                      Check kit installation for selected/installed agents\n  new-task <slug> [--target repo]       Create standard FE task folder\n  status <task> [--target repo]         Show current step, blockers, checklist summary\n  next <task> [--target repo]           Print Prompt bước tiếp theo from workflow-status.md\n  validate-task <task> [--target repo]  Validate standard task structure and workflow rules\n  validate-pr <task> [--target repo] [--base ref] [--no-scope]\n                                      Validate PR readiness; so git diff với bảng file trong plan\n  validate-pr --orphans [--target repo] [--base ref]\n                                      File source đã đổi mà không task nào khai trong plan\n                                      (mức: require_task_for_source trong .frontend-delivery/standard.yaml)\n  validate-workflow <task> [--target] [--base <ref>] [--scope|--no-scope]\n                                      Validate SRS/questions/plan/checklist/Figma gates\n                                      (review/test/pr-ready: scope from git by default)\n  mode begin <task> <mode> [--target] [--actor <tool>]\n                                      Gate lúc vào mode + rule của mode (cho Codex/Cursor/Copilot)\n  mode end <task> <mode> [--target] [--base <ref>] [--actor <tool>]\n                                      Gate kết thúc mode, giống hook của Claude Code\n  report [<task>] [--target] [--since YYYY-MM-DD] [--json]\n                                      Tổng hợp tracking/run-log.jsonl của các task\n                                      (validate-*/mode ghi run-log; tắt bằng --no-log, CI=true tự tắt)\n  check-srs-reference <task> [--target] Validate task.md SRS/API maps\n  check-questions-routing <task> [--target] Validate questions.md routing sections/owners\n  check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections\n  check-plan-checklist-sync <task> [--target] Validate checklist mirrors plan file/hook/store decisions\n  check-input-sync-report <task> [--target] Validate tracking/input-sync-report.md when input sync is active\n  check-figma-evidence <task> [--target] Validate Figma summary, screenshots, and MCP/API evidence\n  check-asset-gate <task> [--target]     Validate embedded Asset Extraction Log\n\n"
+   "out": "Frontend Delivery Agent Kit CLI v<VERSION>\nRules folder + plan input ledger + blocking question input-sync gate + scope diff tính từ git + command evidence trước PR.\n\nCommands:\n  # Agent prompt mode: FE quick <task> is available for small, low-risk localized changes. FE figma-review <task> is available for UI/Figma visual review.\n  init [--target repo] [--agents all|codex,claude,cursor,github]\n                                      Install selected agent adapters into repo. In a TTY, prompts for agent selection.\n  doctor [--target repo] [--strict] [--agents ...]\n                                      Check kit installation for selected/installed agents\n  new-task <slug> [--target repo]       Create standard FE task folder\n  status <task> [--target repo]         Show current step, blockers, checklist summary\n  next <task> [--target repo]           Print Prompt bước tiếp theo from workflow-status.md\n  validate-task <task> [--target repo]  Validate standard task structure and workflow rules\n  validate-pr <task> [--target repo] [--base ref] [--no-scope]\n                                      Validate PR readiness; so git diff với bảng file trong plan\n  validate-pr --orphans [--target repo] [--base ref]\n                                      File source đã đổi mà không task nào khai trong plan\n                                      (mức: require_task_for_source trong .frontend-delivery/standard.yaml)\n  validate-workflow <task> [--target] [--base <ref>] [--scope|--no-scope]\n                                      Validate SRS/questions/plan/checklist/Figma gates\n                                      (review/test/pr-ready: scope from git by default)\n  mode begin <task> <mode> [--target] [--actor <tool>]\n                                      Gate lúc vào mode + rule của mode (cho Codex/Cursor/Copilot)\n  mode end <task> <mode> [--target] [--base <ref>] [--actor <tool>]\n                                      Gate kết thúc mode, giống hook của Claude Code\n  retro [--since YYYY-MM-DD] [--date YYYY-MM-DD] [--json] [--write]\n                                      Số liệu retro (run-log + bug theo nhóm/nguyên nhân gốc)\n  retro check <dir> | retro export <dir>\n                                      Kiểm thư mục retro / xuất đề xuất upstream đã duyệt\n  report [<task>] [--target] [--since YYYY-MM-DD] [--json]\n                                      Tổng hợp tracking/run-log.jsonl của các task\n                                      (validate-*/mode ghi run-log; tắt bằng --no-log, CI=true tự tắt)\n  check-srs-reference <task> [--target] Validate task.md SRS/API maps\n  check-questions-routing <task> [--target] Validate questions.md routing sections/owners\n  check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections\n  check-plan-checklist-sync <task> [--target] Validate checklist mirrors plan file/hook/store decisions\n  check-input-sync-report <task> [--target] Validate tracking/input-sync-report.md when input sync is active\n  check-figma-evidence <task> [--target] Validate Figma summary, screenshots, and MCP/API evidence\n  check-asset-gate <task> [--target]     Validate embedded Asset Extraction Log\n\n"
   },
   "status C-ready": {
    "status": 0,
@@ -17579,7 +17639,7 @@
   },
   "report json": {
    "status": 0,
-   "out": "{\n  \"tasks\": [\n    {\n      \"task\": \"C-ready\",\n      \"summary\": {\n        \"events\": 0,\n        \"modes\": {},\n        \"entryBlocked\": {},\n        \"denials\": {},\n        \"codes\": {},\n        \"actors\": {},\n        \"overrides\": 0,\n        \"abandoned\": 0,\n        \"validates\": {\n          \"ok\": 0,\n          \"failed\": 0\n        }\n      },\n      \"skipped\": 0\n    }\n  ],\n  \"total\": {\n    \"events\": 0,\n    \"modes\": {},\n    \"entryBlocked\": {},\n    \"denials\": {},\n    \"codes\": {},\n    \"actors\": {},\n    \"overrides\": 0,\n    \"abandoned\": 0,\n    \"validates\": {\n      \"ok\": 0,\n      \"failed\": 0\n    }\n  },\n  \"skipped\": 0\n}\n"
+   "out": "{\n  \"tasks\": [\n    {\n      \"task\": \"C-ready\",\n      \"summary\": {\n        \"events\": 0,\n        \"modes\": {},\n        \"entryBlocked\": {},\n        \"denials\": {},\n        \"codes\": {},\n        \"actors\": {},\n        \"overrides\": 0,\n        \"approvals\": 0,\n        \"abandoned\": 0,\n        \"validates\": {\n          \"ok\": 0,\n          \"failed\": 0\n        }\n      },\n      \"skipped\": 0\n    }\n  ],\n  \"total\": {\n    \"events\": 0,\n    \"modes\": {},\n    \"entryBlocked\": {},\n    \"denials\": {},\n    \"codes\": {},\n    \"actors\": {},\n    \"overrides\": 0,\n    \"approvals\": 0,\n    \"abandoned\": 0,\n    \"validates\": {\n      \"ok\": 0,\n      \"failed\": 0\n    }\n  },\n  \"skipped\": 0\n}\n"
   },
   "validate-pr orphans no git": {
    "status": 0,

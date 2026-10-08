@@ -143,6 +143,36 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
     },
   ];
 
+  if (pack.retro) {
+    tools.push(
+      {
+        name: tool('retro_data'),
+        description: m.descriptions.retroData,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            workspace_root: workspaceProp,
+            since: { type: 'string', description: 'Chỉ tính task có hoạt động từ ngày này (YYYY-MM-DD). Bỏ trống = mọi task.' },
+            date: { type: 'string', description: 'Tên thư mục retro (YYYY-MM-DD). Bỏ trống = hôm nay.' },
+          },
+          required: ['workspace_root'],
+        },
+      },
+      {
+        name: tool('validate_retro'),
+        description: m.descriptions.validateRetro,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            workspace_root: workspaceProp,
+            retro_folder: { type: 'string', description: `Thư mục retro, vd ${pack.retro.root}/2026-10-08.` },
+          },
+          required: ['workspace_root', 'retro_folder'],
+        },
+      }
+    );
+  }
+
   const handlers = {
     begin_mode({ workspace_root, task_folder, mode }) {
       const command = pack.normalizeCommand(mode);
@@ -160,6 +190,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
         rulesLabel: rules.source === 'project' ? `${m.configDir}/rules của repo` : 'plugin',
         newTaskHint: `Gọi MCP tool ${tool('new_task')} (hoặc /${pack.pluginName}:new-task ${path.basename(taskDir)}) để tạo task từ template, rồi chạy lại ${pack.label(command)} ${taskRef}.`,
         finishHint: `Trước khi kết thúc: cập nhật ${pack.statusFile} rồi gọi ${tool('validate_workflow')}.`,
+        workspaceRoot: workspace_root,
       });
       return textResult(briefing.text, !briefing.ok);
     },
@@ -282,6 +313,28 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
       return textResult(entries.length ? entries.join('\n') : `Chưa có task nào trong ${pack.tasksRoot}.`);
     },
   };
+
+  if (pack.retro) {
+    handlers.retro_data = ({ workspace_root, since, date }) => {
+      const day = date || new Date().toISOString().slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return textResult(`date phải dạng YYYY-MM-DD: ${day}`, true);
+      const data = pack.retro.buildData(workspace_root, { since });
+      const dir = path.join(workspace_root, pack.retro.root, day);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, 'retro-data.json'), JSON.stringify(data, null, 2) + '\n');
+      const rel = `${pack.retro.root}/${day}`;
+      return textResult(
+        [pack.retro.renderSummary(data), `Đã ghi ${rel}/retro-data.json.`, `Tiếp theo: viết ${rel}/retro-report.md và ${rel}/proposals.md theo template retro, rồi gọi ${tool('validate_retro')}.`].join('\n')
+      );
+    };
+    handlers.validate_retro = ({ workspace_root, retro_folder }) => {
+      const dir = path.resolve(workspace_root, retro_folder);
+      const res = pack.retro.validateFolder(dir);
+      const warnings = res.warnings.map((w) => '- Cảnh báo: ' + w);
+      if (!res.ok) return textResult(['validate-retro: FAILED', '', ...res.errors.map((e) => '- ' + e), ...warnings].join('\n'), true);
+      return textResult(['validate-retro: PASSED', ...warnings].join('\n'));
+    };
+  }
 
   function callTool(name, args) {
     const prefix = `${m.toolPrefix}_`;

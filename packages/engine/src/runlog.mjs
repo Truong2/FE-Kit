@@ -35,6 +35,7 @@ export const RUNLOG_EVENTS = [
   'override_requested',
   'mode_abandoned',
   'validate',
+  'approval_requested',
 ];
 
 export const RunLogRecordSchema = z

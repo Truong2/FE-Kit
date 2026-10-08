@@ -48,6 +48,8 @@ export {
   parseIssueTable,
   countOpenIssuesBySeverity,
   countOpenIssuesInTask,
+  listIssues,
+  listIssuesInTask,
   ISSUE_CATEGORIES,
   ISSUE_ROOT_CAUSES,
   ISSUE_SEVERITIES,
@@ -75,3 +77,17 @@ export {
   rulesForMode,
   allRuleFiles,
 } from './modes.mjs';
+export {
+  RETRO_ROOT,
+  TEAM_RULES_FILE,
+  TEAM_RULES_MAX_CHARS,
+  RETRO_FILES,
+  parseProposals,
+  approvedProposalIds,
+  validateProposals,
+  validateRetroFolder,
+  buildRetroData,
+  renderRetroSummary,
+  exportUpstreamProposals,
+  teamRulesFor,
+} from './retro.mjs';

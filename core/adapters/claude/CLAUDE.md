@@ -12,7 +12,7 @@
 
 ## Cách chạy
 
-Dùng plugin `fe` (bật trong `.claude/settings.json`): `/fe:new-task`, `/fe:plan`, `/fe:input-sync`, `/fe:figma`, `/fe:cook`, `/fe:review`, `/fe:bugfix`, `/fe:test`, `/fe:figma-review`, `/fe:pr`, `/fe:quick`.
+Dùng plugin `fe` (bật trong `.claude/settings.json`): `/fe:new-task`, `/fe:plan`, `/fe:input-sync`, `/fe:figma`, `/fe:cook`, `/fe:review`, `/fe:bugfix`, `/fe:test`, `/fe:figma-review`, `/fe:pr`, `/fe:quick`, và `/fe:retro` (định kỳ, đề xuất cải tiến rule; đề xuất đã duyệt nằm trong `docs/frontend-context/team-rules.md`).
 
 - Main thread chỉ điều phối: mỗi mode được delegate cho subagent `fe:frontend-*` tương ứng; `/fe:quick` và `/fe:new-task` chạy inline.
 - Chỉ `fe:frontend-developer` trong cook/bugfix (và main thread trong quick) được sửa source. Hook của plugin chặn agent khác sửa ngoài `docs/frontend-tasks/` và `docs/frontend-context/`.

@@ -59,6 +59,15 @@ export const PackManifestSchema = z
         .array(z.object({ rule: name, always: list.default([]), modes: list.default([]), when_field: name }))
         .default([]),
     }),
+    /** Vòng tự học: thư mục retro, agent phân tích, file rule của team đã duyệt. */
+    retro: z
+      .object({
+        root: name,
+        agent: name,
+        team_rules_file: name,
+        team_rules_max_chars: z.number().int().positive(),
+      })
+      .optional(),
     mcp: z.object({
       server_name: name,
       tool_prefix: z.string().regex(/^[a-z][a-z0-9]*$/),
@@ -79,6 +88,8 @@ export const PackManifestSchema = z
         scope_diff: name,
         next_step: name,
         task_status: name,
+        retro_data: name.optional(),
+        validate_retro: name.optional(),
       }),
     }),
   })

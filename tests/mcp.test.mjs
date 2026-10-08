@@ -90,3 +90,36 @@ describe('fe_validate_workflow', () => {
     expect(text).not.toMatch(/Scope diff:/);
   });
 });
+
+describe('retro', () => {
+  it('fe_retro_data ghi retro-data.json theo ngày và trả bản tóm tắt', async () => {
+    const res = await callTool('fe_retro_data', { workspace_root: repo, date: '2026-10-08' });
+    expect(res.isError).toBe(false);
+    expect(res.content[0].text).toMatch(/^# Dữ liệu retro FE-Kit/);
+    expect(res.content[0].text).toMatch(/Đã ghi docs\/frontend-retro\/2026-10-08\/retro-data\.json/);
+    const data = JSON.parse(fs.readFileSync(path.join(repo, 'docs', 'frontend-retro', '2026-10-08', 'retro-data.json'), 'utf8'));
+    expect(data).toMatchObject({ schema: 1, tasks_total: 1 });
+    expect((await callTool('fe_retro_data', { workspace_root: repo, date: '08/10' })).isError).toBe(true);
+  });
+
+  it('fe_validate_retro báo thiếu file rồi PASSED khi đủ', async () => {
+    const folder = 'docs/frontend-retro/2026-10-08';
+    await callTool('fe_retro_data', { workspace_root: repo, date: '2026-10-08' });
+    const failed = await callTool('fe_validate_retro', { workspace_root: repo, retro_folder: folder });
+    expect(failed.isError).toBe(true);
+    expect(failed.content[0].text).toMatch(/- Thiếu retro-report\.md/);
+    fs.writeFileSync(path.join(repo, folder, 'retro-report.md'), '# Báo cáo retro\n');
+    fs.writeFileSync(
+      path.join(repo, folder, 'proposals.md'),
+      '## Đề xuất\n\n| ID | Bằng chứng | Trạng thái | Người duyệt |\n|---|---|---|---|\n| R-01 | x | Proposed |  |\n'
+    );
+    expect((await callTool('fe_validate_retro', { workspace_root: repo, retro_folder: folder })).content[0].text).toBe('validate-retro: PASSED');
+  });
+
+  it('fe_begin_mode nạp rule của team cho mode tương ứng', async () => {
+    fs.mkdirSync(path.join(repo, 'docs', 'frontend-context'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'docs', 'frontend-context', 'team-rules.md'), '## review\n\n- Kiểm a11y bằng axe.\n');
+    const res = await callTool('fe_begin_mode', { workspace_root: repo, task_folder: 'docs/frontend-tasks/FE-1', mode: 'review' });
+    expect(res.content[0].text).toMatch(/=== RULE CỦA TEAM \(nguồn: docs\/frontend-context\/team-rules\.md\) — đã duyệt qua retro ===\n## review\n\n- Kiểm a11y bằng axe\./);
+  });
+});

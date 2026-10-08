@@ -34,6 +34,11 @@ import {
   validateAssetGate,
   loadProjectConfig,
   findUntrackedSourceChanges,
+  buildRetroData,
+  renderRetroSummary,
+  validateRetroFolder,
+  exportUpstreamProposals,
+  RETRO_ROOT,
 } from '@frontend-delivery-kit/validators';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -814,6 +819,7 @@ function modeBegin({ target, taskDir, taskRef, command }) {
     rulesLabel: rules.label,
     newTaskHint: `Chạy node bin/fe-kit.mjs new-task ${path.basename(taskDir)} để tạo task từ template, rồi chạy lại: node bin/fe-kit.mjs mode begin ${taskRef} ${command}`,
     finishHint: `Trước khi kết thúc: cập nhật tracking/workflow-status.md rồi chạy node bin/fe-kit.mjs mode end ${taskRef} ${command}.`,
+    workspaceRoot: target,
   });
   console.log(briefing.text);
   if (briefing.entry) {
@@ -859,8 +865,42 @@ function report() {
   else process.stdout.write(renderReport(result));
 }
 
+/**
+ * `retro [--since D] [--date D] [--json] [--write]`: số liệu retro của repo.
+ * `retro check <thư-mục>`: kiểm thư mục retro. `retro export <thư-mục>`: đề xuất upstream đã duyệt.
+ */
+function retro() {
+  const target = path.resolve(argValue('--target', process.cwd()));
+  const action = args[1] && !args[1].startsWith('--') ? args[1] : '';
+  if (action === 'check' || action === 'export') {
+    const dir = args[2] ? path.resolve(target, args[2]) : '';
+    if (!dir || !exists(dir)) { console.error(`Dùng: fe-kit retro ${action} <${RETRO_ROOT}/YYYY-MM-DD>`); process.exit(1); }
+    if (action === 'export') {
+      const text = exportUpstreamProposals(read(path.join(dir, 'proposals.md')));
+      console.log(text || 'Không có đề xuất upstream nào đã duyệt.');
+      return;
+    }
+    const res = validateRetroFolder(dir);
+    for (const w of res.warnings) console.warn('Cảnh báo: ' + w);
+    if (!res.ok) { for (const e of res.errors) console.error(e); process.exit(1); }
+    console.log('retro check passed.');
+    return;
+  }
+  if (action) { console.error('Dùng: fe-kit retro [--since YYYY-MM-DD] [--date YYYY-MM-DD] [--json] [--write] | retro check <thư-mục> | retro export <thư-mục>'); process.exit(1); }
+  const data = buildRetroData(target, { since: argValueFlexible('--since', '') || undefined });
+  if (args.includes('--write')) {
+    const day = argValueFlexible('--date', '') || new Date().toISOString().slice(0, 10);
+    const dir = path.join(target, RETRO_ROOT, day);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'retro-data.json'), JSON.stringify(data, null, 2) + '\n');
+    console.error(`Đã ghi ${RETRO_ROOT}/${day}/retro-data.json`);
+  }
+  if (args.includes('--json')) console.log(JSON.stringify(data, null, 2));
+  else process.stdout.write(renderRetroSummary(data));
+}
+
 function help() {
-  console.log(`Frontend Delivery Agent Kit CLI v${readKitVersion()}\nRules folder + plan input ledger + blocking question input-sync gate + scope diff tính từ git + command evidence trước PR.\n\nCommands:\n  # Agent prompt mode: FE quick <task> is available for small, low-risk localized changes. FE figma-review <task> is available for UI/Figma visual review.\n  init [--target repo] [--agents all|codex,claude,cursor,github]\n                                      Install selected agent adapters into repo. In a TTY, prompts for agent selection.\n  doctor [--target repo] [--strict] [--agents ...]\n                                      Check kit installation for selected/installed agents\n  new-task <slug> [--target repo]       Create standard FE task folder\n  status <task> [--target repo]         Show current step, blockers, checklist summary\n  next <task> [--target repo]           Print Prompt bước tiếp theo from workflow-status.md\n  validate-task <task> [--target repo]  Validate standard task structure and workflow rules\n  validate-pr <task> [--target repo] [--base ref] [--no-scope]\n                                      Validate PR readiness; so git diff với bảng file trong plan\n  validate-pr --orphans [--target repo] [--base ref]\n                                      File source đã đổi mà không task nào khai trong plan\n                                      (mức: require_task_for_source trong .frontend-delivery/standard.yaml)\n  validate-workflow <task> [--target] [--base <ref>] [--scope|--no-scope]\n                                      Validate SRS/questions/plan/checklist/Figma gates\n                                      (review/test/pr-ready: scope from git by default)\n  mode begin <task> <mode> [--target] [--actor <tool>]\n                                      Gate lúc vào mode + rule của mode (cho Codex/Cursor/Copilot)\n  mode end <task> <mode> [--target] [--base <ref>] [--actor <tool>]\n                                      Gate kết thúc mode, giống hook của Claude Code\n  report [<task>] [--target] [--since YYYY-MM-DD] [--json]\n                                      Tổng hợp tracking/run-log.jsonl của các task\n                                      (validate-*/mode ghi run-log; tắt bằng --no-log, CI=true tự tắt)\n  check-srs-reference <task> [--target] Validate task.md SRS/API maps\n  check-questions-routing <task> [--target] Validate questions.md routing sections/owners\n  check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections\n  check-plan-checklist-sync <task> [--target] Validate checklist mirrors plan file/hook/store decisions\n  check-input-sync-report <task> [--target] Validate tracking/input-sync-report.md when input sync is active\n  check-figma-evidence <task> [--target] Validate Figma summary, screenshots, and MCP/API evidence\n  check-asset-gate <task> [--target]     Validate embedded Asset Extraction Log\n`);
+  console.log(`Frontend Delivery Agent Kit CLI v${readKitVersion()}\nRules folder + plan input ledger + blocking question input-sync gate + scope diff tính từ git + command evidence trước PR.\n\nCommands:\n  # Agent prompt mode: FE quick <task> is available for small, low-risk localized changes. FE figma-review <task> is available for UI/Figma visual review.\n  init [--target repo] [--agents all|codex,claude,cursor,github]\n                                      Install selected agent adapters into repo. In a TTY, prompts for agent selection.\n  doctor [--target repo] [--strict] [--agents ...]\n                                      Check kit installation for selected/installed agents\n  new-task <slug> [--target repo]       Create standard FE task folder\n  status <task> [--target repo]         Show current step, blockers, checklist summary\n  next <task> [--target repo]           Print Prompt bước tiếp theo from workflow-status.md\n  validate-task <task> [--target repo]  Validate standard task structure and workflow rules\n  validate-pr <task> [--target repo] [--base ref] [--no-scope]\n                                      Validate PR readiness; so git diff với bảng file trong plan\n  validate-pr --orphans [--target repo] [--base ref]\n                                      File source đã đổi mà không task nào khai trong plan\n                                      (mức: require_task_for_source trong .frontend-delivery/standard.yaml)\n  validate-workflow <task> [--target] [--base <ref>] [--scope|--no-scope]\n                                      Validate SRS/questions/plan/checklist/Figma gates\n                                      (review/test/pr-ready: scope from git by default)\n  mode begin <task> <mode> [--target] [--actor <tool>]\n                                      Gate lúc vào mode + rule của mode (cho Codex/Cursor/Copilot)\n  mode end <task> <mode> [--target] [--base <ref>] [--actor <tool>]\n                                      Gate kết thúc mode, giống hook của Claude Code\n  retro [--since YYYY-MM-DD] [--date YYYY-MM-DD] [--json] [--write]\n                                      Số liệu retro (run-log + bug theo nhóm/nguyên nhân gốc)\n  retro check <dir> | retro export <dir>\n                                      Kiểm thư mục retro / xuất đề xuất upstream đã duyệt\n  report [<task>] [--target] [--since YYYY-MM-DD] [--json]\n                                      Tổng hợp tracking/run-log.jsonl của các task\n                                      (validate-*/mode ghi run-log; tắt bằng --no-log, CI=true tự tắt)\n  check-srs-reference <task> [--target] Validate task.md SRS/API maps\n  check-questions-routing <task> [--target] Validate questions.md routing sections/owners\n  check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections\n  check-plan-checklist-sync <task> [--target] Validate checklist mirrors plan file/hook/store decisions\n  check-input-sync-report <task> [--target] Validate tracking/input-sync-report.md when input sync is active\n  check-figma-evidence <task> [--target] Validate Figma summary, screenshots, and MCP/API evidence\n  check-asset-gate <task> [--target]     Validate embedded Asset Extraction Log\n`);
 }
 
 
@@ -874,5 +914,6 @@ else if (command === 'validate-pr') validatePrLean();
 else if (command === 'validate-workflow') validateWorkflowLean();
 else if (command === 'mode') modeCommand();
 else if (command === 'report') report();
+else if (command === 'retro') retro();
 else if (CHECKS[command]) checkCommand(command);
 else help();

@@ -12,11 +12,13 @@ export default {
   "status_file": "tracking/workflow-status.md",
   "writable_prefixes": [
     "docs/frontend-tasks/",
-    "docs/frontend-context/"
+    "docs/frontend-context/",
+    "docs/frontend-retro/"
   ],
   "scope_ignore": [
     "docs/frontend-tasks/",
     "docs/frontend-context/",
+    "docs/frontend-retro/",
     ".frontend-delivery/"
   ],
   "planned_files_heading": "File sẽ tạo\\s*\\/\\s*cập nhật",
@@ -276,6 +278,12 @@ export default {
       }
     ]
   },
+  "retro": {
+    "root": "docs/frontend-retro",
+    "agent": "frontend-retro-analyst",
+    "team_rules_file": "docs/frontend-context/team-rules.md",
+    "team_rules_max_chars": 3000
+  },
   "mcp": {
     "server_name": "frontend-delivery",
     "tool_prefix": "fe",
@@ -308,7 +316,9 @@ export default {
       "validate_workflow": "Chạy toàn bộ gate của workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing hợp lệ. Task ở review/test/pr-ready thì đối chiếu thêm file đã sửa (git) với plan. GỌI TRƯỚC KHI KẾT THÚC mọi mode; đây là gate chính chặn agent nhảy mode sai.",
       "scope_diff": "So file thực sự thay đổi (git) với bảng \"File sẽ tạo / cập nhật\" trong implementation-plan.md. Dùng trong cook/bugfix/review/pr để phát hiện file sửa ngoài plan thay vì tự khai scope_diff_status.",
       "next_step": "Trả về prompt bước tiếp theo đọc trực tiếp từ tracking/workflow-status.md của task. Dùng khi không chắc mode kế tiếp là gì.",
-      "task_status": "Đọc tóm tắt trạng thái task: mode hiện tại, các gate status chính, số câu hỏi blocking, số issue theo severity. Chỉ đọc, không sửa file."
+      "task_status": "Đọc tóm tắt trạng thái task: mode hiện tại, các gate status chính, số câu hỏi blocking, số issue theo severity. Chỉ đọc, không sửa file.",
+      "retro_data": "Dùng cho /fe:retro. Gộp run-log và bảng bug của mọi task thành số liệu (pass ngay lần đầu, lý do bị chặn, issue theo nhóm và nguyên nhân gốc), ghi docs/frontend-retro/<ngày>/retro-data.json và trả bản tóm tắt. Không sửa rule hay task.",
+      "validate_retro": "Kiểm một thư mục retro: đủ retro-data.json, retro-report.md, proposals.md; đề xuất đã duyệt phải có người duyệt. GỌI TRƯỚC KHI KẾT THÚC /fe:retro."
     }
   }
 };

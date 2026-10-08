@@ -1,6 +1,6 @@
 {
   "name": "@frontend-delivery-kit/engine",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "private": true,
   "description": "Engine dùng chung của kit: state machine của mode, gate kết thúc mode, scope diff, run-log, báo cáo, hook và MCP. Không chứa khái niệm của domain nào; domain pack (vd pack-fe) cung cấp dữ liệu và gate riêng.",
   "type": "module",

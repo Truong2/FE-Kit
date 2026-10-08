@@ -2,7 +2,7 @@
 
 Bộ chuẩn frontend delivery tiếng Việt cho ChatGPT Skill, Claude Code, Codex, Cursor và GitHub Copilot.
 
-Version: 2.4.0
+Version: 2.5.0
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 
@@ -24,7 +24,7 @@ Máy dùng kit cần Git, Node.js từ `18.17` trở lên để chạy CLI/MCP/h
 
 ### Cách 1 — Claude Code plugin (khuyến nghị cho team dùng Claude Code)
 
-Cài plugin để có skill `frontend-delivery-standard`, 11 slash command, 6 subagent, MCP server validator và hook kiểm tra gate lúc chạy. Hook mặc định chỉ cảnh báo. Cơ chế chi tiết: [ARCHITECTURE.md](ARCHITECTURE.md).
+Cài plugin để có skill `frontend-delivery-standard`, 12 slash command, 7 subagent, MCP server validator và hook kiểm tra gate lúc chạy. Hook mặc định chỉ cảnh báo. Cơ chế chi tiết: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 **Dùng cho tất cả dự án trên máy bạn** — chạy trong terminal (scope `user`):
 
@@ -102,8 +102,8 @@ ChatGPT Skill: cài dependency trong repo `FE-Kit` bằng `npm ci`, chạy `npm 
 ```text
 core/                     # NGUỒN DUY NHẤT — sửa ở đây
   SKILL.md                # skill frontend-delivery-standard
-  commands/               # 11 slash command (generator chèn đoạn delegation cho plugin)
-  agents/                 # 6 subagent + _protocol.md dùng chung
+  commands/               # 12 slash command (generator chèn đoạn delegation cho plugin)
+  agents/                 # 7 subagent + _protocol.md dùng chung
   hooks/                  # hook runtime (bundle) + hooks.json
   mcp/server.mjs          # MCP server: fe_begin_mode, fe_validate_*, fe_scope_diff, fe_new_task...
   rules/ templates/ standards/ docs/ scripts/

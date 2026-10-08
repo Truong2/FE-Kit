@@ -8,7 +8,7 @@ Repo chính thức: [`Truong2/FE-Kit`](https://github.com/Truong2/FE-Kit). Marke
 
 ## 1. Claude Code plugin (khuyến nghị cho team dùng Claude Code)
 
-Cài 1 lần, tự động có: skill `frontend-delivery-standard`, 11 slash command, 6 subagent.
+Cài 1 lần, tự động có: skill `frontend-delivery-standard`, 12 slash command, 7 subagent.
 
 ### Chọn phạm vi cài: tất cả dự án hay chỉ 1 dự án?
 

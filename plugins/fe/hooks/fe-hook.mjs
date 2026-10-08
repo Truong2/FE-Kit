@@ -3424,7 +3424,7 @@ var require_parse = __commonJS({
 var require_gray_matter = __commonJS({
   "node_modules/gray-matter/index.js"(exports2, module2) {
     "use strict";
-    var fs9 = __require("fs");
+    var fs11 = __require("fs");
     var sections = require_section_matter();
     var defaults = require_defaults();
     var stringify = require_stringify();
@@ -3508,7 +3508,7 @@ var require_gray_matter = __commonJS({
       return stringify(file2, data, options2);
     };
     matter4.read = function(filepath, options2) {
-      const str2 = fs9.readFileSync(filepath, "utf8");
+      const str2 = fs11.readFileSync(filepath, "utf8");
       const file2 = matter4(str2, options2);
       file2.path = filepath;
       return file2;
@@ -4455,10 +4455,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path10) {
-  if (!path10)
+function getElementAtPath(obj, path12) {
+  if (!path12)
     return obj;
-  return path10.reduce((acc, key) => acc?.[key], obj);
+  return path12.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -4870,11 +4870,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path10, issues) {
+function prefixIssues(path12, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path10);
+    iss.path.unshift(path12);
     return iss;
   });
 }
@@ -5015,9 +5015,9 @@ var Class = class {
   constructor(..._args) {
   }
 };
-function members(proto, table) {
-  for (const key in table) {
-    const desc = Object.getOwnPropertyDescriptor(table, key);
+function members(proto, table2) {
+  for (const key in table2) {
+    const desc = Object.getOwnPropertyDescriptor(table2, key);
     if (desc.get)
       Object.defineProperty(proto, key, { ...desc, enumerable: false });
     else
@@ -5307,16 +5307,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path10 = []) => {
+  const processError = (error62, path12 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path10, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path12, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
       } else {
-        const fullpath = [...path10, ...issue2.path];
+        const fullpath = [...path12, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -5355,17 +5355,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path10 = []) => {
+  const processError = (error62, path12 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path10, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path12, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
       } else {
-        const fullpath = [...path10, ...issue2.path];
+        const fullpath = [...path12, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -5404,8 +5404,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path10 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path10) {
+  const path12 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path12) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -21915,13 +21915,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path10 = ref.slice(1).split("/").filter(Boolean);
-  if (path10.length === 0) {
+  const path12 = ref.slice(1).split("/").filter(Boolean);
+  if (path12.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path10[0] === defsKey) {
-    const key = path10[1] === void 0 ? void 0 : decodeJSONPointerSegment(path10[1]);
+  if (path12[0] === defsKey) {
+    const key = path12[1] === void 0 ? void 0 : decodeJSONPointerSegment(path12[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -22594,7 +22594,8 @@ var RUNLOG_EVENTS = [
   "edit_warned",
   "override_requested",
   "mode_abandoned",
-  "validate"
+  "validate",
+  "approval_requested"
 ];
 var RunLogRecordSchema = external_exports.object({
   v: external_exports.literal(RUNLOG_VERSION),
@@ -22646,6 +22647,107 @@ function dropEmpty(record2) {
   return Object.fromEntries(
     Object.entries(record2 || {}).filter(([, v]) => v !== void 0 && v !== null && !(Array.isArray(v) && v.length === 0))
   );
+}
+function readRunLog(taskDir, { file: runLogFile }) {
+  const file2 = path3.join(taskDir, runLogFile);
+  let text = "";
+  try {
+    text = fs2.readFileSync(file2, "utf8");
+  } catch {
+    return { records: [], skipped: 0 };
+  }
+  const records = [];
+  let skipped = 0;
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    try {
+      const parsed = RunLogRecordSchema.safeParse(JSON.parse(line));
+      if (parsed.success) records.push(parsed.data);
+      else skipped++;
+    } catch {
+      skipped++;
+    }
+  }
+  return { records, skipped };
+}
+
+// packages/engine/src/report.mjs
+var bump = (obj, key, by = 1) => {
+  obj[key] = (obj[key] || 0) + by;
+};
+function emptyMode() {
+  return { starts: 0, completed: 0, firstPass: 0, blocked: 0, released: 0, failed: 0, durationsMs: [] };
+}
+function summarizeRunLog(records, { since } = {}) {
+  const s = {
+    events: 0,
+    modes: {},
+    entryBlocked: {},
+    denials: {},
+    codes: {},
+    actors: {},
+    overrides: 0,
+    approvals: 0,
+    abandoned: 0,
+    validates: { ok: 0, failed: 0 }
+  };
+  for (const r of records) {
+    if (since && String(r.ts) < since) continue;
+    s.events++;
+    if (r.actor) bump(s.actors, r.actor);
+    const mode = r.mode ? s.modes[r.mode] ||= emptyMode() : null;
+    switch (r.event) {
+      case "mode_start":
+        if (mode) mode.starts++;
+        break;
+      case "mode_end":
+        if (!mode) break;
+        if (r.outcome === "pass" || r.outcome === "released") {
+          mode.completed++;
+          if (r.outcome === "released") mode.released++;
+          if (r.outcome === "pass" && (r.attempt ?? 1) === 1) mode.firstPass++;
+          if (typeof r.duration_ms === "number") mode.durationsMs.push(r.duration_ms);
+        } else if (r.outcome === "blocked") {
+          mode.blocked++;
+        } else if (r.outcome === "failed") {
+          mode.failed++;
+        }
+        if (r.outcome !== "pass") for (const c of r.codes || []) bump(s.codes, c);
+        break;
+      case "entry_blocked":
+        for (const c of r.codes || ["ENTRY_BLOCKED"]) {
+          bump(s.entryBlocked, c);
+          bump(s.codes, c);
+        }
+        break;
+      case "edit_denied":
+      case "edit_warned":
+        for (const c of r.codes || ["EDIT_BLOCKED"]) {
+          bump(s.denials, c);
+          bump(s.codes, c);
+        }
+        break;
+      case "override_requested":
+        s.overrides++;
+        break;
+      case "approval_requested":
+        s.approvals++;
+        break;
+      case "mode_abandoned":
+        s.abandoned++;
+        break;
+      case "validate":
+        if (r.outcome === "ok") s.validates.ok++;
+        else {
+          s.validates.failed++;
+          for (const c of r.codes || []) bump(s.codes, c);
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return s;
 }
 
 // packages/engine/src/project-config.mjs
@@ -22910,7 +23012,7 @@ function readIfExists(p) {
 }
 function createModeBriefing(pack) {
   const statusName = path7.posix.basename(pack.statusFile);
-  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint }) {
+  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint, workspaceRoot }) {
     const lines = [];
     const statusPath = path7.join(taskDir, pack.statusFile);
     if (!fs6.existsSync(statusPath)) {
@@ -22947,6 +23049,10 @@ function createModeBriefing(pack) {
       for (const file2 of pack.rulesFor(command, data)) {
         const body = readIfExists(path7.join(rulesDir, file2)).trim();
         if (body) lines.push("", `--- ${file2} ---`, body);
+      }
+      const team = workspaceRoot && pack.teamRules ? pack.teamRules({ workspaceRoot, command }) : null;
+      if (team) {
+        lines.push("", `=== RULE C\u1EE6A TEAM (ngu\u1ED3n: ${team.source}${team.truncated ? ", \u0111\xE3 c\u1EAFt b\u1EDBt v\xEC v\u01B0\u1EE3t tr\u1EA7n" : ""}) \u2014 \u0111\xE3 duy\u1EC7t qua retro ===`, team.text);
       }
     }
     return { ok: entry.allowed, entry, text: lines.join("\n") };
@@ -23134,6 +23240,26 @@ function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
     if (!/^\s*human_override:\s*true\b/im.test(incoming)) return false;
     return parseFrontMatterLoose(readFileSafe(filePath)).data.human_override !== true;
   }
+  function contentAfter(filePath, toolInput) {
+    if (typeof toolInput.content === "string") return toolInput.content;
+    let text = readFileSafe(filePath);
+    const edits = toolInput.edits || [toolInput];
+    for (const e of edits) {
+      if (typeof e?.old_string !== "string" || typeof e?.new_string !== "string") continue;
+      text = e.replace_all ? text.split(e.old_string).join(e.new_string) : text.replace(e.old_string, () => e.new_string);
+    }
+    return text;
+  }
+  function approvalReason(rel, filePath, toolInput) {
+    for (const guard of pack.approvalGuards || []) {
+      if (!new RegExp(guard.file).test(rel)) continue;
+      if (guard.kind === "any") return guard.message([]);
+      const before = guard.approvedIds(readFileSafe(filePath));
+      const added = [...guard.approvedIds(contentAfter(filePath, toolInput))].filter((id) => !before.has(id));
+      if (added.length) return guard.message(added);
+    }
+    return "";
+  }
   function onPreEdit(payload) {
     const toolInput = payload.tool_input || {};
     const rawPath = toolInput.file_path || toolInput.notebook_path;
@@ -23155,6 +23281,13 @@ function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
       return;
     }
     const rel = relativePosix(workspace, filePath);
+    const approval = approvalReason(rel, filePath, toolInput);
+    if (approval) {
+      const active = marker?.status === "pending" ? marker : null;
+      if (active) logEvent(payload, active.task, "approval_requested", { mode: active.command, file: rel });
+      decide(payload, "ask", approval);
+      return;
+    }
     if (pack.writablePrefixes.some((prefix) => rel.startsWith(prefix))) return;
     const agent = kitAgentName(payload.agent_type);
     if (agent && agent !== pack.sourceEditAgent) {
@@ -23380,6 +23513,13 @@ var PackManifestSchema = external_exports.object({
     /** Rule nạp cho `always`, hoặc cho `modes` khi field `when_field` của file trạng thái là true. */
     conditional: external_exports.array(external_exports.object({ rule: name, always: list.default([]), modes: list.default([]), when_field: name })).default([])
   }),
+  /** Vòng tự học: thư mục retro, agent phân tích, file rule của team đã duyệt. */
+  retro: external_exports.object({
+    root: name,
+    agent: name,
+    team_rules_file: name,
+    team_rules_max_chars: external_exports.number().int().positive()
+  }).optional(),
   mcp: external_exports.object({
     server_name: name,
     tool_prefix: external_exports.string().regex(/^[a-z][a-z0-9]*$/),
@@ -23399,7 +23539,9 @@ var PackManifestSchema = external_exports.object({
       validate_workflow: name,
       scope_diff: name,
       next_step: name,
-      task_status: name
+      task_status: name,
+      retro_data: name.optional(),
+      validate_retro: name.optional()
     })
   })
 }).superRefine((m2, ctx) => {
@@ -23432,6 +23574,112 @@ function rulesForManifest(manifest, command, data = {}) {
     if (c.always.includes(command) || data[c.when_field] === true && c.modes.includes(command)) rules.push(c.rule);
   }
   return rules;
+}
+
+// packages/engine/src/retro.mjs
+import fs8 from "node:fs";
+import path9 from "node:path";
+var bump2 = (obj, key, by = 1) => {
+  obj[key] = (obj[key] || 0) + by;
+};
+var sortedEntries = (obj) => Object.entries(obj).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+function taskDirsIn(repoRoot, tasksRoot) {
+  const root = path9.join(repoRoot, tasksRoot);
+  if (!fs8.existsSync(root)) return [];
+  return fs8.readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => path9.join(root, d.name)).sort();
+}
+function buildRetroData({ repoRoot, tasksRoot, runLogFile, listIssues: listIssues2, since, now = /* @__PURE__ */ new Date() }) {
+  const allRecords = [];
+  const issues = {
+    total: 0,
+    open: 0,
+    by_severity: {},
+    by_category: {},
+    by_root_cause: {},
+    by_category_root_cause: {}
+  };
+  const perTask = [];
+  let tasksTotal = 0;
+  for (const dir of taskDirsIn(repoRoot, tasksRoot)) {
+    tasksTotal += 1;
+    const { records } = readRunLog(dir, { file: runLogFile });
+    const inRange = since ? records.filter((r) => String(r.ts) >= since) : records;
+    if (since && !inRange.length) continue;
+    allRecords.push(...inRange);
+    const rows = listIssues2(dir).rows;
+    let open2 = 0;
+    for (const row of rows) {
+      const category = row.category ? row.category.toLowerCase() : "(tr\u1ED1ng)";
+      const rootCause = row.rootCause ? row.rootCause.toLowerCase() : "(tr\u1ED1ng)";
+      issues.total += 1;
+      if (row.status === "open") {
+        issues.open += 1;
+        open2 += 1;
+      }
+      bump2(issues.by_severity, row.severity);
+      bump2(issues.by_category, category);
+      bump2(issues.by_root_cause, rootCause);
+      bump2(issues.by_category_root_cause, `${category} / ${rootCause}`);
+    }
+    const summary2 = summarizeRunLog(inRange);
+    const modes2 = Object.values(summary2.modes);
+    perTask.push({
+      task: path9.basename(dir),
+      events: summary2.events,
+      completed: modes2.reduce((a, m2) => a + m2.completed, 0),
+      first_pass: modes2.reduce((a, m2) => a + m2.firstPass, 0),
+      loops: modes2.reduce((a, m2) => a + m2.blocked + m2.failed, 0),
+      issues: rows.length,
+      open_issues: open2
+    });
+  }
+  const summary = summarizeRunLog(allRecords);
+  const modes = Object.fromEntries(
+    Object.entries(summary.modes).map(([mode, m2]) => [
+      mode,
+      { starts: m2.starts, completed: m2.completed, first_pass: m2.firstPass, blocked: m2.blocked + m2.failed, released: m2.released }
+    ])
+  );
+  return {
+    schema: 1,
+    generated_at: now.toISOString(),
+    since: since || null,
+    tasks_total: tasksTotal,
+    tasks_included: perTask.length,
+    runlog: {
+      events: summary.events,
+      modes,
+      top_codes: sortedEntries(summary.codes).slice(0, 15),
+      overrides: summary.overrides,
+      abandoned: summary.abandoned,
+      denials: summary.denials
+    },
+    issues: {
+      ...issues,
+      by_severity: Object.fromEntries(sortedEntries(issues.by_severity)),
+      by_category: Object.fromEntries(sortedEntries(issues.by_category)),
+      by_root_cause: Object.fromEntries(sortedEntries(issues.by_root_cause)),
+      by_category_root_cause: Object.fromEntries(sortedEntries(issues.by_category_root_cause).slice(0, 15))
+    },
+    per_task: perTask
+  };
+}
+var pct = (part, whole) => whole ? `${Math.round(part / whole * 100)}%` : "\u2014";
+function table(header, rows) {
+  if (!rows.length) return ["Kh\xF4ng c\xF3."];
+  return [`| ${header.join(" | ")} |`, `|${header.map(() => "---").join("|")}|`, ...rows.map((r) => `| ${r.join(" | ")} |`)];
+}
+function renderRetroSummary(data, { title }) {
+  const lines = [`# ${title}`, ""];
+  lines.push(
+    `T\u1EA1o l\xFAc: ${data.generated_at}${data.since ? `. T\xEDnh t\u1EEB: ${data.since}` : ""}. Task: ${data.tasks_included}/${data.tasks_total}. S\u1EF1 ki\u1EC7n run-log: ${data.runlog.events}. Issue: ${data.issues.total} (\u0111ang m\u1EDF ${data.issues.open}).`,
+    ""
+  );
+  lines.push("## Mode", "", ...table(["Mode", "Ho\xE0n t\u1EA5t", "Pass ngay l\u1EA7n \u0111\u1EA7u", "V\xF2ng b\u1ECB ch\u1EB7n"], Object.entries(data.runlog.modes).map(([mode, m2]) => [mode, m2.completed, `${m2.first_pass} (${pct(m2.first_pass, m2.completed)})`, m2.blocked])), "");
+  lines.push("## L\xFD do b\u1ECB ch\u1EB7n nhi\u1EC1u nh\u1EA5t", "", ...table(["Code", "S\u1ED1 l\u1EA7n"], data.runlog.top_codes.map(([c, n]) => [`\`${c}\``, n])), "");
+  lines.push("## Issue theo nh\xF3m v\xE0 nguy\xEAn nh\xE2n g\u1ED1c", "", ...table(["Nh\xF3m / nguy\xEAn nh\xE2n g\u1ED1c", "S\u1ED1 issue"], Object.entries(data.issues.by_category_root_cause)), "");
+  lines.push("## Task nhi\u1EC1u v\xF2ng b\u1ECB ch\u1EB7n nh\u1EA5t", "", ...table(["Task", "V\xF2ng b\u1ECB ch\u1EB7n", "Issue (\u0111ang m\u1EDF)"], [...data.per_task].sort((a, b) => b.loops - a.loops || b.issues - a.issues).slice(0, 10).map((t) => [t.task, t.loops, `${t.issues} (${t.open_issues})`])));
+  return lines.join("\n") + "\n";
 }
 
 // packages/pack-fe/src/parse.mjs
@@ -23610,11 +23858,13 @@ var manifest_gen_default = {
   "status_file": "tracking/workflow-status.md",
   "writable_prefixes": [
     "docs/frontend-tasks/",
-    "docs/frontend-context/"
+    "docs/frontend-context/",
+    "docs/frontend-retro/"
   ],
   "scope_ignore": [
     "docs/frontend-tasks/",
     "docs/frontend-context/",
+    "docs/frontend-retro/",
     ".frontend-delivery/"
   ],
   "planned_files_heading": "File s\u1EBD t\u1EA1o\\s*\\/\\s*c\u1EADp nh\u1EADt",
@@ -23874,6 +24124,12 @@ var manifest_gen_default = {
       }
     ]
   },
+  "retro": {
+    "root": "docs/frontend-retro",
+    "agent": "frontend-retro-analyst",
+    "team_rules_file": "docs/frontend-context/team-rules.md",
+    "team_rules_max_chars": 3e3
+  },
   "mcp": {
     "server_name": "frontend-delivery",
     "tool_prefix": "fe",
@@ -23906,7 +24162,9 @@ var manifest_gen_default = {
       "validate_workflow": "Ch\u1EA1y to\xE0n b\u1ED9 gate c\u1EE7a workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing h\u1EE3p l\u1EC7. Task \u1EDF review/test/pr-ready th\xEC \u0111\u1ED1i chi\u1EBFu th\xEAm file \u0111\xE3 s\u1EEDa (git) v\u1EDBi plan. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC m\u1ECDi mode; \u0111\xE2y l\xE0 gate ch\xEDnh ch\u1EB7n agent nh\u1EA3y mode sai.",
       "scope_diff": 'So file th\u1EF1c s\u1EF1 thay \u0111\u1ED5i (git) v\u1EDBi b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" trong implementation-plan.md. D\xF9ng trong cook/bugfix/review/pr \u0111\u1EC3 ph\xE1t hi\u1EC7n file s\u1EEDa ngo\xE0i plan thay v\xEC t\u1EF1 khai scope_diff_status.',
       "next_step": "Tr\u1EA3 v\u1EC1 prompt b\u01B0\u1EDBc ti\u1EBFp theo \u0111\u1ECDc tr\u1EF1c ti\u1EBFp t\u1EEB tracking/workflow-status.md c\u1EE7a task. D\xF9ng khi kh\xF4ng ch\u1EAFc mode k\u1EBF ti\u1EBFp l\xE0 g\xEC.",
-      "task_status": "\u0110\u1ECDc t\xF3m t\u1EAFt tr\u1EA1ng th\xE1i task: mode hi\u1EC7n t\u1EA1i, c\xE1c gate status ch\xEDnh, s\u1ED1 c\xE2u h\u1ECFi blocking, s\u1ED1 issue theo severity. Ch\u1EC9 \u0111\u1ECDc, kh\xF4ng s\u1EEDa file."
+      "task_status": "\u0110\u1ECDc t\xF3m t\u1EAFt tr\u1EA1ng th\xE1i task: mode hi\u1EC7n t\u1EA1i, c\xE1c gate status ch\xEDnh, s\u1ED1 c\xE2u h\u1ECFi blocking, s\u1ED1 issue theo severity. Ch\u1EC9 \u0111\u1ECDc, kh\xF4ng s\u1EEDa file.",
+      "retro_data": "D\xF9ng cho /fe:retro. G\u1ED9p run-log v\xE0 b\u1EA3ng bug c\u1EE7a m\u1ECDi task th\xE0nh s\u1ED1 li\u1EC7u (pass ngay l\u1EA7n \u0111\u1EA7u, l\xFD do b\u1ECB ch\u1EB7n, issue theo nh\xF3m v\xE0 nguy\xEAn nh\xE2n g\u1ED1c), ghi docs/frontend-retro/<ng\xE0y>/retro-data.json v\xE0 tr\u1EA3 b\u1EA3n t\xF3m t\u1EAFt. Kh\xF4ng s\u1EEDa rule hay task.",
+      "validate_retro": "Ki\u1EC3m m\u1ED9t th\u01B0 m\u1EE5c retro: \u0111\u1EE7 retro-data.json, retro-report.md, proposals.md; \u0111\u1EC1 xu\u1EA5t \u0111\xE3 duy\u1EC7t ph\u1EA3i c\xF3 ng\u01B0\u1EDDi duy\u1EC7t. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC /fe:retro."
     }
   }
 };
@@ -24043,15 +24301,15 @@ function sectionTable(markdown, headingRe) {
   const lines = String(markdown || "").split(/\r?\n/);
   const start = lines.findIndex((l) => /^#{2,3}\s/.test(l) && headingRe.test(l));
   if (start < 0) return null;
-  const table = [];
+  const table2 = [];
   for (const line of lines.slice(start + 1)) {
     if (/^#{1,3}\s/.test(line)) break;
-    if (/^\s*\|/.test(line)) table.push(line);
-    else if (table.length) break;
+    if (/^\s*\|/.test(line)) table2.push(line);
+    else if (table2.length) break;
   }
-  if (table.length < 2) return null;
-  const header = splitRow(table[0]);
-  const rows = table.slice(1).filter((l) => !/^\s*\|\s*:?-+/.test(l)).map(splitRow);
+  if (table2.length < 2) return null;
+  const header = splitRow(table2[0]);
+  const rows = table2.slice(1).filter((l) => !/^\s*\|\s*:?-+/.test(l)).map(splitRow);
   return { header, rows };
 }
 function columnIndex(header) {
@@ -24064,12 +24322,12 @@ function columnIndex(header) {
   return index;
 }
 function parseIssueTable(markdown, headingRe) {
-  const table = sectionTable(markdown, headingRe);
-  if (!table) return { rows: [], confident: true };
-  const col = columnIndex(table.header);
+  const table2 = sectionTable(markdown, headingRe);
+  if (!table2) return { rows: [], confident: true };
+  const col = columnIndex(table2.header);
   const confident = col.id !== void 0 && col.severity !== void 0 && col.status !== void 0;
   const rows = [];
-  for (const cells of table.rows) {
+  for (const cells of table2.rows) {
     const id = cells[col.id ?? 0] || "";
     if (!realCell(id)) continue;
     const severity = severityOf(cells[col.severity ?? 1] || "");
@@ -24087,11 +24345,11 @@ function parseIssueTable(markdown, headingRe) {
   return { rows, confident: rows.length === 0 || confident };
 }
 function statusOverrides(reviewBugsMd) {
-  const table = sectionTable(reviewBugsMd, /Trạng thái sau bugfix|Status after bugfix/i);
+  const table2 = sectionTable(reviewBugsMd, /Trạng thái sau bugfix|Status after bugfix/i);
   const map2 = /* @__PURE__ */ new Map();
-  if (!table) return map2;
-  const col = columnIndex(table.header);
-  for (const cells of table.rows) {
+  if (!table2) return map2;
+  const col = columnIndex(table2.header);
+  for (const cells of table2.rows) {
     const id = cells[col.id ?? 0] || "";
     const status = statusOf(cells[col.status ?? 1]);
     if (realCell(id) && status !== "unknown") map2.set(id, status);
@@ -24099,11 +24357,7 @@ function statusOverrides(reviewBugsMd) {
   return map2;
 }
 function countOpenIssuesBySeverity(reviewBugsMd = "", reviewReportMd = "") {
-  const bugs = parseIssueTable(reviewBugsMd, /Bug cần xử lý|Bugs?\b/i);
-  const report = parseIssueTable(reviewReportMd, /Issue phát hiện|Issues?\b/i);
-  const byId = /* @__PURE__ */ new Map();
-  for (const row of [...report.rows, ...bugs.rows]) byId.set(row.id, row);
-  const overrides = statusOverrides(reviewBugsMd);
+  const { rows, confident } = listIssues(reviewBugsMd, reviewReportMd);
   const result = {
     critical: 0,
     high: 0,
@@ -24113,12 +24367,12 @@ function countOpenIssuesBySeverity(reviewBugsMd = "", reviewReportMd = "") {
     unknownStatusIds: [],
     unknownCategoryIds: [],
     unknownRootCauseIds: [],
-    confident: bugs.confident && report.confident
+    confident
   };
   const categories = new Set(ISSUE_CATEGORIES);
   const rootCauses = new Set(ISSUE_ROOT_CAUSES);
-  for (const row of byId.values()) {
-    const status = overrides.get(row.id) || row.status;
+  for (const row of rows) {
+    const { status } = row;
     if (status === "open") {
       result[row.severity] += 1;
       result.openIds[row.severity].push(row.id);
@@ -24129,6 +24383,18 @@ function countOpenIssuesBySeverity(reviewBugsMd = "", reviewReportMd = "") {
     if (row.hasRootCause && !rootCauses.has(row.rootCause.toLowerCase())) result.unknownRootCauseIds.push(row.id);
   }
   return result;
+}
+function listIssues(reviewBugsMd = "", reviewReportMd = "") {
+  const bugs = parseIssueTable(reviewBugsMd, /Bug cần xử lý|Bugs?\b/i);
+  const report = parseIssueTable(reviewReportMd, /Issue phát hiện|Issues?\b/i);
+  const byId = /* @__PURE__ */ new Map();
+  for (const row of [...report.rows, ...bugs.rows]) byId.set(row.id, row);
+  const overrides = statusOverrides(reviewBugsMd);
+  const rows = [...byId.values()].map((row) => ({ ...row, status: overrides.get(row.id) || row.status }));
+  return { rows, confident: bugs.confident && report.confident };
+}
+function listIssuesInTask(read) {
+  return listIssues(read("tracking/review-bugs.md"), read("output/review-report.md"));
 }
 function countOpenIssuesInTask(read) {
   return countOpenIssuesBySeverity(read("tracking/review-bugs.md"), read("output/review-report.md"));
@@ -24423,8 +24689,8 @@ function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
 }
 
 // packages/pack-fe/src/workflow.mjs
-import fs8 from "node:fs";
-import path9 from "node:path";
+import fs9 from "node:fs";
+import path10 from "node:path";
 
 // packages/pack-fe/src/resolve.mjs
 var TASKS_ROOT = manifest_gen_default.tasks_root;
@@ -24440,20 +24706,20 @@ function loadProjectConfig2(repoRoot) {
 
 // packages/pack-fe/src/workflow.mjs
 function taskIo(taskDir) {
-  const exists = (rel) => fs8.existsSync(path9.join(taskDir, rel));
+  const exists = (rel) => fs9.existsSync(path10.join(taskDir, rel));
   const read = (rel) => {
-    const p = path9.join(taskDir, rel);
-    return fs8.existsSync(p) ? fs8.readFileSync(p, "utf8") : "";
+    const p = path10.join(taskDir, rel);
+    return fs9.existsSync(p) ? fs9.readFileSync(p, "utf8") : "";
   };
   return { exists, read };
 }
 function loadWorkflow(taskDir) {
-  const workflowPath = path9.join(taskDir, "tracking", "workflow-status.md");
-  if (!fs8.existsSync(workflowPath)) {
+  const workflowPath = path10.join(taskDir, "tracking", "workflow-status.md");
+  if (!fs9.existsSync(workflowPath)) {
     const errors = ["Thi\u1EBFu tracking/workflow-status.md"];
     return { ok: false, errors, issues: [{ code: "STATUS_MISSING", message: errors[0] }] };
   }
-  const parsed = parseWorkflowStatus(fs8.readFileSync(workflowPath, "utf8"));
+  const parsed = parseWorkflowStatus(fs9.readFileSync(workflowPath, "utf8"));
   if (parsed.ok) return parsed;
   return { ...parsed, issues: parsed.errors.map((message) => ({ code: "STATUS_SCHEMA_INVALID", message })) };
 }
@@ -24477,17 +24743,17 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   return { ...result, plannedFiles };
 }
 function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
-  if (!fs8.existsSync(tasksRoot)) return [];
+  if (!fs9.existsSync(tasksRoot)) return [];
   const planned = [];
-  for (const ent of fs8.readdirSync(tasksRoot, { withFileTypes: true })) {
+  for (const ent of fs9.readdirSync(tasksRoot, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === exclude) continue;
-    const plan = path9.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
-    if (fs8.existsSync(plan)) planned.push(...parsePlannedFiles2(fs8.readFileSync(plan, "utf8")));
+    const plan = path10.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
+    if (fs9.existsSync(plan)) planned.push(...parsePlannedFiles2(fs9.readFileSync(plan, "utf8")));
   }
   return planned;
 }
 function plannedFilesOfSiblingTasks(taskDir) {
-  return plannedFilesOfTasksIn(path9.dirname(taskDir), path9.basename(taskDir));
+  return plannedFilesOfTasksIn(path10.dirname(taskDir), path10.basename(taskDir));
 }
 function validateWorkflow(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
@@ -24537,7 +24803,127 @@ function scaffoldTask2({ workspaceRoot, name: name2, templatesDir }) {
 // packages/pack-fe/src/runlog.mjs
 var RUNLOG_FILE = runLogFileFor(manifest_gen_default.status_file);
 
+// packages/pack-fe/src/retro.mjs
+import fs10 from "node:fs";
+import path11 from "node:path";
+var RETRO_ROOT = manifest_gen_default.retro.root;
+var TEAM_RULES_FILE = manifest_gen_default.retro.team_rules_file;
+var TEAM_RULES_MAX_CHARS = manifest_gen_default.retro.team_rules_max_chars;
+var RETRO_FILES = ["retro-data.json", "retro-report.md", "proposals.md"];
+var STATUS = [
+  ["applied", /^(applied|đã áp dụng|da ap dung)$/i],
+  ["approved", /^(approved|đã duyệt|da duyet|duyệt)$/i],
+  ["rejected", /^(rejected|từ chối|tu choi|bỏ|bo)$/i],
+  ["proposed", /^(proposed|đề xuất|de xuat|chờ duyệt|cho duyet)$/i]
+];
+function statusOf2(cell) {
+  const t = String(cell || "").trim();
+  return STATUS.find(([, re]) => re.test(t))?.[0] || "unknown";
+}
+var COLUMNS = {
+  id: /^id$/i,
+  evidence: /^(bằng chứng|bang chung|evidence)$/i,
+  target: /^(đích|dich|target)$/i,
+  change: /^(thay đổi đề xuất|thay doi de xuat|change)$/i,
+  metric: /^(metric theo dõi|metric theo doi|metric)$/i,
+  scope: /^(phạm vi|pham vi|scope)$/i,
+  status: /^(trạng thái|trang thai|status)$/i,
+  reviewer: /^(người duyệt|nguoi duyet|reviewer)$/i
+};
+function parseProposals(markdown) {
+  const lines = String(markdown || "").split(/\r?\n/);
+  for (let i = 0; i < lines.length - 1; i++) {
+    if (!/^\s*\|/.test(lines[i]) || !/^\s*\|\s*:?-+/.test(lines[i + 1])) continue;
+    const header = lines[i].split("|").slice(1, -1).map((c) => c.trim());
+    const col = {};
+    header.forEach((name2, idx) => {
+      for (const [key, re] of Object.entries(COLUMNS)) if (col[key] === void 0 && re.test(name2)) col[key] = idx;
+    });
+    if (col.id === void 0 || col.status === void 0) continue;
+    const rows = [];
+    for (const line of lines.slice(i + 2)) {
+      if (!/^\s*\|/.test(line)) break;
+      const cells = line.split("|").slice(1, -1).map((c) => c.trim());
+      const id = cells[col.id] || "";
+      if (!realCell(id)) continue;
+      const get = (key) => col[key] === void 0 ? "" : cells[col[key]] || "";
+      rows.push({
+        id,
+        evidence: get("evidence"),
+        target: get("target"),
+        change: get("change"),
+        metric: get("metric"),
+        scope: get("scope").toLowerCase(),
+        status: statusOf2(get("status")),
+        reviewer: realCell(get("reviewer")) ? get("reviewer") : ""
+      });
+    }
+    return { found: true, rows };
+  }
+  return { found: false, rows: [] };
+}
+function approvedProposalIds(markdown) {
+  return new Set(parseProposals(markdown).rows.filter((r) => r.status === "approved" || r.status === "applied").map((r) => r.id));
+}
+function validateProposals(markdown) {
+  const issues = [];
+  const warnings = [];
+  const { found, rows } = parseProposals(markdown);
+  if (!found) issues.push({ code: "RETRO_PROPOSALS_TABLE_MISSING", message: "proposals.md ch\u01B0a c\xF3 b\u1EA3ng \u0111\u1EC1 xu\u1EA5t (c\u1EA7n c\u1ED9t ID v\xE0 Tr\u1EA1ng th\xE1i)." });
+  for (const r of rows) {
+    if ((r.status === "approved" || r.status === "applied") && !r.reviewer) {
+      issues.push({ code: "RETRO_APPROVAL_INCOMPLETE", message: `\u0110\u1EC1 xu\u1EA5t ${r.id} \u0111\xE3 ${r.status === "applied" ? "\xE1p d\u1EE5ng" : "duy\u1EC7t"} nh\u01B0ng thi\u1EBFu Ng\u01B0\u1EDDi duy\u1EC7t.` });
+    }
+    if (r.status === "unknown") warnings.push(`\u0110\u1EC1 xu\u1EA5t ${r.id} c\xF3 Tr\u1EA1ng th\xE1i l\u1EA1; d\xF9ng Proposed, Approved, Rejected ho\u1EB7c Applied.`);
+    if (r.scope && !["project", "upstream"].includes(r.scope)) warnings.push(`\u0110\u1EC1 xu\u1EA5t ${r.id} c\xF3 Ph\u1EA1m vi l\u1EA1; d\xF9ng project ho\u1EB7c upstream.`);
+    if (!realCell(r.evidence)) warnings.push(`\u0110\u1EC1 xu\u1EA5t ${r.id} thi\u1EBFu B\u1EB1ng ch\u1EE9ng.`);
+  }
+  const errors = issues.map((i) => i.message);
+  return { ok: errors.length === 0, errors, warnings, issues };
+}
+function validateRetroFolder(dir) {
+  const missing = RETRO_FILES.filter((f) => !fs10.existsSync(path11.join(dir, f)));
+  const proposals = fs10.existsSync(path11.join(dir, "proposals.md")) ? fs10.readFileSync(path11.join(dir, "proposals.md"), "utf8") : "";
+  const res = missing.includes("proposals.md") ? { issues: [], warnings: [] } : validateProposals(proposals);
+  const issues = [...missing.map((f) => ({ code: "RETRO_FILE_MISSING", message: `Thi\u1EBFu ${f}` })), ...res.issues];
+  const errors = issues.map((i) => i.message);
+  return { ok: errors.length === 0, errors, warnings: res.warnings, issues };
+}
+function buildRetroData2(repoRoot, { since, now } = {}) {
+  return buildRetroData({
+    repoRoot,
+    tasksRoot: TASKS_ROOT,
+    runLogFile: RUNLOG_FILE,
+    since,
+    now,
+    listIssues: (taskDir) => listIssuesInTask((rel) => {
+      const p = path11.join(taskDir, rel);
+      return fs10.existsSync(p) ? fs10.readFileSync(p, "utf8") : "";
+    })
+  });
+}
+function renderRetroSummary2(data) {
+  return renderRetroSummary(data, { title: "D\u1EEF li\u1EC7u retro FE-Kit" });
+}
+function teamRulesFor({ workspaceRoot, command }) {
+  const file2 = path11.join(workspaceRoot, TEAM_RULES_FILE);
+  if (!fs10.existsSync(file2)) return null;
+  const sections = fs10.readFileSync(file2, "utf8").replace(/\r\n/g, "\n").split(/^(?=## )/m);
+  const picked = sections.filter((sec) => {
+    const heading = sec.match(/^## (.+)$/m)?.[1]?.toLowerCase();
+    if (!heading) return false;
+    if (/^(mọi mode|moi mode|all)$/.test(heading.trim())) return true;
+    return heading.split(/[,/]/).map((h) => h.trim()).includes(command);
+  });
+  if (!picked.length) return null;
+  let text = picked.join("").trim();
+  const truncated = text.length > TEAM_RULES_MAX_CHARS;
+  if (truncated) text = text.slice(0, TEAM_RULES_MAX_CHARS).trimEnd();
+  return { text, source: TEAM_RULES_FILE, truncated };
+}
+
 // packages/pack-fe/src/pack.mjs
+var escapeRe2 = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 var m = manifest_gen_default;
 var fePack = {
   id: m.id,
@@ -24579,6 +24965,28 @@ var fePack = {
   requiredTaskFiles: REQUIRED_TASK_FILES,
   validateWorkflow,
   validateWorkflowAtGate,
+  /** Vòng tự học: số liệu retro, kiểm thư mục retro, rule của team đã duyệt. */
+  retro: {
+    root: RETRO_ROOT,
+    buildData: buildRetroData2,
+    renderSummary: renderRetroSummary2,
+    validateFolder: validateRetroFolder
+  },
+  teamRules: teamRulesFor,
+  /** File cần người dùng xác nhận khi sửa: duyệt đề xuất retro, và rule của team. */
+  approvalGuards: [
+    {
+      file: `^${escapeRe2(RETRO_ROOT)}/[^/]+/proposals\\.md$`,
+      kind: "ids",
+      approvedIds: approvedProposalIds,
+      message: (ids) => `\u0110\u1EC1 xu\u1EA5t ${ids.join(", ")} \u0111ang \u0111\u01B0\u1EE3c chuy\u1EC3n sang Approved trong proposals.md. Ch\u1EC9 ng\u01B0\u1EDDi duy\u1EC7t m\u1EDBi duy\u1EC7t \u0111\u1EC1 xu\u1EA5t retro; x\xE1c nh\u1EADn n\u1EBFu ch\xEDnh b\u1EA1n duy\u1EC7t v\xE0 \u0111\xE3 \u0111i\u1EC1n c\u1ED9t Ng\u01B0\u1EDDi duy\u1EC7t.`
+    },
+    {
+      file: `^${escapeRe2(TEAM_RULES_FILE)}$`,
+      kind: "any",
+      message: () => `\u0110ang s\u1EEDa ${TEAM_RULES_FILE}: rule c\u1EE7a team ch\u1EC9 \u0111\u01B0\u1EE3c th\xEAm t\u1EEB \u0111\u1EC1 xu\u1EA5t retro \u0111\xE3 duy\u1EC7t. X\xE1c nh\u1EADn n\u1EBFu b\u1EA1n \u0111\u1ED3ng \xFD thay \u0111\u1ED5i n\xE0y.`
+    }
+  ],
   /** Chuỗi và cấu hình riêng của FE cho MCP server (`createMcpTools` trong engine). */
   mcp: {
     serverName: m.mcp.server_name,
@@ -24602,7 +25010,9 @@ var fePack = {
       validateWorkflow: m.mcp.descriptions.validate_workflow,
       scopeDiff: m.mcp.descriptions.scope_diff,
       nextStep: m.mcp.descriptions.next_step,
-      taskStatus: m.mcp.descriptions.task_status
+      taskStatus: m.mcp.descriptions.task_status,
+      retroData: m.mcp.descriptions.retro_data,
+      validateRetro: m.mcp.descriptions.validate_retro
     }
   }
 };
@@ -24611,7 +25021,7 @@ fePack.evaluateModeCompletion = evaluateModeCompletion;
 var modeBriefing = createModeBriefing(fePack);
 
 // core/hooks/fe-hook.mjs
-var KIT_VERSION = true ? "2.4.0" : "dev";
+var KIT_VERSION = true ? "2.5.0" : "dev";
 runHook(fePack, { version: KIT_VERSION });
 /*! Bundled license information:
 

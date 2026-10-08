@@ -33,6 +33,7 @@ export function summarizeRunLog(records, { since } = {}) {
     codes: {},
     actors: {},
     overrides: 0,
+    approvals: 0,
     abandoned: 0,
     validates: { ok: 0, failed: 0 },
   };
@@ -74,6 +75,9 @@ export function summarizeRunLog(records, { since } = {}) {
         break;
       case 'override_requested':
         s.overrides++;
+        break;
+      case 'approval_requested':
+        s.approvals++;
         break;
       case 'mode_abandoned':
         s.abandoned++;

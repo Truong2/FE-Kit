@@ -38,7 +38,7 @@ Mặc định đổi được khi review từng phase:
 | 1 | 2.2.0 | Run-log `tracking/run-log.jsonl`, reason code, `fe-kit report`, `fe-kit mode begin/end` cho adapter không có hook, quyết định `enforce` | Code xong; `enforce` chưa bật vì chưa có baseline (xem bên dưới) |
 | 2 | 2.3.0 | Đếm issue từ `review-bugs.md`, taxonomy bug (nhóm + nguyên nhân gốc), deprecate field không gate nào đọc, chuyển gate `check-*` ra khỏi CLI, rule input không tin cậy, kiểm ghi qua shell | Code xong; eval `plan-ignores-injected-srs` chờ chạy thật |
 | 3 | 2.4.0 | Tách `packages/engine` + `packages/pack-fe` theo kiểu strangler, có golden test; pack mẫu thứ hai chỉ dùng trong test | Xong; phần còn lại chuyển sang Phase 5 (xem bên dưới) |
-| 4 | 2.5.0 | `retro`: tổng hợp run-log + bug thành đề xuất sửa rule, có người duyệt | Chưa làm |
+| 4 | 2.5.0 | `retro`: tổng hợp run-log + bug thành đề xuất sửa rule, có người duyệt | Code xong; eval `retro-proposes-not-applies` chờ chạy thật; cần vài tuần run-log thật để retro có ý nghĩa |
 | 5 | 3.0.0 | Pack thật thứ hai (BE hoặc QA), mỗi pack một plugin | Chưa làm |
 
 ### Luật bật `enforce` mặc định

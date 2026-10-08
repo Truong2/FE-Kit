@@ -275,6 +275,34 @@ export function createHookHandlers(pack, { version = 'dev' } = {}) {
     return parseFrontMatterLoose(readFileSafe(filePath)).data.human_override !== true;
   }
 
+  /** Nội dung file sau khi áp Edit/Write/MultiEdit (chỉ để so trước/sau, không ghi). */
+  function contentAfter(filePath, toolInput) {
+    if (typeof toolInput.content === 'string') return toolInput.content;
+    let text = readFileSafe(filePath);
+    const edits = toolInput.edits || [toolInput];
+    for (const e of edits) {
+      if (typeof e?.old_string !== 'string' || typeof e?.new_string !== 'string') continue;
+      text = e.replace_all ? text.split(e.old_string).join(e.new_string) : text.replace(e.old_string, () => e.new_string);
+    }
+    return text;
+  }
+
+  /**
+   * File cần người dùng xác nhận khi sửa (khai trong `pack.approvalGuards`):
+   * `kind: 'ids'` hỏi khi có mục mới chuyển sang đã duyệt; `kind: 'any'` hỏi với mọi thay đổi.
+   * @returns {string} lý do hỏi, rỗng nếu không cần
+   */
+  function approvalReason(rel, filePath, toolInput) {
+    for (const guard of pack.approvalGuards || []) {
+      if (!new RegExp(guard.file).test(rel)) continue;
+      if (guard.kind === 'any') return guard.message([]);
+      const before = guard.approvedIds(readFileSafe(filePath));
+      const added = [...guard.approvedIds(contentAfter(filePath, toolInput))].filter((id) => !before.has(id));
+      if (added.length) return guard.message(added);
+    }
+    return '';
+  }
+
   function onPreEdit(payload) {
     const toolInput = payload.tool_input || {};
     const rawPath = toolInput.file_path || toolInput.notebook_path;
@@ -300,6 +328,14 @@ export function createHookHandlers(pack, { version = 'dev' } = {}) {
     }
 
     const rel = relativePosix(workspace, filePath);
+    // Kiểm trước luật thư mục: file cần duyệt nằm trong thư mục agent được ghi.
+    const approval = approvalReason(rel, filePath, toolInput);
+    if (approval) {
+      const active = marker?.status === 'pending' ? marker : null;
+      if (active) logEvent(payload, active.task, 'approval_requested', { mode: active.command, file: rel });
+      decide(payload, 'ask', approval);
+      return;
+    }
     if (pack.writablePrefixes.some((prefix) => rel.startsWith(prefix))) return;
 
     // Luật theo vai — không cần marker, nên vẫn đúng khi agent được delegate chủ động.

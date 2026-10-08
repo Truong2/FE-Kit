@@ -21,6 +21,17 @@ import { loadProjectConfig } from './project-config.mjs';
 import { scaffoldTask } from './scaffold.mjs';
 import manifest from './manifest.gen.mjs';
 import { RUNLOG_FILE } from './runlog.mjs';
+import {
+  RETRO_ROOT,
+  TEAM_RULES_FILE,
+  buildRetroData,
+  renderRetroSummary,
+  validateRetroFolder,
+  approvedProposalIds,
+  teamRulesFor,
+} from './retro.mjs';
+
+const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const m = manifest;
 
@@ -64,6 +75,29 @@ export const fePack = {
   requiredTaskFiles: REQUIRED_TASK_FILES,
   validateWorkflow,
   validateWorkflowAtGate,
+  /** Vòng tự học: số liệu retro, kiểm thư mục retro, rule của team đã duyệt. */
+  retro: {
+    root: RETRO_ROOT,
+    buildData: buildRetroData,
+    renderSummary: renderRetroSummary,
+    validateFolder: validateRetroFolder,
+  },
+  teamRules: teamRulesFor,
+  /** File cần người dùng xác nhận khi sửa: duyệt đề xuất retro, và rule của team. */
+  approvalGuards: [
+    {
+      file: `^${escapeRe(RETRO_ROOT)}/[^/]+/proposals\\.md$`,
+      kind: 'ids',
+      approvedIds: approvedProposalIds,
+      message: (ids) =>
+        `Đề xuất ${ids.join(', ')} đang được chuyển sang Approved trong proposals.md. Chỉ người duyệt mới duyệt đề xuất retro; xác nhận nếu chính bạn duyệt và đã điền cột Người duyệt.`,
+    },
+    {
+      file: `^${escapeRe(TEAM_RULES_FILE)}$`,
+      kind: 'any',
+      message: () => `Đang sửa ${TEAM_RULES_FILE}: rule của team chỉ được thêm từ đề xuất retro đã duyệt. Xác nhận nếu bạn đồng ý thay đổi này.`,
+    },
+  ],
   /** Chuỗi và cấu hình riêng của FE cho MCP server (`createMcpTools` trong engine). */
   mcp: {
     serverName: m.mcp.server_name,
@@ -88,6 +122,8 @@ export const fePack = {
       scopeDiff: m.mcp.descriptions.scope_diff,
       nextStep: m.mcp.descriptions.next_step,
       taskStatus: m.mcp.descriptions.task_status,
+      retroData: m.mcp.descriptions.retro_data,
+      validateRetro: m.mcp.descriptions.validate_retro,
     },
   },
 };
