@@ -31,3 +31,5 @@ export { createStateMachine } from './state-machine.mjs';
 export { parseFrontMatterLoose, realCell } from './frontmatter.mjs';
 export { createModeCompletion } from './completion.mjs';
 export { createModeBriefing } from './briefing.mjs';
+export { createHookHandlers, runHook } from './hook-core.mjs';
+export { createMcpTools } from './mcp-core.mjs';

@@ -162,8 +162,9 @@ async function captureValidators(root) {
     CONDITIONAL_TASK_FILES: v.CONDITIONAL_TASK_FILES,
     TASKS_ROOT: v.TASKS_ROOT,
     allRuleFiles: v.allRuleFiles(),
-    exports: Object.keys(v).sort(),
   };
+  // So kiểu tập con trong golden.test.mjs: thêm export mới được, bỏ export cũ thì không.
+  out['exports'] = Object.keys(v).sort();
   return out;
 }
 

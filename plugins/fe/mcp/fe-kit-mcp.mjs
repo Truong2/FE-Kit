@@ -3268,8 +3268,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path8) {
-      let input2 = path8;
+    function removeDotSegments(path10) {
+      let input2 = path10;
       const output2 = [];
       let nextSlash = -1;
       let len = 0;
@@ -3674,8 +3674,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path8 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path8 && path8 !== "/" ? path8 : void 0;
+        const path10 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path10 && path10 !== "/" ? path10 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -7181,12 +7181,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats(ajv, list, fs7, exportName) {
+    function addFormats(ajv, list, fs8, exportName) {
       var _a3;
       var _b;
       (_a3 = (_b = ajv.opts.code).formats) !== null && _a3 !== void 0 ? _a3 : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f of list)
-        ajv.addFormat(f, fs7[f]);
+        ajv.addFormat(f, fs8[f]);
     }
     module2.exports = exports2 = formatsPlugin;
     Object.defineProperty(exports2, "__esModule", { value: true });
@@ -10578,7 +10578,7 @@ var require_parse = __commonJS({
 var require_gray_matter = __commonJS({
   "node_modules/gray-matter/index.js"(exports2, module2) {
     "use strict";
-    var fs7 = __require("fs");
+    var fs8 = __require("fs");
     var sections = require_section_matter();
     var defaults = require_defaults2();
     var stringify = require_stringify();
@@ -10662,7 +10662,7 @@ var require_gray_matter = __commonJS({
       return stringify(file2, data, options2);
     };
     matter4.read = function(filepath, options2) {
-      const str2 = fs7.readFileSync(filepath, "utf8");
+      const str2 = fs8.readFileSync(filepath, "utf8");
       const file2 = matter4(str2, options2);
       file2.path = filepath;
       return file2;
@@ -10691,8 +10691,7 @@ var require_gray_matter = __commonJS({
 });
 
 // core/mcp/server.mjs
-import fs6 from "node:fs";
-import path7 from "node:path";
+import path9 from "node:path";
 import { fileURLToPath } from "node:url";
 
 // node_modules/zod/v4/core/index.js
@@ -11182,10 +11181,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path8) {
-  if (!path8)
+function getElementAtPath(obj, path10) {
+  if (!path10)
     return obj;
-  return path8.reduce((acc, key) => acc?.[key], obj);
+  return path10.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -11597,11 +11596,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path8, issues) {
+function prefixIssues(path10, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path8);
+    iss.path.unshift(path10);
     return iss;
   });
 }
@@ -12034,16 +12033,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path8 = []) => {
+  const processError = (error62, path10 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path8, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path10, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else {
-        const fullpath = [...path8, ...issue2.path];
+        const fullpath = [...path10, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -12082,17 +12081,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path8 = []) => {
+  const processError = (error62, path10 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path8, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path10, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path8, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else {
-        const fullpath = [...path8, ...issue2.path];
+        const fullpath = [...path10, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -12131,8 +12130,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path8 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path8) {
+  const path10 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path10) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -29117,13 +29116,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path8 = ref.slice(1).split("/").filter(Boolean);
-  if (path8.length === 0) {
+  const path10 = ref.slice(1).split("/").filter(Boolean);
+  if (path10.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path8[0] === defsKey) {
-    const key = path8[1] === void 0 ? void 0 : decodeJSONPointerSegment(path8[1]);
+  if (path10[0] === defsKey) {
+    const key = path10[1] === void 0 ? void 0 : decodeJSONPointerSegment(path10[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -32920,147 +32919,6 @@ var StdioServerTransport = class {
   }
 };
 
-// packages/validators/src/parse.mjs
-var import_gray_matter3 = __toESM(require_gray_matter(), 1);
-
-// packages/validators/src/schema.mjs
-var GateStatus = external_exports.enum([
-  "not_started",
-  "in_progress",
-  "documented",
-  "completed",
-  "passed",
-  "failed",
-  "blocked",
-  "not_required",
-  "unknown",
-  // Các giá trị template và PR validator đã dùng từ v1.x nhưng schema thiếu.
-  "partial",
-  "manual_review",
-  "waived",
-  "substituted"
-]);
-var CoreMode = external_exports.enum([
-  "planning-mode",
-  "quick-mode",
-  "input-sync-mode",
-  "figma-extraction-mode",
-  "implementation-mode",
-  "bugfix-mode",
-  "review-mode",
-  "testing-mode",
-  "figma-review-mode",
-  "pr-ready-mode"
-]);
-var TriState = external_exports.union([external_exports.boolean(), external_exports.literal("unknown")]);
-var SelfReported = GateStatus.optional();
-var REF_REASON = 'M\u1EE5c "Input ledger" trong body c\u1EE7a workflow-status.md m\u1EDBi l\xE0 danh s\xE1ch input; kh\xF4ng gate n\xE0o \u0111\u1ECDc field n\xE0y.';
-var UNREAD = "Kh\xF4ng gate n\xE0o \u0111\u1ECDc field n\xE0y.";
-var FROM_FILE = "Suy ra \u0111\u01B0\u1EE3c t\u1EEB vi\u1EC7c artifact t\u01B0\u01A1ng \u1EE9ng c\xF3 t\u1ED3n t\u1EA1i.";
-var DEPRECATED_FIELDS = [
-  ...["srs_input_refs", "api_input_refs", "figma_input_refs", "project_context_refs", "feature_context_refs", "design_context_refs", "source_inspection_refs", "rule_refs"].map(
-    (field) => ({ field, since: "2.3.0", reason: REF_REASON })
-  ),
-  { field: "required_input_count", since: "2.3.0", reason: "Gate ch\u1EC9 \u0111\u1ECDc missing_input_count." },
-  ...["srs_logic_coverage_status", "api_contract_mapping_status", "api_error_mapping_status", "fe_error_display_status"].map((field) => ({
-    field,
-    since: "2.3.0",
-    reason: `${UNREAD} SRS \u0111\u01B0\u1EE3c ki\u1EC3m qua srs_trace_matrix_status v\xE0 ma tr\u1EADn trace trong plan.`
-  })),
-  ...["ui_implementation_contract_status", "figma_node_matrix_status", "figma_component_binding_status"].map((field) => ({
-    field,
-    since: "2.3.0",
-    reason: `${UNREAD} Figma \u0111\u01B0\u1EE3c ki\u1EC3m qua figma_gate_status v\xE0 ui_match_review_status.`
-  })),
-  ...["rule_contract_application_status", "clean_code_gate_status"].map((field) => ({ field, since: "2.3.0", reason: UNREAD })),
-  ...["input_sync_report_status", "figma_summary_status", "cook_status", "review_report_status", "test_summary_status", "ui_figma_review_report_status", "pr_summary_status"].map(
-    (field) => ({ field, since: "2.3.0", reason: FROM_FILE })
-  )
-];
-var WorkflowStatusSchema = external_exports.object({
-  // --- Header ---
-  task_id: external_exports.string().min(1, "task_id kh\xF4ng \u0111\u01B0\u1EE3c r\u1ED7ng"),
-  status: external_exports.string().min(1),
-  layout: external_exports.string().default("standard"),
-  current_mode: CoreMode,
-  step_status: external_exports.string().min(1),
-  blocker: external_exports.boolean(),
-  next_mode: external_exports.string().min(1),
-  next_prompt: external_exports.string().min(1),
-  updated_by: external_exports.string().min(1),
-  updated_at: external_exports.string(),
-  human_override: external_exports.boolean().default(false),
-  vietnamese_diacritics_cache_marker: external_exports.string().min(1),
-  // --- Plan input ledger gates ---
-  input_inventory_status: GateStatus,
-  plan_input_ledger_status: GateStatus,
-  required_input_count: external_exports.number().int().min(0).optional(),
-  missing_input_count: external_exports.number().int().min(0),
-  srs_input_refs: external_exports.string().default(""),
-  api_input_refs: external_exports.string().default(""),
-  figma_input_refs: external_exports.string().default(""),
-  project_context_refs: external_exports.string().default(""),
-  feature_context_refs: external_exports.string().default(""),
-  design_context_refs: external_exports.string().default(""),
-  source_inspection_refs: external_exports.string().default(""),
-  rule_refs: external_exports.string().default(""),
-  // --- Core gates ---
-  srs_required: TriState,
-  srs_trace_matrix_status: GateStatus,
-  srs_logic_coverage_status: SelfReported,
-  api_contract_mapping_status: SelfReported,
-  api_error_mapping_status: SelfReported,
-  fe_error_display_status: SelfReported,
-  rule_contract_application_status: SelfReported,
-  clean_code_gate_status: SelfReported,
-  questions_status: external_exports.enum(["none", "open", "blocked", "resolved", "not_required"]),
-  blocking_questions_open: external_exports.number().int().min(0),
-  questions_resolution_gate_status: GateStatus,
-  input_sync_required: external_exports.boolean(),
-  plan_recheck_required_after_input_sync: external_exports.boolean(),
-  // --- Efficiency / evidence gates (tự khai → optional) ---
-  token_budget_status: SelfReported,
-  required_files_read_status: SelfReported,
-  scope_diff_status: SelfReported,
-  command_evidence_status: SelfReported,
-  test_command_log_status: SelfReported,
-  playwright_screenshot_diff_status: SelfReported,
-  // --- Figma/UI gates ---
-  figma_required: TriState,
-  figma_gate_status: GateStatus,
-  ui_implementation_contract_status: SelfReported,
-  figma_node_matrix_status: SelfReported,
-  figma_component_binding_status: SelfReported,
-  ui_match_review_status: GateStatus,
-  ui_match_severity_status: external_exports.enum(["unknown", "none", "low", "medium", "high", "critical"]),
-  // --- Mode output status (suy ra được từ file tồn tại → optional) ---
-  input_sync_report_status: SelfReported,
-  figma_summary_status: SelfReported,
-  cook_status: SelfReported,
-  review_status: external_exports.enum([
-    "not_started",
-    "passed",
-    "needs_bugfix",
-    "blocked",
-    "insufficient_evidence",
-    "not_required"
-  ]),
-  review_report_status: SelfReported,
-  // 'resolved', 'fixed', 'waived' có trong template/standard từ v1.x nhưng schema thiếu.
-  review_bug_status: external_exports.enum(["none", "open", "blocked", "closed", "resolved", "fixed", "waived"]),
-  critical_issues_open: external_exports.number().int().min(0),
-  high_issues_open: external_exports.number().int().min(0),
-  // Medium/Low tự đếm được từ bảng issue (`countOpenIssuesBySeverity`).
-  medium_issues_open: external_exports.number().int().min(0).optional(),
-  low_issues_open: external_exports.number().int().min(0).optional(),
-  bugfix_required: external_exports.boolean(),
-  test_summary_status: external_exports.enum(["not_started", "created", "updated", "passed", "failed", "partial"]).optional(),
-  ui_figma_review_report_status: SelfReported,
-  pr_summary_status: SelfReported,
-  pr_status: external_exports.enum(["not_started", "ready", "opened", "merged", "blocked"]),
-  build_ready: external_exports.boolean()
-}).passthrough();
-
 // packages/engine/src/paths.mjs
 import path from "node:path";
 function toPosix(p) {
@@ -33259,16 +33117,50 @@ function codesOf(result) {
 
 // packages/engine/src/project-config.mjs
 var import_gray_matter = __toESM(require_gray_matter(), 1);
+import fs2 from "node:fs";
+import path3 from "node:path";
 var PROJECT_CONFIG_DEFAULTS = Object.freeze({
   /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
   require_task_for_source: "warn",
   /** Thư mục được coi là source khi kiểm PR không gắn task. */
   source_paths: ["src/", "app/", "apps/", "packages/"]
 });
+var VALIDATORS = {
+  require_task_for_source: (v) => ["off", "warn", "error"].includes(v),
+  source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === "string" && p.trim())
+};
+function loadProjectConfig(repoRoot, { file: configFile }) {
+  const file2 = path3.join(repoRoot, configFile);
+  const config2 = { ...PROJECT_CONFIG_DEFAULTS };
+  const warnings = [];
+  let raw;
+  try {
+    raw = fs2.readFileSync(file2, "utf8");
+  } catch {
+    return { config: config2, warnings, source: "default" };
+  }
+  let data = {};
+  try {
+    data = (0, import_gray_matter.default)(`---
+${raw}
+---
+`).data || {};
+  } catch (err) {
+    warnings.push(`${configFile} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML (${err.message}); d\xF9ng c\u1EA5u h\xECnh m\u1EB7c \u0111\u1ECBnh.`);
+    return { config: config2, warnings, source: "default" };
+  }
+  for (const [key, valid] of Object.entries(VALIDATORS)) {
+    if (data[key] === void 0) continue;
+    if (valid(data[key])) config2[key] = data[key];
+    else warnings.push(`${configFile}: gi\xE1 tr\u1ECB ${key} kh\xF4ng h\u1EE3p l\u1EC7; d\xF9ng m\u1EB7c \u0111\u1ECBnh ${JSON.stringify(PROJECT_CONFIG_DEFAULTS[key])}.`);
+  }
+  config2.source_paths = config2.source_paths.map((p) => p.endsWith("/") ? p : `${p}/`);
+  return { config: config2, warnings, source: "file" };
+}
 
 // packages/engine/src/scaffold.mjs
-import fs2 from "node:fs";
-import path3 from "node:path";
+import fs3 from "node:fs";
+import path4 from "node:path";
 function isValidTaskName(name) {
   return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name || ""));
 }
@@ -33276,30 +33168,30 @@ function scaffoldTask({ workspaceRoot, name, templatesDir, tasksRoot, templateFi
   if (!isValidTaskName(name)) {
     return { ok: false, error: `T\xEAn task kh\xF4ng h\u1EE3p l\u1EC7: "${name}". D\xF9ng d\u1EA1ng ${nameHint}, ch\u1EC9 g\u1ED3m ch\u1EEF, s\u1ED1, d\u1EA5u ch\u1EA5m, g\u1EA1ch d\u01B0\u1EDBi, g\u1EA1ch ngang.` };
   }
-  const root = path3.resolve(workspaceRoot);
-  const taskDir = path3.join(root, tasksRoot, name);
+  const root = path4.resolve(workspaceRoot);
+  const taskDir = path4.join(root, tasksRoot, name);
   if (!isPathInside(root, taskDir)) return { ok: false, error: "Task path n\u1EB1m ngo\xE0i workspace." };
-  const taskRef = toPosix(path3.relative(root, taskDir));
+  const taskRef = toPosix(path4.relative(root, taskDir));
   const fill = (text) => text.replaceAll("<task-folder>", taskRef).replaceAll("<task-id>", name).replaceAll("<TASK_ID>", name);
   const created = [];
   const skipped = [];
   for (const rel of templateFiles) {
-    const dest = path3.join(taskDir, rel);
-    if (fs2.existsSync(dest)) {
+    const dest = path4.join(taskDir, rel);
+    if (fs3.existsSync(dest)) {
       skipped.push(rel);
       continue;
     }
-    const src = path3.join(templatesDir, rel);
-    const template = fs2.existsSync(src) ? fs2.readFileSync(src, "utf8") : "";
-    fs2.mkdirSync(path3.dirname(dest), { recursive: true });
-    fs2.writeFileSync(dest, fill(template));
+    const src = path4.join(templatesDir, rel);
+    const template = fs3.existsSync(src) ? fs3.readFileSync(src, "utf8") : "";
+    fs3.mkdirSync(path4.dirname(dest), { recursive: true });
+    fs3.writeFileSync(dest, fill(template));
     created.push(rel);
   }
   for (const rel of emptyFiles) {
-    const file2 = path3.join(taskDir, rel);
-    if (fs2.existsSync(file2)) continue;
-    fs2.mkdirSync(path3.dirname(file2), { recursive: true });
-    fs2.writeFileSync(file2, "");
+    const file2 = path4.join(taskDir, rel);
+    if (fs3.existsSync(file2)) continue;
+    fs3.mkdirSync(path4.dirname(file2), { recursive: true });
+    fs3.writeFileSync(file2, "");
     created.push(rel);
   }
   return { ok: true, taskDir, taskRef, created, skipped };
@@ -33399,10 +33291,10 @@ function realCell(v) {
 }
 
 // packages/engine/src/completion.mjs
-import fs3 from "node:fs";
-import path4 from "node:path";
+import fs4 from "node:fs";
+import path5 from "node:path";
 function createModeCompletion(pack) {
-  const statusName = path4.posix.basename(pack.statusFile);
+  const statusName = path5.posix.basename(pack.statusFile);
   return function evaluateModeCompletion2({ taskDir, taskRef, command, startedAt, scope, repoRoot, base, extraIssues = [] }) {
     const done = (issues2, refused = false) => ({
       ok: issues2.length === 0,
@@ -33411,10 +33303,10 @@ function createModeCompletion(pack) {
       errors: issues2.map((i) => i.message)
     });
     const read = (rel) => {
-      const p = path4.join(taskDir, rel);
-      return fs3.existsSync(p) ? fs3.readFileSync(p, "utf8") : "";
+      const p = path5.join(taskDir, rel);
+      return fs4.existsSync(p) ? fs4.readFileSync(p, "utf8") : "";
     };
-    const statusPath = path4.join(taskDir, pack.statusFile);
+    const statusPath = path5.join(taskDir, pack.statusFile);
     const raw = read(pack.statusFile);
     if (!raw) return done([{ code: "END_STATUS_MISSING", message: `Ch\u01B0a c\xF3 ${taskRef}/${pack.statusFile}.` }]);
     const loose = parseFrontMatterLoose(raw);
@@ -33446,7 +33338,7 @@ function createModeCompletion(pack) {
     if (startedAt !== void 0) {
       let mtime = 0;
       try {
-        mtime = fs3.statSync(statusPath).mtimeMs;
+        mtime = fs4.statSync(statusPath).mtimeMs;
       } catch {
       }
       if (mtime + 1e3 < startedAt) {
@@ -33464,7 +33356,7 @@ function createModeCompletion(pack) {
       });
     }
     for (const rel of pack.requiredArtifacts[command] || []) {
-      if (!fs3.existsSync(path4.join(taskDir, rel))) {
+      if (!fs4.existsSync(path5.join(taskDir, rel))) {
         issues.push({ code: "END_ARTIFACT_MISSING", message: `Thi\u1EBFu artifact b\u1EAFt bu\u1ED9c c\u1EE7a ${pack.label(command)}: ${rel}` });
       }
     }
@@ -33477,25 +33369,25 @@ function createModeCompletion(pack) {
 }
 
 // packages/engine/src/briefing.mjs
-import fs4 from "node:fs";
-import path5 from "node:path";
+import fs5 from "node:fs";
+import path6 from "node:path";
 function readIfExists(p) {
-  return fs4.existsSync(p) ? fs4.readFileSync(p, "utf8") : "";
+  return fs5.existsSync(p) ? fs5.readFileSync(p, "utf8") : "";
 }
 function createModeBriefing(pack) {
-  const statusName = path5.posix.basename(pack.statusFile);
+  const statusName = path6.posix.basename(pack.statusFile);
   return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint }) {
     const lines = [];
-    const statusPath = path5.join(taskDir, pack.statusFile);
-    if (!fs4.existsSync(statusPath)) {
+    const statusPath = path6.join(taskDir, pack.statusFile);
+    if (!fs5.existsSync(statusPath)) {
       lines.push(`GATE: CH\u01AFA C\xD3 TASK FOLDER H\u1EE2P L\u1EC6 (${taskRef}/${pack.statusFile} kh\xF4ng t\u1ED3n t\u1EA1i).`);
       lines.push(newTaskHint);
       return { ok: false, entry: null, text: lines.join("\n") };
     }
-    const raw = fs4.readFileSync(statusPath, "utf8");
+    const raw = fs5.readFileSync(statusPath, "utf8");
     const strict = pack.parseStatus(raw);
     const data = strict.ok ? strict.data : parseFrontMatterLoose(raw).data;
-    const read = (rel) => readIfExists(path5.join(taskDir, rel));
+    const read = (rel) => readIfExists(path6.join(taskDir, rel));
     const entry = pack.evaluateModeEntry({ requested: command, data, ...pack.entryInputs({ data, read }), taskRef });
     if (entry.allowed) {
       lines.push(`GATE: \u0110\u01AF\u1EE2C CH\u1EA0Y ${pack.label(command)} (${entry.mode}) cho ${taskRef}.`);
@@ -33519,13 +33411,416 @@ function createModeBriefing(pack) {
       lines.push(finishHint);
       lines.push("", `=== RULE \xC1P D\u1EE4NG CHO ${pack.label(command)} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
       for (const file2 of pack.rulesFor(command, data)) {
-        const body = readIfExists(path5.join(rulesDir, file2)).trim();
+        const body = readIfExists(path6.join(rulesDir, file2)).trim();
         if (body) lines.push("", `--- ${file2} ---`, body);
       }
     }
     return { ok: entry.allowed, entry, text: lines.join("\n") };
   };
 }
+
+// packages/engine/src/hook-core.mjs
+var MARKER_TTL_MS = 4 * 60 * 60 * 1e3;
+
+// packages/engine/src/mcp-core.mjs
+import fs6 from "node:fs";
+import path7 from "node:path";
+function textResult(text, isError = false) {
+  return { content: [{ type: "text", text }], isError };
+}
+function readIfExists2(p) {
+  return fs6.existsSync(p) ? fs6.readFileSync(p, "utf8") : "";
+}
+var escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoot2 }) {
+  const m = pack.mcp;
+  const tool = (name) => `${m.toolPrefix}_${name}`;
+  const statusName = path7.posix.basename(pack.statusFile);
+  const nextPromptRe = new RegExp(`^##\\s+${escapeRe(m.nextPromptHeading)}\\s*\\r?\\n+([\\s\\S]*?)(?=\\r?\\n##\\s|(?![\\s\\S]))`, "m");
+  const modeBriefing2 = createModeBriefing(pack);
+  function kitDir(workspaceRoot, kind) {
+    const project = path7.join(path7.resolve(workspaceRoot), m.configDir, kind);
+    if (fs6.existsSync(project)) return { dir: project, source: "project" };
+    return { dir: path7.join(pluginRoot2, m.skillDir, kind), source: "plugin" };
+  }
+  function nextPrompt(taskDir) {
+    const match = readIfExists2(path7.join(taskDir, pack.statusFile)).match(nextPromptRe);
+    return match ? match[1].trim() : "";
+  }
+  const workspaceProp = { type: "string", description: "\u0110\u01B0\u1EDDng d\u1EABn tuy\u1EC7t \u0111\u1ED1i t\u1EDBi repo d\u1EF1 \xE1n." };
+  const taskProp = { type: "string", description: m.taskPropDescription };
+  const baseRefProp = (description) => ({ type: "string", description });
+  const tools2 = [
+    {
+      name: tool("begin_mode"),
+      description: m.descriptions.beginMode,
+      inputSchema: {
+        type: "object",
+        properties: {
+          workspace_root: workspaceProp,
+          task_folder: taskProp,
+          mode: { type: "string", description: `Mode mu\u1ED1n ch\u1EA1y: ${pack.commands.join(", ")}.` }
+        },
+        required: ["workspace_root", "task_folder", "mode"]
+      }
+    },
+    {
+      name: tool("new_task"),
+      description: m.descriptions.newTask,
+      inputSchema: {
+        type: "object",
+        properties: {
+          workspace_root: workspaceProp,
+          task_name: { type: "string", description: m.taskNameDescription }
+        },
+        required: ["workspace_root", "task_name"]
+      }
+    },
+    {
+      name: tool("validate_task"),
+      description: m.descriptions.validateTask,
+      inputSchema: {
+        type: "object",
+        properties: { workspace_root: workspaceProp, task_folder: taskProp },
+        required: ["workspace_root", "task_folder"]
+      }
+    },
+    {
+      name: tool("validate_workflow"),
+      description: m.descriptions.validateWorkflow,
+      inputSchema: {
+        type: "object",
+        properties: {
+          workspace_root: workspaceProp,
+          task_folder: taskProp,
+          base_ref: baseRefProp("Nh\xE1nh/commit g\u1ED1c \u0111\u1EC3 t\xEDnh scope \u1EDF review/test/pr (vd origin/main). B\u1ECF tr\u1ED1ng th\xEC t\u1EF1 d\xF2.")
+        },
+        required: ["workspace_root", "task_folder"]
+      }
+    },
+    {
+      name: tool("scope_diff"),
+      description: m.descriptions.scopeDiff,
+      inputSchema: {
+        type: "object",
+        properties: {
+          workspace_root: workspaceProp,
+          task_folder: taskProp,
+          base_ref: baseRefProp("Nh\xE1nh/commit g\u1ED1c \u0111\u1EC3 so (vd origin/main). B\u1ECF tr\u1ED1ng th\xEC t\u1EF1 d\xF2; kh\xF4ng d\xF2 \u0111\u01B0\u1EE3c th\xEC ch\u1EC9 x\xE9t thay \u0111\u1ED5i ch\u01B0a commit.")
+        },
+        required: ["workspace_root", "task_folder"]
+      }
+    },
+    {
+      name: tool("next_step"),
+      description: m.descriptions.nextStep,
+      inputSchema: {
+        type: "object",
+        properties: { workspace_root: workspaceProp, task_folder: taskProp },
+        required: ["workspace_root", "task_folder"]
+      }
+    },
+    {
+      name: tool("task_status"),
+      description: m.descriptions.taskStatus,
+      inputSchema: {
+        type: "object",
+        properties: { workspace_root: workspaceProp, task_folder: taskProp },
+        required: ["workspace_root", "task_folder"]
+      }
+    },
+    {
+      name: tool("list_tasks"),
+      description: `Li\u1EC7t k\xEA m\u1ECDi task folder trong ${pack.tasksRoot} k\xE8m mode hi\u1EC7n t\u1EA1i c\u1EE7a t\u1EEBng task.`,
+      inputSchema: {
+        type: "object",
+        properties: { workspace_root: workspaceProp },
+        required: ["workspace_root"]
+      }
+    }
+  ];
+  const handlers = {
+    begin_mode({ workspace_root, task_folder, mode }) {
+      const command = pack.normalizeCommand(mode);
+      if (!command) {
+        return textResult(`Kh\xF4ng nh\u1EADn ra mode "${mode}". Mode h\u1EE3p l\u1EC7: ${pack.commands.join(", ")}.`, true);
+      }
+      const taskDir = pack.resolveTaskDir(workspace_root, task_folder);
+      const taskRef = relativePosix(workspace_root, taskDir) || toPosix(task_folder);
+      const rules = kitDir(workspace_root, "rules");
+      const briefing = modeBriefing2({
+        taskDir,
+        taskRef,
+        command,
+        rulesDir: rules.dir,
+        rulesLabel: rules.source === "project" ? `${m.configDir}/rules c\u1EE7a repo` : "plugin",
+        newTaskHint: `G\u1ECDi MCP tool ${tool("new_task")} (ho\u1EB7c /${pack.pluginName}:new-task ${path7.basename(taskDir)}) \u0111\u1EC3 t\u1EA1o task t\u1EEB template, r\u1ED3i ch\u1EA1y l\u1EA1i ${pack.label(command)} ${taskRef}.`,
+        finishHint: `Tr\u01B0\u1EDBc khi k\u1EBFt th\xFAc: c\u1EADp nh\u1EADt ${pack.statusFile} r\u1ED3i g\u1ECDi ${tool("validate_workflow")}.`
+      });
+      return textResult(briefing.text, !briefing.ok);
+    },
+    new_task({ workspace_root, task_name }) {
+      const templates = kitDir(workspace_root, "templates");
+      const res = pack.scaffoldTask({ workspaceRoot: workspace_root, name: task_name, templatesDir: templates.dir });
+      if (!res.ok) return textResult(res.error, true);
+      const lines = [
+        `Task folder: ${res.taskRef}`,
+        `Template ngu\u1ED3n: ${templates.source === "project" ? `${m.configDir}/templates c\u1EE7a repo` : "plugin"}`,
+        ...res.created.map((f) => `T\u1EA0O ${f}`),
+        ...res.skipped.map((f) => `GI\u1EEE NGUY\xCAN (\u0111\xE3 c\xF3) ${f}`)
+      ];
+      if (!res.created.length) lines.push("", "Task \u0111\xE3 t\u1ED3n t\u1EA1i \u0111\u1EA7y \u0111\u1EE7, kh\xF4ng ghi \u0111\xE8 g\xEC.");
+      lines.push("", "Ti\u1EBFp theo: " + (nextPrompt(res.taskDir) || pack.label(`${m.firstCommand} ${res.taskRef}`)));
+      lines.push(...m.afterNewTask(res.taskRef));
+      return textResult(lines.join("\n"));
+    },
+    validate_task({ workspace_root, task_folder }) {
+      const taskDir = pack.resolveTaskDir(workspace_root, task_folder);
+      if (!fs6.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
+      const lines = [];
+      let ok = true;
+      for (const rel of pack.requiredTaskFiles) {
+        const present = fs6.existsSync(path7.join(taskDir, rel));
+        lines.push(`${present ? "OK" : "THI\u1EBEU"} ${rel}`);
+        if (!present) ok = false;
+      }
+      lines.push("");
+      lines.push(ok ? "validate-task: PASSED" : "validate-task: FAILED");
+      const np = nextPrompt(taskDir);
+      if (ok && np) lines.push("", "Ti\u1EBFp theo: " + np);
+      return textResult(lines.join("\n"), !ok);
+    },
+    validate_workflow({ workspace_root, task_folder, base_ref }) {
+      const taskDir = pack.resolveTaskDir(workspace_root, task_folder);
+      if (!fs6.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
+      const res = pack.validateWorkflowAtGate(taskDir, { repoRoot: workspace_root, base: base_ref });
+      appendRunLog(taskDir, {
+        pack: pack.id,
+        event: "validate",
+        source: "mcp",
+        actor: "claude",
+        kit: version2,
+        outcome: res.ok ? "ok" : "failed",
+        codes: codesOf(res)
+      });
+      const warnings = (res.warnings || []).map((w) => "- C\u1EA3nh b\xE1o: " + w);
+      const scopeLine = {
+        git: `Scope: t\xEDnh t\u1EEB git (base: ${res.base || "ch\u1EC9 thay \u0111\u1ED5i ch\u01B0a commit"}).`,
+        self_reported: m.scopeSelfReported
+      }[res.scopeSource];
+      const head = scopeLine ? [scopeLine] : [];
+      if (!res.ok) {
+        return textResult(["validate-workflow: FAILED", ...head, "", ...res.errors.map((e) => "- " + e), ...warnings].join("\n"), true);
+      }
+      const np = nextPrompt(taskDir);
+      return textResult(["validate-workflow: PASSED", ...head, ...warnings, ...np ? ["", "Ti\u1EBFp theo: " + np] : []].join("\n"));
+    },
+    scope_diff({ workspace_root, task_folder, base_ref }) {
+      const taskDir = pack.resolveTaskDir(workspace_root, task_folder);
+      if (!fs6.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
+      const base = base_ref || detectBaseRef(workspace_root);
+      const scope = pack.scopeDiffForTask(taskDir, { repoRoot: workspace_root, base });
+      if (!scope) return textResult(m.scopeUnavailable);
+      const lines = [
+        `Base: ${base || "(kh\xF4ng c\xF3 \u2014 ch\u1EC9 x\xE9t thay \u0111\u1ED5i ch\u01B0a commit v\xE0 file untracked)"}`,
+        `File khai trong plan: ${scope.plannedFiles.length}`,
+        `Trong plan: ${scope.inScope.length}; ngo\xE0i plan: ${scope.outOfPlan.length}; b\u1ECF qua (artifact/lockfile): ${scope.ignored.length}`
+      ];
+      if (scope.plannedEmpty) lines.push("", m.plannedFilesMissing);
+      if (scope.outOfPlan.length) {
+        lines.push("", "File s\u1EEDa NGO\xC0I plan:", ...scope.outOfPlan.map((f) => "- " + f));
+        lines.push("", `scope-diff: FAILED \u2014 c\u1EADp nh\u1EADt plan/${pack.planUpdateRoute} ho\u1EB7c ho\xE0n t\xE1c c\xE1c file tr\xEAn.`);
+        return textResult(lines.join("\n"), true);
+      }
+      lines.push("", "scope-diff: PASSED");
+      return textResult(lines.join("\n"));
+    },
+    next_step({ workspace_root, task_folder }) {
+      const taskDir = pack.resolveTaskDir(workspace_root, task_folder);
+      const np = nextPrompt(taskDir);
+      if (!np) return textResult(`Kh\xF4ng \u0111\u1ECDc \u0111\u01B0\u1EE3c "${m.nextPromptHeading}" trong ${pack.statusFile}.`, true);
+      return textResult(np);
+    },
+    task_status({ workspace_root, task_folder }) {
+      const taskDir = pack.resolveTaskDir(workspace_root, task_folder);
+      const statusPath = path7.join(taskDir, pack.statusFile);
+      if (!fs6.existsSync(statusPath)) return textResult(`Thi\u1EBFu ${pack.statusFile}`, true);
+      const parsed = pack.parseStatus(fs6.readFileSync(statusPath, "utf8"));
+      if (!parsed.ok) return textResult(`Kh\xF4ng parse \u0111\u01B0\u1EE3c ${statusName}:
+` + parsed.errors.join("\n"), true);
+      const d = parsed.data;
+      const lines = m.statusFields.filter((k) => d[k] !== void 0).map((k) => `${k}: ${d[k]}`);
+      lines.push(...m.statusExtras((rel) => readIfExists2(path7.join(taskDir, rel))));
+      return textResult(lines.join("\n"));
+    },
+    list_tasks({ workspace_root }) {
+      const root = path7.resolve(workspace_root, pack.tasksRoot);
+      if (!fs6.existsSync(root)) return textResult(`Ch\u01B0a c\xF3 th\u01B0 m\u1EE5c ${pack.tasksRoot}.`);
+      const entries = fs6.readdirSync(root, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => {
+        const statusPath = path7.join(root, e.name, pack.statusFile);
+        let mode = `ch\u01B0a c\xF3 ${path7.posix.basename(pack.statusFile, ".md")}`;
+        if (fs6.existsSync(statusPath)) {
+          const match = fs6.readFileSync(statusPath, "utf8").match(/^current_mode:\s*(.+)$/m);
+          if (match) mode = match[1].trim();
+        }
+        return `- ${e.name} (${mode})`;
+      });
+      return textResult(entries.length ? entries.join("\n") : `Ch\u01B0a c\xF3 task n\xE0o trong ${pack.tasksRoot}.`);
+    }
+  };
+  function callTool2(name, args) {
+    const prefix = `${m.toolPrefix}_`;
+    const handler = name.startsWith(prefix) ? handlers[name.slice(prefix.length)] : void 0;
+    if (!handler) return textResult(`Tool kh\xF4ng t\u1ED3n t\u1EA1i: ${name}`, true);
+    try {
+      return handler(args ?? {});
+    } catch (err) {
+      return textResult(`L\u1ED7i khi ch\u1EA1y ${name}: ${err.message}`, true);
+    }
+  }
+  return { serverName: m.serverName, tools: tools2, callTool: callTool2 };
+}
+
+// packages/validators/src/parse.mjs
+var import_gray_matter3 = __toESM(require_gray_matter(), 1);
+
+// packages/validators/src/schema.mjs
+var GateStatus = external_exports.enum([
+  "not_started",
+  "in_progress",
+  "documented",
+  "completed",
+  "passed",
+  "failed",
+  "blocked",
+  "not_required",
+  "unknown",
+  // Các giá trị template và PR validator đã dùng từ v1.x nhưng schema thiếu.
+  "partial",
+  "manual_review",
+  "waived",
+  "substituted"
+]);
+var CoreMode = external_exports.enum([
+  "planning-mode",
+  "quick-mode",
+  "input-sync-mode",
+  "figma-extraction-mode",
+  "implementation-mode",
+  "bugfix-mode",
+  "review-mode",
+  "testing-mode",
+  "figma-review-mode",
+  "pr-ready-mode"
+]);
+var TriState = external_exports.union([external_exports.boolean(), external_exports.literal("unknown")]);
+var SelfReported = GateStatus.optional();
+var REF_REASON = 'M\u1EE5c "Input ledger" trong body c\u1EE7a workflow-status.md m\u1EDBi l\xE0 danh s\xE1ch input; kh\xF4ng gate n\xE0o \u0111\u1ECDc field n\xE0y.';
+var UNREAD = "Kh\xF4ng gate n\xE0o \u0111\u1ECDc field n\xE0y.";
+var FROM_FILE = "Suy ra \u0111\u01B0\u1EE3c t\u1EEB vi\u1EC7c artifact t\u01B0\u01A1ng \u1EE9ng c\xF3 t\u1ED3n t\u1EA1i.";
+var DEPRECATED_FIELDS = [
+  ...["srs_input_refs", "api_input_refs", "figma_input_refs", "project_context_refs", "feature_context_refs", "design_context_refs", "source_inspection_refs", "rule_refs"].map(
+    (field) => ({ field, since: "2.3.0", reason: REF_REASON })
+  ),
+  { field: "required_input_count", since: "2.3.0", reason: "Gate ch\u1EC9 \u0111\u1ECDc missing_input_count." },
+  ...["srs_logic_coverage_status", "api_contract_mapping_status", "api_error_mapping_status", "fe_error_display_status"].map((field) => ({
+    field,
+    since: "2.3.0",
+    reason: `${UNREAD} SRS \u0111\u01B0\u1EE3c ki\u1EC3m qua srs_trace_matrix_status v\xE0 ma tr\u1EADn trace trong plan.`
+  })),
+  ...["ui_implementation_contract_status", "figma_node_matrix_status", "figma_component_binding_status"].map((field) => ({
+    field,
+    since: "2.3.0",
+    reason: `${UNREAD} Figma \u0111\u01B0\u1EE3c ki\u1EC3m qua figma_gate_status v\xE0 ui_match_review_status.`
+  })),
+  ...["rule_contract_application_status", "clean_code_gate_status"].map((field) => ({ field, since: "2.3.0", reason: UNREAD })),
+  ...["input_sync_report_status", "figma_summary_status", "cook_status", "review_report_status", "test_summary_status", "ui_figma_review_report_status", "pr_summary_status"].map(
+    (field) => ({ field, since: "2.3.0", reason: FROM_FILE })
+  )
+];
+var WorkflowStatusSchema = external_exports.object({
+  // --- Header ---
+  task_id: external_exports.string().min(1, "task_id kh\xF4ng \u0111\u01B0\u1EE3c r\u1ED7ng"),
+  status: external_exports.string().min(1),
+  layout: external_exports.string().default("standard"),
+  current_mode: CoreMode,
+  step_status: external_exports.string().min(1),
+  blocker: external_exports.boolean(),
+  next_mode: external_exports.string().min(1),
+  next_prompt: external_exports.string().min(1),
+  updated_by: external_exports.string().min(1),
+  updated_at: external_exports.string(),
+  human_override: external_exports.boolean().default(false),
+  vietnamese_diacritics_cache_marker: external_exports.string().min(1),
+  // --- Plan input ledger gates ---
+  input_inventory_status: GateStatus,
+  plan_input_ledger_status: GateStatus,
+  required_input_count: external_exports.number().int().min(0).optional(),
+  missing_input_count: external_exports.number().int().min(0),
+  srs_input_refs: external_exports.string().default(""),
+  api_input_refs: external_exports.string().default(""),
+  figma_input_refs: external_exports.string().default(""),
+  project_context_refs: external_exports.string().default(""),
+  feature_context_refs: external_exports.string().default(""),
+  design_context_refs: external_exports.string().default(""),
+  source_inspection_refs: external_exports.string().default(""),
+  rule_refs: external_exports.string().default(""),
+  // --- Core gates ---
+  srs_required: TriState,
+  srs_trace_matrix_status: GateStatus,
+  srs_logic_coverage_status: SelfReported,
+  api_contract_mapping_status: SelfReported,
+  api_error_mapping_status: SelfReported,
+  fe_error_display_status: SelfReported,
+  rule_contract_application_status: SelfReported,
+  clean_code_gate_status: SelfReported,
+  questions_status: external_exports.enum(["none", "open", "blocked", "resolved", "not_required"]),
+  blocking_questions_open: external_exports.number().int().min(0),
+  questions_resolution_gate_status: GateStatus,
+  input_sync_required: external_exports.boolean(),
+  plan_recheck_required_after_input_sync: external_exports.boolean(),
+  // --- Efficiency / evidence gates (tự khai → optional) ---
+  token_budget_status: SelfReported,
+  required_files_read_status: SelfReported,
+  scope_diff_status: SelfReported,
+  command_evidence_status: SelfReported,
+  test_command_log_status: SelfReported,
+  playwright_screenshot_diff_status: SelfReported,
+  // --- Figma/UI gates ---
+  figma_required: TriState,
+  figma_gate_status: GateStatus,
+  ui_implementation_contract_status: SelfReported,
+  figma_node_matrix_status: SelfReported,
+  figma_component_binding_status: SelfReported,
+  ui_match_review_status: GateStatus,
+  ui_match_severity_status: external_exports.enum(["unknown", "none", "low", "medium", "high", "critical"]),
+  // --- Mode output status (suy ra được từ file tồn tại → optional) ---
+  input_sync_report_status: SelfReported,
+  figma_summary_status: SelfReported,
+  cook_status: SelfReported,
+  review_status: external_exports.enum([
+    "not_started",
+    "passed",
+    "needs_bugfix",
+    "blocked",
+    "insufficient_evidence",
+    "not_required"
+  ]),
+  review_report_status: SelfReported,
+  // 'resolved', 'fixed', 'waived' có trong template/standard từ v1.x nhưng schema thiếu.
+  review_bug_status: external_exports.enum(["none", "open", "blocked", "closed", "resolved", "fixed", "waived"]),
+  critical_issues_open: external_exports.number().int().min(0),
+  high_issues_open: external_exports.number().int().min(0),
+  // Medium/Low tự đếm được từ bảng issue (`countOpenIssuesBySeverity`).
+  medium_issues_open: external_exports.number().int().min(0).optional(),
+  low_issues_open: external_exports.number().int().min(0).optional(),
+  bugfix_required: external_exports.boolean(),
+  test_summary_status: external_exports.enum(["not_started", "created", "updated", "passed", "failed", "partial"]).optional(),
+  ui_figma_review_report_status: SelfReported,
+  pr_summary_status: SelfReported,
+  pr_status: external_exports.enum(["not_started", "ready", "opened", "merged", "blocked"]),
+  build_ready: external_exports.boolean()
+}).passthrough();
 
 // packages/validators/src/parse.mjs
 function parseWorkflowStatus(raw) {
@@ -33564,6 +33859,7 @@ var COMMAND_TO_MODE = {
 var COMMANDS = Object.keys(COMMAND_TO_MODE);
 var COMMAND_ALIASES = { build: "cook", "figma-extract": "figma", implement: "cook" };
 var TERMINAL_NEXT_MODES = ["none", "done", "completed", "merged"];
+var SOURCE_EDIT_COMMANDS = ["cook", "bugfix", "quick"];
 var ALWAYS_ALLOWED = ["plan", "input-sync"];
 var ALLOWED_NEXT = {
   plan: ["input-sync", "figma", "cook", "plan", "quick"],
@@ -33672,6 +33968,8 @@ var AGENT_FOR_COMMAND = {
   pr: "frontend-release-manager",
   quick: null
 };
+var SOURCE_EDIT_AGENT = "frontend-developer";
+var KIT_WRITABLE_PREFIXES = ["docs/frontend-tasks/", "docs/frontend-context/"];
 var ALWAYS_RULES = [
   "core.md",
   "mode-output-contract.md",
@@ -34137,8 +34435,8 @@ function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
 }
 
 // packages/validators/src/workflow.mjs
-import fs5 from "node:fs";
-import path6 from "node:path";
+import fs7 from "node:fs";
+import path8 from "node:path";
 
 // packages/validators/src/resolve.mjs
 var TASKS_ROOT = "docs/frontend-tasks";
@@ -34146,22 +34444,28 @@ function resolveTaskDir2(workspaceRoot, taskFolder) {
   return resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot: TASKS_ROOT });
 }
 
+// packages/validators/src/project-config.mjs
+var PROJECT_CONFIG_FILE = ".frontend-delivery/standard.yaml";
+function loadProjectConfig2(repoRoot) {
+  return loadProjectConfig(repoRoot, { file: PROJECT_CONFIG_FILE });
+}
+
 // packages/validators/src/workflow.mjs
 function taskIo(taskDir) {
-  const exists = (rel) => fs5.existsSync(path6.join(taskDir, rel));
+  const exists = (rel) => fs7.existsSync(path8.join(taskDir, rel));
   const read = (rel) => {
-    const p = path6.join(taskDir, rel);
-    return fs5.existsSync(p) ? fs5.readFileSync(p, "utf8") : "";
+    const p = path8.join(taskDir, rel);
+    return fs7.existsSync(p) ? fs7.readFileSync(p, "utf8") : "";
   };
   return { exists, read };
 }
 function loadWorkflow(taskDir) {
-  const workflowPath = path6.join(taskDir, "tracking", "workflow-status.md");
-  if (!fs5.existsSync(workflowPath)) {
+  const workflowPath = path8.join(taskDir, "tracking", "workflow-status.md");
+  if (!fs7.existsSync(workflowPath)) {
     const errors = ["Thi\u1EBFu tracking/workflow-status.md"];
     return { ok: false, errors, issues: [{ code: "STATUS_MISSING", message: errors[0] }] };
   }
-  const parsed = parseWorkflowStatus(fs5.readFileSync(workflowPath, "utf8"));
+  const parsed = parseWorkflowStatus(fs7.readFileSync(workflowPath, "utf8"));
   if (parsed.ok) return parsed;
   return { ...parsed, issues: parsed.errors.map((message) => ({ code: "STATUS_SCHEMA_INVALID", message })) };
 }
@@ -34185,17 +34489,17 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   return { ...result, plannedFiles };
 }
 function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
-  if (!fs5.existsSync(tasksRoot)) return [];
+  if (!fs7.existsSync(tasksRoot)) return [];
   const planned = [];
-  for (const ent of fs5.readdirSync(tasksRoot, { withFileTypes: true })) {
+  for (const ent of fs7.readdirSync(tasksRoot, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === exclude) continue;
-    const plan = path6.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
-    if (fs5.existsSync(plan)) planned.push(...parsePlannedFiles2(fs5.readFileSync(plan, "utf8")));
+    const plan = path8.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
+    if (fs7.existsSync(plan)) planned.push(...parsePlannedFiles2(fs7.readFileSync(plan, "utf8")));
   }
   return planned;
 }
 function plannedFilesOfSiblingTasks(taskDir) {
-  return plannedFilesOfTasksIn(path6.dirname(taskDir), path6.basename(taskDir));
+  return plannedFilesOfTasksIn(path8.dirname(taskDir), path8.basename(taskDir));
 }
 function validateWorkflow(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
@@ -34228,34 +34532,6 @@ function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
   return { ...res, warnings: [...res.warnings, ...warnings], scopeSource, base: usedBase };
 }
 
-// packages/validators/src/pack.mjs
-var fePack = {
-  id: "fe",
-  statusFile: "tracking/workflow-status.md",
-  label: (command) => `FE ${command}`,
-  commandToMode: COMMAND_TO_MODE,
-  requiredArtifacts: MODE_REQUIRED_ARTIFACTS,
-  agentFor: AGENT_FOR_COMMAND,
-  readInputsHint: 'Input c\u1EA7n \u0111\u1ECDc: m\u1EE5c "Input ledger b\u1EAFt bu\u1ED9c cho FE plan" trong tracking/workflow-status.md.',
-  parseStatus: parseWorkflowStatus,
-  rulesFor: (command, data) => rulesForMode(command, { figmaRequired: data.figma_required === true }),
-  /** Số câu hỏi blocking và issue Critical/High đang mở, đếm từ file của task. */
-  entryInputs: ({ data, read }) => ({
-    openBlockingQuestions: countOpenBlockingQuestions(read("planning/questions.md")),
-    openIssues: effectiveOpenIssues(data, countOpenIssuesInTask(read))
-  }),
-  evaluateModeEntry,
-  validateWorkflow,
-  validateWorkflowAtGate
-};
-var evaluateModeCompletion = createModeCompletion(fePack);
-var modeBriefing = createModeBriefing(fePack);
-
-// packages/validators/src/runlog.mjs
-function appendRunLog2(taskDir, record2) {
-  return appendRunLog(taskDir, { pack: "fe", ...record2 });
-}
-
 // packages/validators/src/scaffold.mjs
 var TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
 function scaffoldTask2({ workspaceRoot, name, templatesDir }) {
@@ -34270,251 +34546,63 @@ function scaffoldTask2({ workspaceRoot, name, templatesDir }) {
   });
 }
 
-// core/mcp/server.mjs
-var KIT_VERSION = true ? "2.3.0" : "dev";
-var SKILL_DIR_IN_PLUGIN = "skills/frontend-delivery-standard";
-function pluginRoot() {
-  if (process.env.CLAUDE_PLUGIN_ROOT) return path7.resolve(process.env.CLAUDE_PLUGIN_ROOT);
-  return path7.resolve(path7.dirname(fileURLToPath(import.meta.url)), "..");
-}
-function kitDir(workspaceRoot, kind) {
-  const project = path7.join(path7.resolve(workspaceRoot), ".frontend-delivery", kind);
-  if (fs6.existsSync(project)) return { dir: project, source: "project" };
-  return { dir: path7.join(pluginRoot(), SKILL_DIR_IN_PLUGIN, kind), source: "plugin" };
-}
-function textResult(text, isError = false) {
-  return { content: [{ type: "text", text }], isError };
-}
-function readIfExists2(p) {
-  return fs6.existsSync(p) ? fs6.readFileSync(p, "utf8") : "";
-}
-function nextPrompt(taskDir) {
-  const raw = readIfExists2(path7.join(taskDir, "tracking", "workflow-status.md"));
-  const m = raw.match(/^##\s+Prompt bước tiếp theo\s*\r?\n+([\s\S]*?)(?=\r?\n##\s|(?![\s\S]))/m);
-  return m ? m[1].trim() : "";
-}
-var workspaceProp = { type: "string", description: "\u0110\u01B0\u1EDDng d\u1EABn tuy\u1EC7t \u0111\u1ED1i t\u1EDBi repo d\u1EF1 \xE1n." };
-var taskProp = { type: "string", description: "T\xEAn task (FE-123-abc) ho\u1EB7c \u0111\u01B0\u1EDDng d\u1EABn task folder." };
-var TOOLS = [
-  {
-    name: "fe_begin_mode",
-    description: "G\u1ECCI \u0110\u1EA6U TI\xCAN khi b\u1EAFt \u0111\u1EA7u b\u1EA5t k\u1EF3 mode FE n\xE0o (plan/quick/input-sync/figma/cook/bugfix/review/test/figma-review/pr). Tr\u1EA3 v\u1EC1: mode c\xF3 \u0111\u01B0\u1EE3c ch\u1EA1y kh\xF4ng (gate c\xE2u h\u1ECFi blocking, build_ready, Figma, review), prompt ph\u1EA3i ch\u1EA1y thay th\u1EBF n\u1EBFu b\u1ECB ch\u1EB7n, artifact b\u1EAFt bu\u1ED9c c\u1EE7a mode v\xE0 nguy\xEAn v\u0103n c\xE1c rule \xE1p d\u1EE5ng cho mode (kh\xF4ng c\u1EA7n \u0111\u1ECDc file rule ri\xEAng).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        workspace_root: workspaceProp,
-        task_folder: taskProp,
-        mode: { type: "string", description: `Mode mu\u1ED1n ch\u1EA1y: ${COMMANDS.join(", ")}.` }
-      },
-      required: ["workspace_root", "task_folder", "mode"]
-    }
-  },
-  {
-    name: "fe_new_task",
-    description: "T\u1EA1o task folder chu\u1EA9n trong docs/frontend-tasks/<t\xEAn> t\u1EEB template c\u1EE7a kit (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). Kh\xF4ng ghi \u0111\xE8 file \u0111\xE3 c\xF3. D\xF9ng cho /fe:new-task thay v\xEC t\u1EF1 copy template.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        workspace_root: workspaceProp,
-        task_name: { type: "string", description: "T\xEAn task d\u1EA1ng FE-<id>-<slug>, vd FE-123-login-form." }
-      },
-      required: ["workspace_root", "task_name"]
-    }
-  },
-  {
-    name: "fe_validate_task",
-    description: "Ki\u1EC3m tra task folder c\xF3 \u0111\u1EE7 file b\u1EAFt bu\u1ED9c theo chu\u1EA9n Frontend Delivery kh\xF4ng (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). D\xF9ng tr\u01B0\u1EDBc khi chuy\u1EC3n mode.",
-    inputSchema: {
-      type: "object",
-      properties: { workspace_root: workspaceProp, task_folder: taskProp },
-      required: ["workspace_root", "task_folder"]
-    }
-  },
-  {
-    name: "fe_validate_workflow",
-    description: "Ch\u1EA1y to\xE0n b\u1ED9 gate c\u1EE7a workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing h\u1EE3p l\u1EC7. Task \u1EDF review/test/pr-ready th\xEC \u0111\u1ED1i chi\u1EBFu th\xEAm file \u0111\xE3 s\u1EEDa (git) v\u1EDBi plan. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC m\u1ECDi mode; \u0111\xE2y l\xE0 gate ch\xEDnh ch\u1EB7n agent nh\u1EA3y mode sai.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        workspace_root: workspaceProp,
-        task_folder: taskProp,
-        base_ref: {
-          type: "string",
-          description: "Nh\xE1nh/commit g\u1ED1c \u0111\u1EC3 t\xEDnh scope \u1EDF review/test/pr (vd origin/main). B\u1ECF tr\u1ED1ng th\xEC t\u1EF1 d\xF2."
-        }
-      },
-      required: ["workspace_root", "task_folder"]
-    }
-  },
-  {
-    name: "fe_scope_diff",
-    description: 'So file th\u1EF1c s\u1EF1 thay \u0111\u1ED5i (git) v\u1EDBi b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" trong implementation-plan.md. D\xF9ng trong cook/bugfix/review/pr \u0111\u1EC3 ph\xE1t hi\u1EC7n file s\u1EEDa ngo\xE0i plan thay v\xEC t\u1EF1 khai scope_diff_status.',
-    inputSchema: {
-      type: "object",
-      properties: {
-        workspace_root: workspaceProp,
-        task_folder: taskProp,
-        base_ref: {
-          type: "string",
-          description: "Nh\xE1nh/commit g\u1ED1c \u0111\u1EC3 so (vd origin/main). B\u1ECF tr\u1ED1ng th\xEC t\u1EF1 d\xF2; kh\xF4ng d\xF2 \u0111\u01B0\u1EE3c th\xEC ch\u1EC9 x\xE9t thay \u0111\u1ED5i ch\u01B0a commit."
-        }
-      },
-      required: ["workspace_root", "task_folder"]
-    }
-  },
-  {
-    name: "fe_next_step",
-    description: "Tr\u1EA3 v\u1EC1 prompt b\u01B0\u1EDBc ti\u1EBFp theo \u0111\u1ECDc tr\u1EF1c ti\u1EBFp t\u1EEB tracking/workflow-status.md c\u1EE7a task. D\xF9ng khi kh\xF4ng ch\u1EAFc mode k\u1EBF ti\u1EBFp l\xE0 g\xEC.",
-    inputSchema: {
-      type: "object",
-      properties: { workspace_root: workspaceProp, task_folder: taskProp },
-      required: ["workspace_root", "task_folder"]
-    }
-  },
-  {
-    name: "fe_task_status",
-    description: "\u0110\u1ECDc t\xF3m t\u1EAFt tr\u1EA1ng th\xE1i task: mode hi\u1EC7n t\u1EA1i, c\xE1c gate status ch\xEDnh, s\u1ED1 c\xE2u h\u1ECFi blocking, s\u1ED1 issue theo severity. Ch\u1EC9 \u0111\u1ECDc, kh\xF4ng s\u1EEDa file.",
-    inputSchema: {
-      type: "object",
-      properties: { workspace_root: workspaceProp, task_folder: taskProp },
-      required: ["workspace_root", "task_folder"]
-    }
-  },
-  {
-    name: "fe_list_tasks",
-    description: `Li\u1EC7t k\xEA m\u1ECDi task folder trong ${TASKS_ROOT} k\xE8m mode hi\u1EC7n t\u1EA1i c\u1EE7a t\u1EEBng task.`,
-    inputSchema: {
-      type: "object",
-      properties: { workspace_root: workspaceProp },
-      required: ["workspace_root"]
-    }
-  }
-];
-var handlers = {
-  fe_begin_mode({ workspace_root, task_folder, mode }) {
-    const command = normalizeCommand(mode);
-    if (!command) {
-      return textResult(`Kh\xF4ng nh\u1EADn ra mode "${mode}". Mode h\u1EE3p l\u1EC7: ${COMMANDS.join(", ")}.`, true);
-    }
-    const taskDir = resolveTaskDir2(workspace_root, task_folder);
-    const taskRef = relativePosix(workspace_root, taskDir) || toPosix(task_folder);
-    const rules = kitDir(workspace_root, "rules");
-    const briefing = modeBriefing({
-      taskDir,
-      taskRef,
-      command,
-      rulesDir: rules.dir,
-      rulesLabel: rules.source === "project" ? ".frontend-delivery/rules c\u1EE7a repo" : "plugin",
-      newTaskHint: `G\u1ECDi MCP tool fe_new_task (ho\u1EB7c /fe:new-task ${path7.basename(taskDir)}) \u0111\u1EC3 t\u1EA1o task t\u1EEB template, r\u1ED3i ch\u1EA1y l\u1EA1i FE ${command} ${taskRef}.`,
-      finishHint: "Tr\u01B0\u1EDBc khi k\u1EBFt th\xFAc: c\u1EADp nh\u1EADt tracking/workflow-status.md r\u1ED3i g\u1ECDi fe_validate_workflow."
-    });
-    return textResult(briefing.text, !briefing.ok);
-  },
-  fe_new_task({ workspace_root, task_name }) {
-    const templates = kitDir(workspace_root, "templates");
-    const res = scaffoldTask2({ workspaceRoot: workspace_root, name: task_name, templatesDir: templates.dir });
-    if (!res.ok) return textResult(res.error, true);
-    const lines = [
-      `Task folder: ${res.taskRef}`,
-      `Template ngu\u1ED3n: ${templates.source === "project" ? ".frontend-delivery/templates c\u1EE7a repo" : "plugin"}`,
-      ...res.created.map((f) => `T\u1EA0O ${f}`),
-      ...res.skipped.map((f) => `GI\u1EEE NGUY\xCAN (\u0111\xE3 c\xF3) ${f}`)
-    ];
-    if (!res.created.length) lines.push("", "Task \u0111\xE3 t\u1ED3n t\u1EA1i \u0111\u1EA7y \u0111\u1EE7, kh\xF4ng ghi \u0111\xE8 g\xEC.");
-    lines.push("", "Ti\u1EBFp theo: " + (nextPrompt(res.taskDir) || `FE plan ${res.taskRef}`));
-    lines.push(`Task nh\u1ECF, r\u1EE7i ro th\u1EA5p c\xF3 th\u1EC3 d\xF9ng: FE quick ${res.taskRef}`);
-    return textResult(lines.join("\n"));
-  },
-  fe_validate_task({ workspace_root, task_folder }) {
-    const taskDir = resolveTaskDir2(workspace_root, task_folder);
-    if (!fs6.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
-    const lines = [];
-    let ok = true;
-    for (const rel of REQUIRED_TASK_FILES) {
-      const present = fs6.existsSync(path7.join(taskDir, rel));
-      lines.push(`${present ? "OK" : "THI\u1EBEU"} ${rel}`);
-      if (!present) ok = false;
-    }
-    lines.push("");
-    lines.push(ok ? "validate-task: PASSED" : "validate-task: FAILED");
-    const np = nextPrompt(taskDir);
-    if (ok && np) lines.push("", "Ti\u1EBFp theo: " + np);
-    return textResult(lines.join("\n"), !ok);
-  },
-  fe_validate_workflow({ workspace_root, task_folder, base_ref }) {
-    const taskDir = resolveTaskDir2(workspace_root, task_folder);
-    if (!fs6.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
-    const res = validateWorkflowAtGate(taskDir, { repoRoot: workspace_root, base: base_ref });
-    appendRunLog2(taskDir, {
-      event: "validate",
-      source: "mcp",
-      actor: "claude",
-      kit: KIT_VERSION,
-      outcome: res.ok ? "ok" : "failed",
-      codes: codesOf(res)
-    });
-    const warnings = (res.warnings || []).map((w) => "- C\u1EA3nh b\xE1o: " + w);
-    const scopeLine = {
-      git: `Scope: t\xEDnh t\u1EEB git (base: ${res.base || "ch\u1EC9 thay \u0111\u1ED5i ch\u01B0a commit"}).`,
-      self_reported: "Scope: d\xF9ng scope_diff_status t\u1EF1 khai."
-    }[res.scopeSource];
-    const head = scopeLine ? [scopeLine] : [];
-    if (!res.ok) {
-      return textResult(
-        ["validate-workflow: FAILED", ...head, "", ...res.errors.map((e) => "- " + e), ...warnings].join("\n"),
-        true
-      );
-    }
-    const np = nextPrompt(taskDir);
-    return textResult(
-      ["validate-workflow: PASSED", ...head, ...warnings, ...np ? ["", "Ti\u1EBFp theo: " + np] : []].join("\n")
-    );
-  },
-  fe_scope_diff({ workspace_root, task_folder, base_ref }) {
-    const taskDir = resolveTaskDir2(workspace_root, task_folder);
-    if (!fs6.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
-    const base = base_ref || detectBaseRef(workspace_root);
-    const scope = scopeDiffForTask(taskDir, { repoRoot: workspace_root, base });
-    if (!scope) {
-      return textResult("Kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff (kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng diff \u0111\u01B0\u1EE3c base). Ghi scope_diff_status theo review th\u1EE7 c\xF4ng v\xE0 n\xEAu l\xFD do.");
-    }
-    const lines = [
-      `Base: ${base || "(kh\xF4ng c\xF3 \u2014 ch\u1EC9 x\xE9t thay \u0111\u1ED5i ch\u01B0a commit v\xE0 file untracked)"}`,
-      `File khai trong plan: ${scope.plannedFiles.length}`,
-      `Trong plan: ${scope.inScope.length}; ngo\xE0i plan: ${scope.outOfPlan.length}; b\u1ECF qua (artifact/lockfile): ${scope.ignored.length}`
-    ];
-    if (scope.plannedEmpty) {
-      lines.push("", 'implementation-plan.md ch\u01B0a khai file n\xE0o \u1EDF m\u1EE5c "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" n\xEAn kh\xF4ng \u0111\u1ED1i chi\u1EBFu \u0111\u01B0\u1EE3c.');
-    }
-    if (scope.outOfPlan.length) {
-      lines.push("", "File s\u1EEDa NGO\xC0I plan:", ...scope.outOfPlan.map((f) => "- " + f));
-      lines.push("", "scope-diff: FAILED \u2014 c\u1EADp nh\u1EADt plan/input-sync ho\u1EB7c ho\xE0n t\xE1c c\xE1c file tr\xEAn.");
-      return textResult(lines.join("\n"), true);
-    }
-    lines.push("", "scope-diff: PASSED");
-    return textResult(lines.join("\n"));
-  },
-  fe_next_step({ workspace_root, task_folder }) {
-    const taskDir = resolveTaskDir2(workspace_root, task_folder);
-    const np = nextPrompt(taskDir);
-    if (!np) {
-      return textResult(
-        'Kh\xF4ng \u0111\u1ECDc \u0111\u01B0\u1EE3c "Prompt b\u01B0\u1EDBc ti\u1EBFp theo" trong tracking/workflow-status.md.',
-        true
-      );
-    }
-    return textResult(np);
-  },
-  fe_task_status({ workspace_root, task_folder }) {
-    const taskDir = resolveTaskDir2(workspace_root, task_folder);
-    const wf = path7.join(taskDir, "tracking", "workflow-status.md");
-    if (!fs6.existsSync(wf)) return textResult("Thi\u1EBFu tracking/workflow-status.md", true);
-    const parsed = parseWorkflowStatus(fs6.readFileSync(wf, "utf8"));
-    if (!parsed.ok) {
-      return textResult("Kh\xF4ng parse \u0111\u01B0\u1EE3c workflow-status.md:\n" + parsed.errors.join("\n"), true);
-    }
-    const d = parsed.data;
-    const pick2 = [
+// packages/validators/src/pack.mjs
+var fePack = {
+  id: "fe",
+  displayName: "FE-Kit",
+  /** Namespace slash command và agent của plugin: `/fe:<mode>`, `fe:<agent>`. */
+  pluginName: "fe",
+  /** Tiền tố lệnh dạng chữ: `FE <mode> <task>`. */
+  promptPrefix: "FE",
+  /** Tiền tố biến môi trường: `FE_KIT_HOOKS`, `FE_KIT_BASH_GUARD`, `FE_KIT_HOOKS_DEBUG`. */
+  envPrefix: "FE_KIT",
+  agentPrefix: "frontend-",
+  tasksRoot: TASKS_ROOT,
+  statusFile: "tracking/workflow-status.md",
+  writablePrefixes: KIT_WRITABLE_PREFIXES,
+  commands: COMMANDS,
+  commandToMode: COMMAND_TO_MODE,
+  sourceEditCommands: SOURCE_EDIT_COMMANDS,
+  sourceEditAgent: SOURCE_EDIT_AGENT,
+  requiredArtifacts: MODE_REQUIRED_ARTIFACTS,
+  agentFor: AGENT_FOR_COMMAND,
+  label: (command) => `FE ${command}`,
+  /** Mode nào sửa lỗi source mà mode chỉ đọc phát hiện. */
+  sourceFixRoute: "FE bugfix/cook",
+  /** Mode cập nhật plan khi phạm vi đổi. */
+  planUpdateRoute: "input-sync",
+  readInputsHint: 'Input c\u1EA7n \u0111\u1ECDc: m\u1EE5c "Input ledger b\u1EAFt bu\u1ED9c cho FE plan" trong tracking/workflow-status.md.',
+  parseStatus: parseWorkflowStatus,
+  rulesFor: (command, data) => rulesForMode(command, { figmaRequired: data.figma_required === true }),
+  /** Số câu hỏi blocking và issue Critical/High đang mở, đếm từ file của task. */
+  entryInputs: ({ data, read }) => ({
+    openBlockingQuestions: countOpenBlockingQuestions(read("planning/questions.md")),
+    openIssues: effectiveOpenIssues(data, countOpenIssuesInTask(read))
+  }),
+  normalizeCommand,
+  evaluateModeEntry,
+  resolveTaskDir: resolveTaskDir2,
+  scopeDiffForTask,
+  loadProjectConfig: loadProjectConfig2,
+  scaffoldTask: scaffoldTask2,
+  requiredTaskFiles: REQUIRED_TASK_FILES,
+  validateWorkflow,
+  validateWorkflowAtGate,
+  /** Chuỗi và cấu hình riêng của FE cho MCP server (`createMcpTools` trong engine). */
+  mcp: {
+    serverName: "frontend-delivery",
+    toolPrefix: "fe",
+    configDir: ".frontend-delivery",
+    skillDir: "skills/frontend-delivery-standard",
+    nextPromptHeading: "Prompt b\u01B0\u1EDBc ti\u1EBFp theo",
+    firstCommand: "plan",
+    afterNewTask: (taskRef) => [`Task nh\u1ECF, r\u1EE7i ro th\u1EA5p c\xF3 th\u1EC3 d\xF9ng: FE quick ${taskRef}`],
+    taskPropDescription: "T\xEAn task (FE-123-abc) ho\u1EB7c \u0111\u01B0\u1EDDng d\u1EABn task folder.",
+    taskNameDescription: "T\xEAn task d\u1EA1ng FE-<id>-<slug>, vd FE-123-login-form.",
+    scopeSelfReported: "Scope: d\xF9ng scope_diff_status t\u1EF1 khai.",
+    scopeUnavailable: "Kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff (kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng diff \u0111\u01B0\u1EE3c base). Ghi scope_diff_status theo review th\u1EE7 c\xF4ng v\xE0 n\xEAu l\xFD do.",
+    plannedFilesMissing: 'implementation-plan.md ch\u01B0a khai file n\xE0o \u1EDF m\u1EE5c "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" n\xEAn kh\xF4ng \u0111\u1ED1i chi\u1EBFu \u0111\u01B0\u1EE3c.',
+    statusFields: [
       "current_mode",
       "next_mode",
       "build_ready",
@@ -34527,41 +34615,33 @@ var handlers = {
       "high_issues_open",
       "pr_status",
       "human_override"
-    ];
-    const lines = pick2.filter((k) => d[k] !== void 0).map((k) => `${k}: ${d[k]}`);
-    const derived = countOpenBlockingQuestions(readIfExists2(path7.join(taskDir, "planning", "questions.md")));
-    lines.push(`blocking_questions_open (\u0111\u1EBFm t\u1EEB questions.md): ${derived}`);
-    return textResult(lines.join("\n"));
-  },
-  fe_list_tasks({ workspace_root }) {
-    const root = path7.resolve(workspace_root, TASKS_ROOT);
-    if (!fs6.existsSync(root)) return textResult(`Ch\u01B0a c\xF3 th\u01B0 m\u1EE5c ${TASKS_ROOT}.`);
-    const entries = fs6.readdirSync(root, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => {
-      const wf = path7.join(root, e.name, "tracking", "workflow-status.md");
-      let mode = "ch\u01B0a c\xF3 workflow-status";
-      if (fs6.existsSync(wf)) {
-        const m = fs6.readFileSync(wf, "utf8").match(/^current_mode:\s*(.+)$/m);
-        if (m) mode = m[1].trim();
-      }
-      return `- ${e.name} (${mode})`;
-    });
-    return textResult(entries.length ? entries.join("\n") : `Ch\u01B0a c\xF3 task n\xE0o trong ${TASKS_ROOT}.`);
+    ],
+    statusExtras: (read) => [`blocking_questions_open (\u0111\u1EBFm t\u1EEB questions.md): ${countOpenBlockingQuestions(read("planning/questions.md"))}`],
+    descriptions: {
+      beginMode: "G\u1ECCI \u0110\u1EA6U TI\xCAN khi b\u1EAFt \u0111\u1EA7u b\u1EA5t k\u1EF3 mode FE n\xE0o (plan/quick/input-sync/figma/cook/bugfix/review/test/figma-review/pr). Tr\u1EA3 v\u1EC1: mode c\xF3 \u0111\u01B0\u1EE3c ch\u1EA1y kh\xF4ng (gate c\xE2u h\u1ECFi blocking, build_ready, Figma, review), prompt ph\u1EA3i ch\u1EA1y thay th\u1EBF n\u1EBFu b\u1ECB ch\u1EB7n, artifact b\u1EAFt bu\u1ED9c c\u1EE7a mode v\xE0 nguy\xEAn v\u0103n c\xE1c rule \xE1p d\u1EE5ng cho mode (kh\xF4ng c\u1EA7n \u0111\u1ECDc file rule ri\xEAng).",
+      newTask: "T\u1EA1o task folder chu\u1EA9n trong docs/frontend-tasks/<t\xEAn> t\u1EEB template c\u1EE7a kit (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). Kh\xF4ng ghi \u0111\xE8 file \u0111\xE3 c\xF3. D\xF9ng cho /fe:new-task thay v\xEC t\u1EF1 copy template.",
+      validateTask: "Ki\u1EC3m tra task folder c\xF3 \u0111\u1EE7 file b\u1EAFt bu\u1ED9c theo chu\u1EA9n Frontend Delivery kh\xF4ng (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). D\xF9ng tr\u01B0\u1EDBc khi chuy\u1EC3n mode.",
+      validateWorkflow: "Ch\u1EA1y to\xE0n b\u1ED9 gate c\u1EE7a workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing h\u1EE3p l\u1EC7. Task \u1EDF review/test/pr-ready th\xEC \u0111\u1ED1i chi\u1EBFu th\xEAm file \u0111\xE3 s\u1EEDa (git) v\u1EDBi plan. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC m\u1ECDi mode; \u0111\xE2y l\xE0 gate ch\xEDnh ch\u1EB7n agent nh\u1EA3y mode sai.",
+      scopeDiff: 'So file th\u1EF1c s\u1EF1 thay \u0111\u1ED5i (git) v\u1EDBi b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" trong implementation-plan.md. D\xF9ng trong cook/bugfix/review/pr \u0111\u1EC3 ph\xE1t hi\u1EC7n file s\u1EEDa ngo\xE0i plan thay v\xEC t\u1EF1 khai scope_diff_status.',
+      nextStep: "Tr\u1EA3 v\u1EC1 prompt b\u01B0\u1EDBc ti\u1EBFp theo \u0111\u1ECDc tr\u1EF1c ti\u1EBFp t\u1EEB tracking/workflow-status.md c\u1EE7a task. D\xF9ng khi kh\xF4ng ch\u1EAFc mode k\u1EBF ti\u1EBFp l\xE0 g\xEC.",
+      taskStatus: "\u0110\u1ECDc t\xF3m t\u1EAFt tr\u1EA1ng th\xE1i task: mode hi\u1EC7n t\u1EA1i, c\xE1c gate status ch\xEDnh, s\u1ED1 c\xE2u h\u1ECFi blocking, s\u1ED1 issue theo severity. Ch\u1EC9 \u0111\u1ECDc, kh\xF4ng s\u1EEDa file."
+    }
   }
 };
-var server = new Server(
-  { name: "frontend-delivery", version: KIT_VERSION },
-  { capabilities: { tools: {} } }
-);
-server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
-server.setRequestHandler(CallToolRequestSchema, async (req) => {
-  const handler = handlers[req.params.name];
-  if (!handler) return textResult(`Tool kh\xF4ng t\u1ED3n t\u1EA1i: ${req.params.name}`, true);
-  try {
-    return handler(req.params.arguments ?? {});
-  } catch (err) {
-    return textResult(`L\u1ED7i khi ch\u1EA1y ${req.params.name}: ${err.message}`, true);
-  }
-});
+var evaluateModeCompletion = createModeCompletion(fePack);
+fePack.evaluateModeCompletion = evaluateModeCompletion;
+var modeBriefing = createModeBriefing(fePack);
+
+// core/mcp/server.mjs
+var KIT_VERSION = true ? "2.3.0" : "dev";
+function pluginRoot() {
+  if (process.env.CLAUDE_PLUGIN_ROOT) return path9.resolve(process.env.CLAUDE_PLUGIN_ROOT);
+  return path9.resolve(path9.dirname(fileURLToPath(import.meta.url)), "..");
+}
+var { serverName, tools, callTool } = createMcpTools(fePack, { version: KIT_VERSION, pluginRoot: pluginRoot() });
+var server = new Server({ name: serverName, version: KIT_VERSION }, { capabilities: { tools: {} } });
+server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
+server.setRequestHandler(CallToolRequestSchema, async (req) => callTool(req.params.name, req.params.arguments));
 var transport = new StdioServerTransport();
 await server.connect(transport);
 /*! Bundled license information:

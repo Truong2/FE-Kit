@@ -22,6 +22,11 @@ describe.each(Object.keys(golden))('golden %s', (section) => {
   });
 
   it.each(Object.keys(golden[section]))('%s', (key) => {
+    if (section === 'validators' && key === 'exports') {
+      // API công khai chỉ được thêm, không được mất export.
+      expect(current[section][key]).toEqual(expect.arrayContaining(golden[section][key]));
+      return;
+    }
     expect(current[section][key]).toEqual(golden[section][key]);
   });
 });

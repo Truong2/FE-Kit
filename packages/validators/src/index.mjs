@@ -21,7 +21,7 @@ export {
   validatePr,
   SCOPE_CHECKED_MODES,
 } from './workflow.mjs';
-export { evaluateModeCompletion } from './pack.mjs';
+export { evaluateModeCompletion, fePack } from './pack.mjs';
 export { snapshotFiles, filesTouchedSince, fingerprintFile } from './scope.mjs';
 export {
   appendRunLog,

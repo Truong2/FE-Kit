@@ -23237,6 +23237,9 @@ function createModeBriefing(pack) {
   };
 }
 
+// packages/engine/src/hook-core.mjs
+var MARKER_TTL_MS = 4 * 60 * 60 * 1e3;
+
 // packages/validators/src/parse.mjs
 function parseWorkflowStatus(raw) {
   let frontMatter;
@@ -23274,6 +23277,7 @@ var COMMAND_TO_MODE = {
 var COMMANDS = Object.keys(COMMAND_TO_MODE);
 var COMMAND_ALIASES = { build: "cook", "figma-extract": "figma", implement: "cook" };
 var TERMINAL_NEXT_MODES = ["none", "done", "completed", "merged"];
+var SOURCE_EDIT_COMMANDS = ["cook", "bugfix", "quick"];
 var ALWAYS_ALLOWED = ["plan", "input-sync"];
 var ALLOWED_NEXT = {
   plan: ["input-sync", "figma", "cook", "plan", "quick"],
@@ -23382,6 +23386,8 @@ var AGENT_FOR_COMMAND = {
   pr: "frontend-release-manager",
   quick: null
 };
+var SOURCE_EDIT_AGENT = "frontend-developer";
+var KIT_WRITABLE_PREFIXES = ["docs/frontend-tasks/", "docs/frontend-context/"];
 var ALWAYS_RULES = [
   "core.md",
   "mode-output-contract.md",
@@ -24030,14 +24036,45 @@ function validatePr(taskDir, { scope } = {}) {
   return { ok: errors.length === 0, errors, issues, warnings: [...workflow.warnings, ...pr.warnings] };
 }
 
+// packages/validators/src/scaffold.mjs
+var TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
+function scaffoldTask2({ workspaceRoot, name, templatesDir }) {
+  return scaffoldTask({
+    workspaceRoot,
+    name,
+    templatesDir,
+    tasksRoot: TASKS_ROOT,
+    templateFiles: TASK_TEMPLATE_FILES,
+    emptyFiles: [TASK_GITKEEP],
+    nameHint: "FE-<id>-<slug>"
+  });
+}
+
 // packages/validators/src/pack.mjs
 var fePack = {
   id: "fe",
+  displayName: "FE-Kit",
+  /** Namespace slash command và agent của plugin: `/fe:<mode>`, `fe:<agent>`. */
+  pluginName: "fe",
+  /** Tiền tố lệnh dạng chữ: `FE <mode> <task>`. */
+  promptPrefix: "FE",
+  /** Tiền tố biến môi trường: `FE_KIT_HOOKS`, `FE_KIT_BASH_GUARD`, `FE_KIT_HOOKS_DEBUG`. */
+  envPrefix: "FE_KIT",
+  agentPrefix: "frontend-",
+  tasksRoot: TASKS_ROOT,
   statusFile: "tracking/workflow-status.md",
-  label: (command2) => `FE ${command2}`,
+  writablePrefixes: KIT_WRITABLE_PREFIXES,
+  commands: COMMANDS,
   commandToMode: COMMAND_TO_MODE,
+  sourceEditCommands: SOURCE_EDIT_COMMANDS,
+  sourceEditAgent: SOURCE_EDIT_AGENT,
   requiredArtifacts: MODE_REQUIRED_ARTIFACTS,
   agentFor: AGENT_FOR_COMMAND,
+  label: (command2) => `FE ${command2}`,
+  /** Mode nào sửa lỗi source mà mode chỉ đọc phát hiện. */
+  sourceFixRoute: "FE bugfix/cook",
+  /** Mode cập nhật plan khi phạm vi đổi. */
+  planUpdateRoute: "input-sync",
   readInputsHint: 'Input c\u1EA7n \u0111\u1ECDc: m\u1EE5c "Input ledger b\u1EAFt bu\u1ED9c cho FE plan" trong tracking/workflow-status.md.',
   parseStatus: parseWorkflowStatus,
   rulesFor: (command2, data) => rulesForMode(command2, { figmaRequired: data.figma_required === true }),
@@ -24046,11 +24083,57 @@ var fePack = {
     openBlockingQuestions: countOpenBlockingQuestions(read3("planning/questions.md")),
     openIssues: effectiveOpenIssues(data, countOpenIssuesInTask(read3))
   }),
+  normalizeCommand,
   evaluateModeEntry,
+  resolveTaskDir: resolveTaskDir2,
+  scopeDiffForTask,
+  loadProjectConfig: loadProjectConfig2,
+  scaffoldTask: scaffoldTask2,
+  requiredTaskFiles: REQUIRED_TASK_FILES,
   validateWorkflow,
-  validateWorkflowAtGate
+  validateWorkflowAtGate,
+  /** Chuỗi và cấu hình riêng của FE cho MCP server (`createMcpTools` trong engine). */
+  mcp: {
+    serverName: "frontend-delivery",
+    toolPrefix: "fe",
+    configDir: ".frontend-delivery",
+    skillDir: "skills/frontend-delivery-standard",
+    nextPromptHeading: "Prompt b\u01B0\u1EDBc ti\u1EBFp theo",
+    firstCommand: "plan",
+    afterNewTask: (taskRef) => [`Task nh\u1ECF, r\u1EE7i ro th\u1EA5p c\xF3 th\u1EC3 d\xF9ng: FE quick ${taskRef}`],
+    taskPropDescription: "T\xEAn task (FE-123-abc) ho\u1EB7c \u0111\u01B0\u1EDDng d\u1EABn task folder.",
+    taskNameDescription: "T\xEAn task d\u1EA1ng FE-<id>-<slug>, vd FE-123-login-form.",
+    scopeSelfReported: "Scope: d\xF9ng scope_diff_status t\u1EF1 khai.",
+    scopeUnavailable: "Kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff (kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng diff \u0111\u01B0\u1EE3c base). Ghi scope_diff_status theo review th\u1EE7 c\xF4ng v\xE0 n\xEAu l\xFD do.",
+    plannedFilesMissing: 'implementation-plan.md ch\u01B0a khai file n\xE0o \u1EDF m\u1EE5c "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" n\xEAn kh\xF4ng \u0111\u1ED1i chi\u1EBFu \u0111\u01B0\u1EE3c.',
+    statusFields: [
+      "current_mode",
+      "next_mode",
+      "build_ready",
+      "questions_resolution_gate_status",
+      "blocking_questions_open",
+      "figma_required",
+      "figma_gate_status",
+      "review_status",
+      "critical_issues_open",
+      "high_issues_open",
+      "pr_status",
+      "human_override"
+    ],
+    statusExtras: (read3) => [`blocking_questions_open (\u0111\u1EBFm t\u1EEB questions.md): ${countOpenBlockingQuestions(read3("planning/questions.md"))}`],
+    descriptions: {
+      beginMode: "G\u1ECCI \u0110\u1EA6U TI\xCAN khi b\u1EAFt \u0111\u1EA7u b\u1EA5t k\u1EF3 mode FE n\xE0o (plan/quick/input-sync/figma/cook/bugfix/review/test/figma-review/pr). Tr\u1EA3 v\u1EC1: mode c\xF3 \u0111\u01B0\u1EE3c ch\u1EA1y kh\xF4ng (gate c\xE2u h\u1ECFi blocking, build_ready, Figma, review), prompt ph\u1EA3i ch\u1EA1y thay th\u1EBF n\u1EBFu b\u1ECB ch\u1EB7n, artifact b\u1EAFt bu\u1ED9c c\u1EE7a mode v\xE0 nguy\xEAn v\u0103n c\xE1c rule \xE1p d\u1EE5ng cho mode (kh\xF4ng c\u1EA7n \u0111\u1ECDc file rule ri\xEAng).",
+      newTask: "T\u1EA1o task folder chu\u1EA9n trong docs/frontend-tasks/<t\xEAn> t\u1EEB template c\u1EE7a kit (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). Kh\xF4ng ghi \u0111\xE8 file \u0111\xE3 c\xF3. D\xF9ng cho /fe:new-task thay v\xEC t\u1EF1 copy template.",
+      validateTask: "Ki\u1EC3m tra task folder c\xF3 \u0111\u1EE7 file b\u1EAFt bu\u1ED9c theo chu\u1EA9n Frontend Delivery kh\xF4ng (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). D\xF9ng tr\u01B0\u1EDBc khi chuy\u1EC3n mode.",
+      validateWorkflow: "Ch\u1EA1y to\xE0n b\u1ED9 gate c\u1EE7a workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing h\u1EE3p l\u1EC7. Task \u1EDF review/test/pr-ready th\xEC \u0111\u1ED1i chi\u1EBFu th\xEAm file \u0111\xE3 s\u1EEDa (git) v\u1EDBi plan. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC m\u1ECDi mode; \u0111\xE2y l\xE0 gate ch\xEDnh ch\u1EB7n agent nh\u1EA3y mode sai.",
+      scopeDiff: 'So file th\u1EF1c s\u1EF1 thay \u0111\u1ED5i (git) v\u1EDBi b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" trong implementation-plan.md. D\xF9ng trong cook/bugfix/review/pr \u0111\u1EC3 ph\xE1t hi\u1EC7n file s\u1EEDa ngo\xE0i plan thay v\xEC t\u1EF1 khai scope_diff_status.',
+      nextStep: "Tr\u1EA3 v\u1EC1 prompt b\u01B0\u1EDBc ti\u1EBFp theo \u0111\u1ECDc tr\u1EF1c ti\u1EBFp t\u1EEB tracking/workflow-status.md c\u1EE7a task. D\xF9ng khi kh\xF4ng ch\u1EAFc mode k\u1EBF ti\u1EBFp l\xE0 g\xEC.",
+      taskStatus: "\u0110\u1ECDc t\xF3m t\u1EAFt tr\u1EA1ng th\xE1i task: mode hi\u1EC7n t\u1EA1i, c\xE1c gate status ch\xEDnh, s\u1ED1 c\xE2u h\u1ECFi blocking, s\u1ED1 issue theo severity. Ch\u1EC9 \u0111\u1ECDc, kh\xF4ng s\u1EEDa file."
+    }
+  }
 };
 var evaluateModeCompletion = createModeCompletion(fePack);
+fePack.evaluateModeCompletion = evaluateModeCompletion;
 var modeBriefing = createModeBriefing(fePack);
 
 // packages/validators/src/runlog.mjs
@@ -24329,20 +24412,6 @@ function validateInputSyncReport(taskDir) {
   if (!/Figma gate status sau sync/i.test(report2)) errors.push("input-sync-report.md ph\u1EA3i re-check Figma gate sau sync.");
   if (!/tracking\/workflow-status\.md/i.test(report2)) errors.push("input-sync-report.md ph\u1EA3i ghi workflow-status.md l\xE0 file c\u1EADp nh\u1EADt next prompt/build_ready.");
   return { ok: errors.length === 0, errors };
-}
-
-// packages/validators/src/scaffold.mjs
-var TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
-function scaffoldTask2({ workspaceRoot, name, templatesDir }) {
-  return scaffoldTask({
-    workspaceRoot,
-    name,
-    templatesDir,
-    tasksRoot: TASKS_ROOT,
-    templateFiles: TASK_TEMPLATE_FILES,
-    emptyFiles: [TASK_GITKEEP],
-    nameHint: "FE-<id>-<slug>"
-  });
 }
 
 // bin/fe-kit.mjs

@@ -3,7 +3,7 @@ import { createRequire as __fdkCreateRequire } from 'node:module';
 const require = __fdkCreateRequire(import.meta.url);
 import {
   validateWorkflowAtGate
-} from "./chunks/chunk-OLG7SNL4.mjs";
+} from "./chunks/chunk-G57C3FKO.mjs";
 
 // core/scripts/validate-workflow.mjs
 import fs from "node:fs";

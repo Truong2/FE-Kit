@@ -2692,8 +2692,8 @@ var require_dumper = __commonJS({
       }
       return result;
     }
-    function generateNextLine(state, level2) {
-      return "\n" + common.repeat(" ", state.indent * level2);
+    function generateNextLine(state, level) {
+      return "\n" + common.repeat(" ", state.indent * level);
     }
     function testImplicitResolving(state, str2) {
       var index, length, type;
@@ -2772,7 +2772,7 @@ var require_dumper = __commonJS({
       }
       return hasFoldableLine ? STYLE_FOLDED : STYLE_LITERAL;
     }
-    function writeScalar(state, string4, level2, iskey) {
+    function writeScalar(state, string4, level, iskey) {
       state.dump = (function() {
         if (string4.length === 0) {
           return "''";
@@ -2780,9 +2780,9 @@ var require_dumper = __commonJS({
         if (!state.noCompatMode && DEPRECATED_BOOLEANS_SYNTAX.indexOf(string4) !== -1) {
           return "'" + string4 + "'";
         }
-        var indent = state.indent * Math.max(1, level2);
+        var indent = state.indent * Math.max(1, level);
         var lineWidth = state.lineWidth === -1 ? -1 : Math.max(Math.min(state.lineWidth, 40), state.lineWidth - indent);
-        var singleLineOnly = iskey || state.flowLevel > -1 && level2 >= state.flowLevel;
+        var singleLineOnly = iskey || state.flowLevel > -1 && level >= state.flowLevel;
         function testAmbiguity(string5) {
           return testImplicitResolving(state, string5);
         }
@@ -2873,10 +2873,10 @@ var require_dumper = __commonJS({
       }
       return result;
     }
-    function writeFlowSequence(state, level2, object2) {
+    function writeFlowSequence(state, level, object2) {
       var _result = "", _tag = state.tag, index, length;
       for (index = 0, length = object2.length; index < length; index += 1) {
-        if (writeNode(state, level2, object2[index], false, false)) {
+        if (writeNode(state, level, object2[index], false, false)) {
           if (index !== 0) _result += "," + (!state.condenseFlow ? " " : "");
           _result += state.dump;
         }
@@ -2884,12 +2884,12 @@ var require_dumper = __commonJS({
       state.tag = _tag;
       state.dump = "[" + _result + "]";
     }
-    function writeBlockSequence(state, level2, object2, compact) {
+    function writeBlockSequence(state, level, object2, compact) {
       var _result = "", _tag = state.tag, index, length;
       for (index = 0, length = object2.length; index < length; index += 1) {
-        if (writeNode(state, level2 + 1, object2[index], true, true)) {
+        if (writeNode(state, level + 1, object2[index], true, true)) {
           if (!compact || index !== 0) {
-            _result += generateNextLine(state, level2);
+            _result += generateNextLine(state, level);
           }
           if (state.dump && CHAR_LINE_FEED === state.dump.charCodeAt(0)) {
             _result += "-";
@@ -2902,7 +2902,7 @@ var require_dumper = __commonJS({
       state.tag = _tag;
       state.dump = _result || "[]";
     }
-    function writeFlowMapping(state, level2, object2) {
+    function writeFlowMapping(state, level, object2) {
       var _result = "", _tag = state.tag, objectKeyList = Object.keys(object2), index, length, objectKey, objectValue, pairBuffer;
       for (index = 0, length = objectKeyList.length; index < length; index += 1) {
         pairBuffer = "";
@@ -2910,12 +2910,12 @@ var require_dumper = __commonJS({
         if (state.condenseFlow) pairBuffer += '"';
         objectKey = objectKeyList[index];
         objectValue = object2[objectKey];
-        if (!writeNode(state, level2, objectKey, false, false)) {
+        if (!writeNode(state, level, objectKey, false, false)) {
           continue;
         }
         if (state.dump.length > 1024) pairBuffer += "? ";
         pairBuffer += state.dump + (state.condenseFlow ? '"' : "") + ":" + (state.condenseFlow ? "" : " ");
-        if (!writeNode(state, level2, objectValue, false, false)) {
+        if (!writeNode(state, level, objectValue, false, false)) {
           continue;
         }
         pairBuffer += state.dump;
@@ -2924,7 +2924,7 @@ var require_dumper = __commonJS({
       state.tag = _tag;
       state.dump = "{" + _result + "}";
     }
-    function writeBlockMapping(state, level2, object2, compact) {
+    function writeBlockMapping(state, level, object2, compact) {
       var _result = "", _tag = state.tag, objectKeyList = Object.keys(object2), index, length, objectKey, objectValue, explicitPair, pairBuffer;
       if (state.sortKeys === true) {
         objectKeyList.sort();
@@ -2936,11 +2936,11 @@ var require_dumper = __commonJS({
       for (index = 0, length = objectKeyList.length; index < length; index += 1) {
         pairBuffer = "";
         if (!compact || index !== 0) {
-          pairBuffer += generateNextLine(state, level2);
+          pairBuffer += generateNextLine(state, level);
         }
         objectKey = objectKeyList[index];
         objectValue = object2[objectKey];
-        if (!writeNode(state, level2 + 1, objectKey, true, true, true)) {
+        if (!writeNode(state, level + 1, objectKey, true, true, true)) {
           continue;
         }
         explicitPair = state.tag !== null && state.tag !== "?" || state.dump && state.dump.length > 1024;
@@ -2953,9 +2953,9 @@ var require_dumper = __commonJS({
         }
         pairBuffer += state.dump;
         if (explicitPair) {
-          pairBuffer += generateNextLine(state, level2);
+          pairBuffer += generateNextLine(state, level);
         }
-        if (!writeNode(state, level2 + 1, objectValue, true, explicitPair)) {
+        if (!writeNode(state, level + 1, objectValue, true, explicitPair)) {
           continue;
         }
         if (state.dump && CHAR_LINE_FEED === state.dump.charCodeAt(0)) {
@@ -2992,7 +2992,7 @@ var require_dumper = __commonJS({
       }
       return false;
     }
-    function writeNode(state, level2, object2, block, compact, iskey) {
+    function writeNode(state, level, object2, block, compact, iskey) {
       state.tag = null;
       state.dump = object2;
       if (!detectType(state, object2, false)) {
@@ -3000,14 +3000,14 @@ var require_dumper = __commonJS({
       }
       var type = _toString.call(state.dump);
       if (block) {
-        block = state.flowLevel < 0 || state.flowLevel > level2;
+        block = state.flowLevel < 0 || state.flowLevel > level;
       }
       var objectOrArray = type === "[object Object]" || type === "[object Array]", duplicateIndex, duplicate;
       if (objectOrArray) {
         duplicateIndex = state.duplicates.indexOf(object2);
         duplicate = duplicateIndex !== -1;
       }
-      if (state.tag !== null && state.tag !== "?" || duplicate || state.indent !== 2 && level2 > 0) {
+      if (state.tag !== null && state.tag !== "?" || duplicate || state.indent !== 2 && level > 0) {
         compact = false;
       }
       if (duplicate && state.usedDuplicates[duplicateIndex]) {
@@ -3018,18 +3018,18 @@ var require_dumper = __commonJS({
         }
         if (type === "[object Object]") {
           if (block && Object.keys(state.dump).length !== 0) {
-            writeBlockMapping(state, level2, state.dump, compact);
+            writeBlockMapping(state, level, state.dump, compact);
             if (duplicate) {
               state.dump = "&ref_" + duplicateIndex + state.dump;
             }
           } else {
-            writeFlowMapping(state, level2, state.dump);
+            writeFlowMapping(state, level, state.dump);
             if (duplicate) {
               state.dump = "&ref_" + duplicateIndex + " " + state.dump;
             }
           }
         } else if (type === "[object Array]") {
-          var arrayLevel = state.noArrayIndent && level2 > 0 ? level2 - 1 : level2;
+          var arrayLevel = state.noArrayIndent && level > 0 ? level - 1 : level;
           if (block && state.dump.length !== 0) {
             writeBlockSequence(state, arrayLevel, state.dump, compact);
             if (duplicate) {
@@ -3043,7 +3043,7 @@ var require_dumper = __commonJS({
           }
         } else if (type === "[object String]") {
           if (state.tag !== "?") {
-            writeScalar(state, state.dump, level2, iskey);
+            writeScalar(state, state.dump, level, iskey);
           }
         } else {
           if (state.skipInvalid) return false;
@@ -3424,7 +3424,7 @@ var require_parse = __commonJS({
 var require_gray_matter = __commonJS({
   "node_modules/gray-matter/index.js"(exports2, module2) {
     "use strict";
-    var fs8 = __require("fs");
+    var fs9 = __require("fs");
     var sections = require_section_matter();
     var defaults = require_defaults();
     var stringify = require_stringify();
@@ -3508,7 +3508,7 @@ var require_gray_matter = __commonJS({
       return stringify(file2, data, options2);
     };
     matter4.read = function(filepath, options2) {
-      const str2 = fs8.readFileSync(filepath, "utf8");
+      const str2 = fs9.readFileSync(filepath, "utf8");
       const file2 = matter4(str2, options2);
       file2.path = filepath;
       return file2;
@@ -3536,13 +3536,180 @@ var require_gray_matter = __commonJS({
   }
 });
 
-// core/hooks/fe-hook.mjs
-import fs7 from "node:fs";
-import os from "node:os";
-import path8 from "node:path";
+// packages/engine/src/paths.mjs
+import path from "node:path";
+function toPosix(p) {
+  return String(p ?? "").replace(/\\/g, "/");
+}
+function isPathInside(parent, child) {
+  let a = path.resolve(parent);
+  let b = path.resolve(child);
+  if (process.platform === "win32") {
+    a = a.toLowerCase();
+    b = b.toLowerCase();
+  }
+  return b === a || b.startsWith(a.endsWith(path.sep) ? a : a + path.sep);
+}
+function resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot }) {
+  const root = path.resolve(workspaceRoot);
+  const input2 = String(taskFolder ?? "").trim().replace(/^["']|["']$/g, "");
+  if (!input2) throw new Error("Thi\u1EBFu task folder.");
+  const posix = toPosix(input2).replace(/\/+$/, "");
+  const candidate = path.isAbsolute(input2) ? path.resolve(input2) : path.resolve(root, posix.includes("/") ? posix : `${tasksRoot}/${posix}`);
+  if (!isPathInside(root, candidate)) {
+    throw new Error(`Task path n\u1EB1m ngo\xE0i workspace: ${taskFolder}`);
+  }
+  return candidate;
+}
+function relativePosix(root, target) {
+  if (!isPathInside(root, target)) return "";
+  return toPosix(path.relative(path.resolve(root), path.resolve(target)));
+}
 
-// packages/validators/src/parse.mjs
-var import_gray_matter3 = __toESM(require_gray_matter(), 1);
+// packages/engine/src/scope.mjs
+import { spawnSync } from "node:child_process";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path2 from "node:path";
+var LOCKFILE_IGNORE = ["package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb"];
+function isPlaceholder(cell) {
+  const t = String(cell ?? "").trim();
+  if (!t) return true;
+  if (/^(n\/a|na|không áp dụng|khong ap dung|none|-|—|\.\.\.)$/i.test(t)) return true;
+  return /^<.*>$/.test(t);
+}
+function cleanPath(p) {
+  return toPosix(p).trim().replace(/^\.\//, "").replace(/^\/+/, "");
+}
+function parsePlannedFiles(planMarkdown, { heading }) {
+  const text = String(planMarkdown || "");
+  const section = text.match(new RegExp(`^##\\s+(?:\\d+\\.\\s*)?${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##\\s|(?![\\s\\S]))`, "im"));
+  if (!section) return [];
+  const files = [];
+  for (const line of section[1].split(/\r?\n/)) {
+    if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
+    const first = (line.split("|")[1] || "").trim();
+    if (/^file$/i.test(first) || isPlaceholder(first)) continue;
+    const ticked = [...first.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+    const candidates = ticked.length ? ticked : first.split(/[,;]|<br\s*\/?>/i);
+    for (const c of candidates) {
+      const p = cleanPath(c).split(/\s+/)[0] || "";
+      if (p && !isPlaceholder(p) && /[/.]/.test(p)) files.push(p);
+    }
+  }
+  return [...new Set(files)];
+}
+function globToRegExp(glob) {
+  const escaped = glob.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+  const pattern = escaped.replace(/\*\*\/?/g, "\0").replace(/\*/g, "[^/]*").replace(/\u0000/g, ".*");
+  return new RegExp(`^${pattern}$`);
+}
+function matchesPlanned(file2, planned) {
+  if (planned === file2) return true;
+  if (planned.endsWith("/")) return file2.startsWith(planned);
+  if (planned.includes("*")) return globToRegExp(planned).test(file2);
+  return file2.startsWith(planned + "/");
+}
+function isIgnored(file2, ignore) {
+  return ignore.some((rule) => rule.endsWith("/") ? file2.startsWith(rule) : file2 === rule || file2.endsWith("/" + rule));
+}
+function computeScopeDiff({ plannedFiles = [], changedFiles = [], ignore = LOCKFILE_IGNORE }) {
+  const planned = plannedFiles.map(cleanPath).filter(Boolean);
+  const inScope = [];
+  const outOfPlan = [];
+  const ignored = [];
+  for (const raw of [...new Set(changedFiles.map(cleanPath).filter(Boolean))]) {
+    if (isIgnored(raw, ignore)) ignored.push(raw);
+    else if (planned.some((p) => matchesPlanned(raw, p))) inScope.push(raw);
+    else outOfPlan.push(raw);
+  }
+  return {
+    ok: outOfPlan.length === 0,
+    plannedEmpty: planned.length === 0,
+    inScope,
+    outOfPlan,
+    ignored
+  };
+}
+function git(cwd, args) {
+  const r = spawnSync("git", args, { cwd, encoding: "utf8", windowsHide: true });
+  if (r.error || r.status !== 0) return null;
+  return r.stdout.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+}
+function detectBaseRef(cwd, env = process.env) {
+  if (env.FE_KIT_BASE_REF) return env.FE_KIT_BASE_REF;
+  if (env.GITHUB_BASE_REF) return `origin/${env.GITHUB_BASE_REF}`;
+  for (const ref of ["origin/main", "origin/master", "main", "master"]) {
+    if (git(cwd, ["rev-parse", "--verify", "--quiet", ref])) return ref;
+  }
+  return "";
+}
+function listChangedFiles({ cwd, base = "" }) {
+  if (!git(cwd, ["rev-parse", "--is-inside-work-tree"])) {
+    return { ok: false, reason: "Kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng c\xF3 l\u1EC7nh git." };
+  }
+  const files = /* @__PURE__ */ new Set();
+  if (base) {
+    const committed = git(cwd, ["diff", "--name-only", "--relative", `${base}...HEAD`]);
+    if (!committed) return { ok: false, reason: `Kh\xF4ng diff \u0111\u01B0\u1EE3c v\u1EDBi base ref "${base}".` };
+    committed.forEach((f) => files.add(f));
+  }
+  for (const args of [
+    ["diff", "--name-only", "--relative", "HEAD"],
+    ["ls-files", "--others", "--exclude-standard"]
+  ]) {
+    (git(cwd, args) || []).forEach((f) => files.add(f));
+  }
+  return { ok: true, files: [...files].map(toPosix), base };
+}
+var SNAPSHOT_MAX_FILES = 2e3;
+var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
+function fingerprintFile(absPath) {
+  try {
+    const st = fs.statSync(absPath);
+    if (!st.isFile()) return "unknown";
+    if (st.size > SNAPSHOT_MAX_BYTES) return `size:${st.size}:${st.mtimeMs}`;
+    return crypto.createHash("sha1").update(fs.readFileSync(absPath)).digest("hex");
+  } catch (e) {
+    return e && e.code === "ENOENT" ? "deleted" : "unknown";
+  }
+}
+function snapshotFiles(cwd, files) {
+  const snapshot = {};
+  files.forEach((f, i) => {
+    snapshot[f] = i < SNAPSHOT_MAX_FILES ? fingerprintFile(path2.join(cwd, f)) : "skipped";
+  });
+  return snapshot;
+}
+function filesTouchedSince(cwd, snapshot, currentFiles) {
+  const touched = [];
+  const preDirtyTouched = [];
+  const current = new Set(currentFiles);
+  for (const f of current) {
+    if (!Object.prototype.hasOwnProperty.call(snapshot, f)) {
+      touched.push(f);
+      continue;
+    }
+    const before = snapshot[f];
+    if (before === "skipped") continue;
+    if (before === "unknown" || fingerprintFile(path2.join(cwd, f)) !== before) {
+      touched.push(f);
+      preDirtyTouched.push(f);
+    }
+  }
+  for (const f of Object.keys(snapshot)) {
+    if (!current.has(f) && snapshot[f] !== "skipped") {
+      touched.push(f);
+      preDirtyTouched.push(f);
+    }
+  }
+  return { touched, preDirtyTouched };
+}
+
+// packages/engine/src/runlog.mjs
+import fs2 from "node:fs";
+import path3 from "node:path";
+import crypto2 from "node:crypto";
 
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -4288,10 +4455,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path9) {
-  if (!path9)
+function getElementAtPath(obj, path10) {
+  if (!path10)
     return obj;
-  return path9.reduce((acc, key) => acc?.[key], obj);
+  return path10.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -4703,11 +4870,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path9, issues) {
+function prefixIssues(path10, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path9);
+    iss.path.unshift(path10);
     return iss;
   });
 }
@@ -5140,16 +5307,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path9 = []) => {
+  const processError = (error62, path10 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path9, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path10, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else {
-        const fullpath = [...path9, ...issue2.path];
+        const fullpath = [...path10, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -5188,17 +5355,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path9 = []) => {
+  const processError = (error62, path10 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path9, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path10, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path9, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path10, ...issue2.path]);
       } else {
-        const fullpath = [...path9, ...issue2.path];
+        const fullpath = [...path10, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -5237,8 +5404,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path9 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path9) {
+  const path10 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path10) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -21748,13 +21915,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path9 = ref.slice(1).split("/").filter(Boolean);
-  if (path9.length === 0) {
+  const path10 = ref.slice(1).split("/").filter(Boolean);
+  if (path10.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path9[0] === defsKey) {
-    const key = path9[1] === void 0 ? void 0 : decodeJSONPointerSegment(path9[1]);
+  if (path10[0] === defsKey) {
+    const key = path10[1] === void 0 ? void 0 : decodeJSONPointerSegment(path10[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -22410,6 +22577,759 @@ function date4(params) {
   return _coercedDate(ZodDate, params);
 }
 
+// packages/engine/src/runlog.mjs
+var RUNLOG_FILE = "tracking/run-log.jsonl";
+var RUNLOG_VERSION = 1;
+var RUNLOG_MAX_BYTES = 5 * 1024 * 1024;
+var MAX_RECORD_BYTES = 4096;
+var RUNLOG_EVENTS = [
+  "mode_start",
+  "mode_end",
+  "entry_blocked",
+  "edit_denied",
+  "edit_warned",
+  "override_requested",
+  "mode_abandoned",
+  "validate"
+];
+var RunLogRecordSchema = external_exports.object({
+  v: external_exports.literal(RUNLOG_VERSION),
+  ts: external_exports.string(),
+  pack: external_exports.string(),
+  task: external_exports.string(),
+  event: external_exports.enum(RUNLOG_EVENTS),
+  mode: external_exports.string().optional(),
+  source: external_exports.enum(["hook", "mcp", "cli"]),
+  actor: external_exports.string().optional(),
+  level: external_exports.string().optional(),
+  outcome: external_exports.string().optional(),
+  codes: external_exports.array(external_exports.string()).optional(),
+  attempt: external_exports.number().int().positive().optional(),
+  duration_ms: external_exports.number().nonnegative().optional()
+}).passthrough();
+function hashSession(sessionId) {
+  if (!sessionId) return void 0;
+  return crypto2.createHash("sha256").update(String(sessionId)).digest("hex").slice(0, 12);
+}
+function enabled() {
+  return String(process.env.FE_KIT_RUNLOG || "").trim().toLowerCase() !== "off";
+}
+function appendRunLog(taskDir, record2) {
+  try {
+    if (!enabled() || !taskDir) return false;
+    const trackingDir = path3.join(taskDir, "tracking");
+    if (!fs2.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
+    const file2 = path3.join(taskDir, RUNLOG_FILE);
+    const size = fs2.statSync(file2, { throwIfNoEntry: false })?.size || 0;
+    if (size > RUNLOG_MAX_BYTES) return false;
+    const full = {
+      v: RUNLOG_VERSION,
+      ts: (/* @__PURE__ */ new Date()).toISOString(),
+      pack: record2?.pack,
+      task: path3.basename(taskDir),
+      ...dropEmpty(record2)
+    };
+    let line = JSON.stringify(full);
+    if (Buffer.byteLength(line) > MAX_RECORD_BYTES) {
+      line = JSON.stringify({ ...full, codes: full.codes?.slice(0, 20), files: full.files?.slice(0, 20), truncated: true });
+    }
+    fs2.appendFileSync(file2, line + "\n");
+    return true;
+  } catch {
+    return false;
+  }
+}
+function dropEmpty(record2) {
+  return Object.fromEntries(
+    Object.entries(record2 || {}).filter(([, v]) => v !== void 0 && v !== null && !(Array.isArray(v) && v.length === 0))
+  );
+}
+
+// packages/engine/src/project-config.mjs
+var import_gray_matter = __toESM(require_gray_matter(), 1);
+import fs3 from "node:fs";
+import path4 from "node:path";
+var PROJECT_CONFIG_DEFAULTS = Object.freeze({
+  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
+  require_task_for_source: "warn",
+  /** Thư mục được coi là source khi kiểm PR không gắn task. */
+  source_paths: ["src/", "app/", "apps/", "packages/"]
+});
+var VALIDATORS = {
+  require_task_for_source: (v) => ["off", "warn", "error"].includes(v),
+  source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === "string" && p.trim())
+};
+function loadProjectConfig(repoRoot, { file: configFile }) {
+  const file2 = path4.join(repoRoot, configFile);
+  const config2 = { ...PROJECT_CONFIG_DEFAULTS };
+  const warnings = [];
+  let raw;
+  try {
+    raw = fs3.readFileSync(file2, "utf8");
+  } catch {
+    return { config: config2, warnings, source: "default" };
+  }
+  let data = {};
+  try {
+    data = (0, import_gray_matter.default)(`---
+${raw}
+---
+`).data || {};
+  } catch (err) {
+    warnings.push(`${configFile} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML (${err.message}); d\xF9ng c\u1EA5u h\xECnh m\u1EB7c \u0111\u1ECBnh.`);
+    return { config: config2, warnings, source: "default" };
+  }
+  for (const [key, valid] of Object.entries(VALIDATORS)) {
+    if (data[key] === void 0) continue;
+    if (valid(data[key])) config2[key] = data[key];
+    else warnings.push(`${configFile}: gi\xE1 tr\u1ECB ${key} kh\xF4ng h\u1EE3p l\u1EC7; d\xF9ng m\u1EB7c \u0111\u1ECBnh ${JSON.stringify(PROJECT_CONFIG_DEFAULTS[key])}.`);
+  }
+  config2.source_paths = config2.source_paths.map((p) => p.endsWith("/") ? p : `${p}/`);
+  return { config: config2, warnings, source: "file" };
+}
+
+// packages/engine/src/scaffold.mjs
+import fs4 from "node:fs";
+import path5 from "node:path";
+function isValidTaskName(name) {
+  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name || ""));
+}
+function scaffoldTask({ workspaceRoot, name, templatesDir, tasksRoot, templateFiles, emptyFiles = [], nameHint }) {
+  if (!isValidTaskName(name)) {
+    return { ok: false, error: `T\xEAn task kh\xF4ng h\u1EE3p l\u1EC7: "${name}". D\xF9ng d\u1EA1ng ${nameHint}, ch\u1EC9 g\u1ED3m ch\u1EEF, s\u1ED1, d\u1EA5u ch\u1EA5m, g\u1EA1ch d\u01B0\u1EDBi, g\u1EA1ch ngang.` };
+  }
+  const root = path5.resolve(workspaceRoot);
+  const taskDir = path5.join(root, tasksRoot, name);
+  if (!isPathInside(root, taskDir)) return { ok: false, error: "Task path n\u1EB1m ngo\xE0i workspace." };
+  const taskRef = toPosix(path5.relative(root, taskDir));
+  const fill = (text) => text.replaceAll("<task-folder>", taskRef).replaceAll("<task-id>", name).replaceAll("<TASK_ID>", name);
+  const created = [];
+  const skipped = [];
+  for (const rel of templateFiles) {
+    const dest = path5.join(taskDir, rel);
+    if (fs4.existsSync(dest)) {
+      skipped.push(rel);
+      continue;
+    }
+    const src = path5.join(templatesDir, rel);
+    const template = fs4.existsSync(src) ? fs4.readFileSync(src, "utf8") : "";
+    fs4.mkdirSync(path5.dirname(dest), { recursive: true });
+    fs4.writeFileSync(dest, fill(template));
+    created.push(rel);
+  }
+  for (const rel of emptyFiles) {
+    const file2 = path5.join(taskDir, rel);
+    if (fs4.existsSync(file2)) continue;
+    fs4.mkdirSync(path5.dirname(file2), { recursive: true });
+    fs4.writeFileSync(file2, "");
+    created.push(rel);
+  }
+  return { ok: true, taskDir, taskRef, created, skipped };
+}
+
+// packages/engine/src/state-machine.mjs
+function norm(v) {
+  return String(v ?? "").trim().toLowerCase();
+}
+function bool(v) {
+  return v === true || norm(v) === "true";
+}
+function createStateMachine(spec) {
+  const COMMAND_TO_MODE2 = spec.commandToMode;
+  const COMMANDS2 = Object.keys(COMMAND_TO_MODE2);
+  const ALLOWED_NEXT2 = spec.allowedNext;
+  const ALIASES = spec.aliases || {};
+  const TERMINAL_NEXT = spec.terminalNext;
+  const ALWAYS_ALLOWED2 = spec.alwaysAllowed;
+  const MODE_TO_COMMAND = Object.fromEntries(Object.entries(COMMAND_TO_MODE2).map(([cmd, mode]) => [mode, cmd]));
+  const prefixRe = new RegExp(`^${spec.commandPrefix}`);
+  function normalizeCommand2(value) {
+    let v = norm(value);
+    if (!v) return "";
+    v = v.replace(/^\//, "").replace(prefixRe, "").split(/\s+/)[0];
+    if (MODE_TO_COMMAND[v]) return MODE_TO_COMMAND[v];
+    if (ALIASES[v]) return ALIASES[v];
+    return COMMANDS2.includes(v) ? v : "";
+  }
+  function checkRecordedNextMode2({ currentMode, nextMode }) {
+    const warnings = [];
+    const raw = norm(nextMode);
+    if (!raw || TERMINAL_NEXT.includes(raw)) return { warnings };
+    const next = normalizeCommand2(raw);
+    if (!next) {
+      warnings.push(`next_mode="${nextMode}" kh\xF4ng thu\u1ED9c danh s\xE1ch mode \u0111\xE3 bi\u1EBFt (${COMMANDS2.join(", ")}, none).`);
+      return { warnings };
+    }
+    const current = normalizeCommand2(currentMode);
+    if (current && !ALLOWED_NEXT2[current].includes(next)) {
+      warnings.push(`next_mode="${next}" sau mode "${current}" l\xE0 chuy\u1EC3n b\u01B0\u1EDBc b\u1EA5t th\u01B0\u1EDDng (th\u01B0\u1EDDng l\xE0: ${ALLOWED_NEXT2[current].join(", ")}).`);
+    }
+    return { warnings };
+  }
+  function evaluateModeEntry2({ requested, data = {}, taskRef = "<task-folder>", ...inputs }) {
+    const command = normalizeCommand2(requested);
+    const result = { allowed: true, command, mode: COMMAND_TO_MODE2[command] || "", reasons: [], reasonCodes: [], warnings: [], redirect: "" };
+    if (!command) {
+      result.allowed = false;
+      result.reasons.push(`Kh\xF4ng nh\u1EADn ra mode "${requested}". Mode h\u1EE3p l\u1EC7: ${COMMANDS2.join(", ")}.`);
+      result.reasonCodes.push("ENTRY_UNKNOWN_MODE");
+      return result;
+    }
+    for (const rule of spec.entryRules({ command, data, taskRef, alwaysAllowed: ALWAYS_ALLOWED2, bool, norm, ...inputs })) {
+      result.reasons.push(rule.reason);
+      result.reasonCodes.push(rule.code);
+      if (rule.redirect && !result.redirect) result.redirect = rule.redirect;
+    }
+    const recorded = normalizeCommand2(data.next_mode);
+    if (recorded && recorded !== command && !ALWAYS_ALLOWED2.includes(command)) {
+      result.warnings.push(`${spec.statusFileName} ghi b\u01B0\u1EDBc k\u1EBF ti\u1EBFp l\xE0 "${recorded}" nh\u01B0ng \u0111ang ch\u1EA1y "${command}".`);
+    }
+    if (result.reasons.length) {
+      if (bool(data.human_override)) {
+        result.warnings.push(...result.reasons.map((r) => `[human_override] ${r}`));
+        result.reasons = [];
+        result.reasonCodes = [];
+        result.redirect = "";
+      } else {
+        result.allowed = false;
+      }
+    }
+    return result;
+  }
+  return { COMMAND_TO_MODE: COMMAND_TO_MODE2, COMMANDS: COMMANDS2, ALLOWED_NEXT: ALLOWED_NEXT2, TERMINAL_NEXT, normalizeCommand: normalizeCommand2, checkRecordedNextMode: checkRecordedNextMode2, evaluateModeEntry: evaluateModeEntry2 };
+}
+
+// packages/engine/src/frontmatter.mjs
+var import_gray_matter2 = __toESM(require_gray_matter(), 1);
+function parseFrontMatterLoose(raw) {
+  const text = String(raw ?? "");
+  const hasFrontMatter = /^﻿?---\r?\n/.test(text);
+  if (!hasFrontMatter) return { data: {}, body: text, hasFrontMatter: false };
+  try {
+    const parsed = (0, import_gray_matter2.default)(text);
+    return { data: parsed.data || {}, body: parsed.content, hasFrontMatter: true };
+  } catch (err) {
+    return { data: {}, body: text, hasFrontMatter: true, error: err.message };
+  }
+}
+function realCell(v) {
+  const t = String(v ?? "").trim();
+  if (!t) return false;
+  if (/^(n\/a|na|không áp dụng|khong ap dung|none|-|—|\.\.\.)$/i.test(t)) return false;
+  if (/^<.*>$/.test(t)) return false;
+  return true;
+}
+
+// packages/engine/src/completion.mjs
+import fs5 from "node:fs";
+import path6 from "node:path";
+function createModeCompletion(pack) {
+  const statusName = path6.posix.basename(pack.statusFile);
+  return function evaluateModeCompletion2({ taskDir, taskRef, command, startedAt, scope, repoRoot, base, extraIssues = [] }) {
+    const done = (issues2, refused = false) => ({
+      ok: issues2.length === 0,
+      refused,
+      issues: issues2,
+      errors: issues2.map((i) => i.message)
+    });
+    const read = (rel) => {
+      const p = path6.join(taskDir, rel);
+      return fs5.existsSync(p) ? fs5.readFileSync(p, "utf8") : "";
+    };
+    const statusPath = path6.join(taskDir, pack.statusFile);
+    const raw = read(pack.statusFile);
+    if (!raw) return done([{ code: "END_STATUS_MISSING", message: `Ch\u01B0a c\xF3 ${taskRef}/${pack.statusFile}.` }]);
+    const loose = parseFrontMatterLoose(raw);
+    if (!loose.hasFrontMatter || loose.error) {
+      return done([
+        {
+          code: "END_STATUS_UNPARSEABLE",
+          message: `${pack.statusFile} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML frontmatter${loose.error ? `: ${loose.error}` : "."}`
+        }
+      ]);
+    }
+    const data = loose.data;
+    const entry = pack.evaluateModeEntry({ requested: command, data, ...pack.entryInputs({ data, read }), taskRef });
+    if (!entry.allowed) {
+      const refused = pack.validateWorkflow(taskDir);
+      if (refused.ok) return done([], true);
+      return done(
+        [
+          {
+            code: "END_REFUSED_ROUTE_INVALID",
+            message: `${pack.label(command)} \u0111ang b\u1ECB gate ch\u1EB7n (${entry.reasons.join(" ")}) n\xEAn kh\xF4ng c\u1EA7n artifact c\u1EE7a mode. Gi\u1EEF nguy\xEAn current_mode; ch\u1EC9 s\u1EEDa ${statusName} cho h\u1EE3p l\u1EC7 v\xE0 route sang: ${entry.redirect}`
+          },
+          ...refused.issues
+        ],
+        true
+      );
+    }
+    const issues = [];
+    if (startedAt !== void 0) {
+      let mtime = 0;
+      try {
+        mtime = fs5.statSync(statusPath).mtimeMs;
+      } catch {
+      }
+      if (mtime + 1e3 < startedAt) {
+        issues.push({
+          code: "END_STATUS_NOT_UPDATED",
+          message: `${pack.statusFile} ch\u01B0a \u0111\u01B0\u1EE3c c\u1EADp nh\u1EADt trong l\u01B0\u1EE3t n\xE0y (kh\xF4ng mode n\xE0o \u0111\u01B0\u1EE3c k\u1EBFt th\xFAc ch\u1EC9 b\u1EB1ng chat).`
+        });
+      }
+    }
+    const expected = pack.commandToMode[command];
+    if (String(data.current_mode || "") !== expected) {
+      issues.push({
+        code: "END_CURRENT_MODE_MISMATCH",
+        message: `current_mode trong ${statusName} ph\u1EA3i l\xE0 ${expected} (\u0111ang l\xE0 "${data.current_mode || ""}").`
+      });
+    }
+    for (const rel of pack.requiredArtifacts[command] || []) {
+      if (!fs5.existsSync(path6.join(taskDir, rel))) {
+        issues.push({ code: "END_ARTIFACT_MISSING", message: `Thi\u1EBFu artifact b\u1EAFt bu\u1ED9c c\u1EE7a ${pack.label(command)}: ${rel}` });
+      }
+    }
+    issues.push(...extraIssues);
+    const gates = repoRoot && !scope ? pack.validateWorkflowAtGate(taskDir, { repoRoot, base }) : pack.validateWorkflow(taskDir, { scope });
+    if (!gates.ok) issues.push(...gates.issues);
+    const seen = /* @__PURE__ */ new Set();
+    return done(issues.filter((i) => !seen.has(i.message) && seen.add(i.message)));
+  };
+}
+
+// packages/engine/src/briefing.mjs
+import fs6 from "node:fs";
+import path7 from "node:path";
+function readIfExists(p) {
+  return fs6.existsSync(p) ? fs6.readFileSync(p, "utf8") : "";
+}
+function createModeBriefing(pack) {
+  const statusName = path7.posix.basename(pack.statusFile);
+  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint }) {
+    const lines = [];
+    const statusPath = path7.join(taskDir, pack.statusFile);
+    if (!fs6.existsSync(statusPath)) {
+      lines.push(`GATE: CH\u01AFA C\xD3 TASK FOLDER H\u1EE2P L\u1EC6 (${taskRef}/${pack.statusFile} kh\xF4ng t\u1ED3n t\u1EA1i).`);
+      lines.push(newTaskHint);
+      return { ok: false, entry: null, text: lines.join("\n") };
+    }
+    const raw = fs6.readFileSync(statusPath, "utf8");
+    const strict = pack.parseStatus(raw);
+    const data = strict.ok ? strict.data : parseFrontMatterLoose(raw).data;
+    const read = (rel) => readIfExists(path7.join(taskDir, rel));
+    const entry = pack.evaluateModeEntry({ requested: command, data, ...pack.entryInputs({ data, read }), taskRef });
+    if (entry.allowed) {
+      lines.push(`GATE: \u0110\u01AF\u1EE2C CH\u1EA0Y ${pack.label(command)} (${entry.mode}) cho ${taskRef}.`);
+    } else {
+      lines.push(`GATE: B\u1ECA CH\u1EB6N \u2014 kh\xF4ng \u0111\u01B0\u1EE3c ch\u1EA1y ${pack.label(command)} cho ${taskRef}.`);
+      for (const r of entry.reasons) lines.push(`- ${r}`);
+      lines.push(`Vi\u1EC7c ph\u1EA3i l\xE0m: c\u1EADp nh\u1EADt ${pack.statusFile} (next_mode, next_prompt) v\xE0 d\u1EEBng. Prompt \u0111\xFAng: ${entry.redirect}`);
+      lines.push("Kh\xF4ng s\u1EEDa source code trong l\u01B0\u1EE3t n\xE0y.");
+    }
+    for (const w of entry.warnings) lines.push(`C\u1EA3nh b\xE1o: ${w}`);
+    if (!strict.ok) {
+      lines.push("", `${statusName} ch\u01B0a h\u1EE3p l\u1EC7 schema (s\u1EEDa trong l\u01B0\u1EE3t n\xE0y):`);
+      for (const e of strict.errors.slice(0, 10)) lines.push(`- ${e}`);
+    }
+    if (entry.allowed) {
+      const agent = pack.agentFor[command];
+      lines.push("", `Agent \u0111\u1EA3m nh\u1EADn: ${agent ? agent : "main thread (inline)"}`);
+      lines.push("", "Artifact b\u1EAFt bu\u1ED9c khi k\u1EBFt th\xFAc mode (t\u01B0\u01A1ng \u0111\u1ED1i task folder):");
+      for (const rel of pack.requiredArtifacts[command]) lines.push(`- ${rel}`);
+      lines.push(pack.readInputsHint);
+      lines.push(finishHint);
+      lines.push("", `=== RULE \xC1P D\u1EE4NG CHO ${pack.label(command)} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
+      for (const file2 of pack.rulesFor(command, data)) {
+        const body = readIfExists(path7.join(rulesDir, file2)).trim();
+        if (body) lines.push("", `--- ${file2} ---`, body);
+      }
+    }
+    return { ok: entry.allowed, entry, text: lines.join("\n") };
+  };
+}
+
+// packages/engine/src/hook-core.mjs
+import fs7 from "node:fs";
+import os from "node:os";
+import path8 from "node:path";
+var DEFAULT_LEVEL = "warn";
+var MARKER_TTL_MS = 4 * 60 * 60 * 1e3;
+var SHELL_WRITE = /(^|[;&|(]\s*)(rm|mv|cp|tee|touch|truncate|dd)\s|(^|[^0-9&>=-])>>?\s*(?!\/dev\/null|&|nul\b)[^\s&|;=]|\bsed\s+(-[a-z]*i|--in-place)|\bgit\s+(checkout|restore|reset|apply|stash|clean)\b|\b(Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|New-Item)\b/i;
+var escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
+  const env = (name) => process.env[`${pack.envPrefix}_${name}`];
+  const statusName = path8.posix.basename(pack.statusFile);
+  const promptRe = new RegExp(`^\\s*(?:\\/${escapeRe(pack.pluginName)}:|${escapeRe(pack.promptPrefix)}\\s+)([a-z-]+)(?:\\s+(\\S+))?`, "i");
+  const statusFileRe = new RegExp(`${pack.statusFile.split("/").map(escapeRe).join("[\\\\/]")}$`, "i");
+  const pluginAgentRe = new RegExp(`^${escapeRe(pack.pluginName)}:`);
+  function level() {
+    const v = String(env("HOOKS") || process.env[`EVAL_${pack.envPrefix}_HOOKS`] || "").trim().toLowerCase();
+    return ["off", "warn", "enforce"].includes(v) ? v : DEFAULT_LEVEL;
+  }
+  function stateDir() {
+    const base = process.env.CLAUDE_PLUGIN_DATA || path8.join(os.tmpdir(), `${pack.id}-kit-hooks`);
+    return path8.join(base, "sessions");
+  }
+  function markerPath(sessionId) {
+    return path8.join(stateDir(), `${String(sessionId || "unknown").replace(/[^A-Za-z0-9_.-]/g, "_")}.json`);
+  }
+  function readMarker(sessionId) {
+    try {
+      const m = JSON.parse(fs7.readFileSync(markerPath(sessionId), "utf8"));
+      if (Date.now() - Number(m.startedAt || 0) > MARKER_TTL_MS) return null;
+      return m;
+    } catch {
+      return null;
+    }
+  }
+  function writeMarker(sessionId, marker) {
+    fs7.mkdirSync(stateDir(), { recursive: true });
+    fs7.writeFileSync(markerPath(sessionId), JSON.stringify(marker, null, 2));
+  }
+  function kitAgentName(agentType) {
+    const name = String(agentType || "").replace(pluginAgentRe, "");
+    return name.startsWith(pack.agentPrefix) ? name : "";
+  }
+  function emit(obj) {
+    process.stdout.write(JSON.stringify(obj));
+  }
+  function warn(message) {
+    emit({ systemMessage: `[${pack.displayName} c\u1EA3nh b\xE1o] ${message}` });
+  }
+  function readFileSafe(p) {
+    try {
+      return fs7.readFileSync(p, "utf8");
+    } catch {
+      return "";
+    }
+  }
+  function logEvent(payload, taskDir, event, fields = {}) {
+    try {
+      appendRunLog(taskDir, {
+        pack: pack.id,
+        event,
+        source: "hook",
+        actor: "claude",
+        kit: version2,
+        level: level(),
+        session: hashSession(payload.session_id),
+        ...fields
+      });
+    } catch {
+    }
+  }
+  function loadTask(taskDir) {
+    const raw = readFileSafe(path8.join(taskDir, pack.statusFile));
+    const loose = parseFrontMatterLoose(raw);
+    const inputs = pack.entryInputs({ data: loose.data, read: (rel) => readFileSafe(path8.join(taskDir, rel)) });
+    return { raw, loose, data: loose.data, inputs };
+  }
+  function parseModePrompt(prompt) {
+    const m = String(prompt || "").match(promptRe);
+    if (!m) return null;
+    const command = pack.normalizeCommand(m[1]);
+    if (!command || !m[2]) return null;
+    return { command, taskArg: m[2] };
+  }
+  function beginMode(payload, { command, taskArg, workspace }) {
+    if (!pack.commands.includes(command)) return null;
+    let taskDir;
+    try {
+      taskDir = pack.resolveTaskDir(workspace, taskArg);
+    } catch {
+      return null;
+    }
+    const existing = readMarker(payload.session_id);
+    if (existing && existing.status === "pending" && existing.task === taskDir && existing.command === command) {
+      return { marker: existing, replaced: null };
+    }
+    const replaced = existing && existing.status === "pending" ? existing : null;
+    const marker = {
+      task: taskDir,
+      taskRef: relativePosix(workspace, taskDir),
+      workspace,
+      command,
+      startedAt: Date.now(),
+      status: "pending",
+      delegated: false,
+      // path → dấu vân tay nội dung của file đang dirty lúc mở mode
+      baseline: {}
+    };
+    const changed = listChangedFiles({ cwd: workspace });
+    if (changed.ok) marker.baseline = snapshotFiles(workspace, changed.files);
+    writeMarker(payload.session_id, marker);
+    logEvent(payload, taskDir, "mode_start", { mode: command });
+    if (replaced) logEvent(payload, replaced.task, "mode_abandoned", { mode: replaced.command, replaced_by: command });
+    return { marker, replaced };
+  }
+  function replacedMessage(replaced) {
+    return `[${pack.displayName} c\u1EA3nh b\xE1o] ${pack.label(replaced.command)} cho ${replaced.taskRef} ch\u01B0a qua gate k\u1EBFt th\xFAc mode th\xEC \u0111\xE3 b\u1EAFt \u0111\u1EA7u l\u1EC7nh ${pack.promptPrefix} kh\xE1c. Ki\u1EC3m tra l\u1EA1i ${pack.statusFile} c\u1EE7a ${replaced.taskRef} tr\u01B0\u1EDBc khi ti\u1EBFp t\u1EE5c task \u0111\xF3.`;
+  }
+  function onPrompt(payload) {
+    const parsed = parseModePrompt(payload.prompt);
+    if (!parsed) return;
+    const workspace = path8.resolve(payload.cwd || process.cwd());
+    const begun = beginMode(payload, { ...parsed, workspace });
+    if (!begun) return;
+    const { marker, replaced } = begun;
+    const out = replaced ? { systemMessage: replacedMessage(replaced) } : {};
+    const { data, inputs, raw } = loadTask(marker.task);
+    const entry = raw ? pack.evaluateModeEntry({ requested: marker.command, data, ...inputs, taskRef: marker.taskRef }) : { allowed: true };
+    if (!entry.allowed) {
+      logEvent(payload, marker.task, "entry_blocked", { mode: marker.command, codes: entry.reasonCodes });
+      out.hookSpecificOutput = {
+        hookEventName: payload.hook_event_name,
+        additionalContext: `[${pack.displayName} gate] ${pack.label(marker.command)} \u0111ang B\u1ECA CH\u1EB6N cho ${marker.taskRef}: ${entry.reasons.join(" ")} Kh\xF4ng s\u1EEDa source. C\u1EADp nh\u1EADt ${pack.statusFile} v\xE0 route sang: ${entry.redirect}`
+      };
+    }
+    if (Object.keys(out).length) emit(out);
+  }
+  function onBeginModeTool(payload) {
+    const input2 = payload.tool_input || {};
+    const command = pack.normalizeCommand(input2.mode);
+    if (!command || !input2.task_folder) return;
+    const workspace = path8.resolve(input2.workspace_root || payload.cwd || process.cwd());
+    const begun = beginMode(payload, { command, taskArg: input2.task_folder, workspace });
+    if (begun?.replaced) emit({ systemMessage: replacedMessage(begun.replaced) });
+  }
+  function decide(payload, decision, reason) {
+    emit({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: decision,
+        permissionDecisionReason: reason
+      }
+    });
+  }
+  function denyOrWarn(payload, reason, log) {
+    const enforce = level() === "enforce";
+    if (log?.taskDir) {
+      logEvent(payload, log.taskDir, enforce ? "edit_denied" : "edit_warned", {
+        mode: log.mode,
+        agent: kitAgentName(payload.agent_type) || void 0,
+        codes: log.codes,
+        file: log.file
+      });
+    }
+    if (enforce) decide(payload, "deny", reason);
+    else warn(reason);
+  }
+  function onDelegate(payload) {
+    const marker = readMarker(payload.session_id);
+    if (!marker || marker.status !== "pending") return;
+    const target = kitAgentName(payload.tool_input?.subagent_type);
+    if (target && target === pack.agentFor[marker.command]) {
+      writeMarker(payload.session_id, { ...marker, delegated: true });
+    }
+  }
+  function turnsOnHumanOverride(filePath, toolInput) {
+    if (!statusFileRe.test(filePath)) return false;
+    const incoming = [toolInput.content, toolInput.new_string, ...(toolInput.edits || []).map((e) => e?.new_string)].filter(Boolean).join("\n");
+    if (!/^\s*human_override:\s*true\b/im.test(incoming)) return false;
+    return parseFrontMatterLoose(readFileSafe(filePath)).data.human_override !== true;
+  }
+  function onPreEdit(payload) {
+    const toolInput = payload.tool_input || {};
+    const rawPath = toolInput.file_path || toolInput.notebook_path;
+    if (!rawPath) return;
+    const marker = readMarker(payload.session_id);
+    const workspace = marker?.workspace || path8.resolve(payload.cwd || process.cwd());
+    const filePath = path8.resolve(workspace, rawPath);
+    if (!isPathInside(workspace, filePath)) return;
+    if (turnsOnHumanOverride(filePath, toolInput)) {
+      const taskDir = pack.statusFile.split("/").reduce((dir) => path8.dirname(dir), filePath);
+      logEvent(payload, taskDir, "override_requested", {
+        mode: marker?.status === "pending" ? marker.command : void 0
+      });
+      decide(
+        payload,
+        "ask",
+        `Agent \u0111ang b\u1EADt human_override: true trong ${statusName}. Field n\xE0y b\u1ECF qua gate c\u1EE7a ${pack.displayName} n\xEAn c\u1EA7n ng\u01B0\u1EDDi d\xF9ng x\xE1c nh\u1EADn.`
+      );
+      return;
+    }
+    const rel = relativePosix(workspace, filePath);
+    if (pack.writablePrefixes.some((prefix) => rel.startsWith(prefix))) return;
+    const agent = kitAgentName(payload.agent_type);
+    if (agent && agent !== pack.sourceEditAgent) {
+      const active = marker?.status === "pending" ? marker : null;
+      denyOrWarn(
+        payload,
+        `Agent ${agent} kh\xF4ng \u0111\u01B0\u1EE3c s\u1EEDa source (${rel}). Ch\u1EC9 ${pack.sourceEditAgent} trong ${pack.label(pack.sourceEditCommands.join("/"))} \u0111\u01B0\u1EE3c s\u1EEDa code; h\xE3y ghi ph\xE1t hi\u1EC7n v\xE0o artifact c\u1EE7a task trong ${pack.tasksRoot}/.`,
+        { taskDir: active?.task, mode: active?.command, codes: ["EDIT_ROLE_FORBIDDEN"], file: rel }
+      );
+      return;
+    }
+    if (!marker || marker.status !== "pending" || !pack.sourceEditCommands.includes(marker.command)) return;
+    const { data, inputs, raw } = loadTask(marker.task);
+    if (!raw) return;
+    const entry = pack.evaluateModeEntry({
+      requested: marker.command,
+      data,
+      openBlockingQuestions: inputs.openBlockingQuestions,
+      taskRef: marker.taskRef
+    });
+    if (entry.allowed) return;
+    denyOrWarn(
+      payload,
+      `${pack.label(marker.command)} ch\u01B0a \u0111\u01B0\u1EE3c s\u1EEDa source cho ${marker.taskRef}: ${entry.reasons.join(" ")} Prompt \u0111\xFAng: ${entry.redirect}. (N\u1EBFu mode n\xE0y \u0111\xE3 b\u1ECB hu\u1EF7, ch\u1EA1y l\u1EC7nh ${pack.promptPrefix} kh\xE1c ho\u1EB7c \u0111\u1EB7t ${pack.envPrefix}_HOOKS=off.)`,
+      { taskDir: marker.task, mode: marker.command, codes: ["EDIT_GATE_CLOSED", ...entry.reasonCodes], file: rel }
+    );
+  }
+  function shellGuardEnabled() {
+    return String(env("BASH_GUARD") || "").trim().toLowerCase() !== "off";
+  }
+  function onShell(payload) {
+    if (!shellGuardEnabled()) return;
+    const agent = kitAgentName(payload.agent_type);
+    if (!agent || agent === pack.sourceEditAgent) return;
+    const command = String(payload.tool_input?.command || "");
+    if (!SHELL_WRITE.test(command)) return;
+    const marker = readMarker(payload.session_id);
+    if (marker?.status === "pending") {
+      logEvent(payload, marker.task, "edit_warned", { mode: marker.command, agent, codes: ["SHELL_WRITE_SUSPECTED"] });
+    }
+    warn(
+      `Agent ${agent} \u0111ang ch\u1EA1y l\u1EC7nh shell c\xF3 th\u1EC3 ghi file. Agent n\xE0y kh\xF4ng \u0111\u01B0\u1EE3c s\u1EEDa source; ch\u1EC9 ghi artifact trong ${pack.tasksRoot}/. Source b\u1ECB \u0111\u1ED5i trong mode s\u1EBD b\u1ECB ch\u1EB7n khi k\u1EBFt th\xFAc mode.`
+    );
+  }
+  function baselineOf(marker) {
+    if (marker.baseline && typeof marker.baseline === "object") return marker.baseline;
+    return Object.fromEntries((marker.baselineChanged || []).map((f) => [f, "skipped"]));
+  }
+  function sourceTouchedInReadOnlyMode(marker) {
+    if (!marker.baseline || typeof marker.baseline !== "object") return [];
+    const changed = listChangedFiles({ cwd: marker.workspace });
+    if (!changed.ok) return [];
+    const { touched } = filesTouchedSince(marker.workspace, marker.baseline, changed.files);
+    const { source_paths: sourcePaths } = pack.loadProjectConfig(marker.workspace).config;
+    return touched.filter((f) => !pack.writablePrefixes.some((p) => f.startsWith(p)) && sourcePaths.some((p) => f.startsWith(p)));
+  }
+  function completionProblems(marker) {
+    let scope;
+    const extraIssues = [];
+    if (!pack.sourceEditCommands.includes(marker.command)) {
+      const touched = sourceTouchedInReadOnlyMode(marker);
+      if (touched.length) {
+        extraIssues.push({
+          code: "END_SOURCE_TOUCHED_IN_READONLY_MODE",
+          message: `${pack.label(marker.command)} kh\xF4ng \u0111\u01B0\u1EE3c s\u1EEDa source, nh\u01B0ng c\xE1c file sau \u0111\xE3 b\u1ECB \u0111\u1ED5i trong mode n\xE0y: ${touched.join(", ")}. Ho\xE0n t\xE1c ph\u1EA7n mode n\xE0y \u0111\xE3 s\u1EEDa (kh\xF4ng \u0111\u1EE5ng thay \u0111\u1ED5i c\xF3 s\u1EB5n c\u1EE7a ng\u01B0\u1EDDi d\xF9ng) v\xE0 ghi ph\xE1t hi\u1EC7n v\xE0o artifact \u0111\u1EC3 route ${pack.sourceFixRoute}.`
+        });
+      }
+    } else {
+      const changed = listChangedFiles({ cwd: marker.workspace });
+      if (changed.ok) {
+        const { touched, preDirtyTouched } = filesTouchedSince(marker.workspace, baselineOf(marker), changed.files);
+        const diff = pack.scopeDiffForTask(marker.task, { repoRoot: marker.workspace, changedFiles: touched });
+        if (diff && !diff.plannedEmpty) {
+          scope = diff;
+          const userFiles = diff.outOfPlan.filter((f) => preDirtyTouched.includes(f));
+          if (userFiles.length) {
+            extraIssues.push({
+              code: "END_PREDIRTY_OUT_OF_PLAN",
+              message: `C\xE1c file sau \u0111\xE3 c\xF3 thay \u0111\u1ED5i ch\u01B0a commit c\u1EE7a ng\u01B0\u1EDDi d\xF9ng t\u1EEB tr\u01B0\u1EDBc ${pack.label(marker.command)} v\xE0 b\u1ECB s\u1EEDa th\xEAm trong mode n\xE0y, ngo\xE0i plan: ${userFiles.join(", ")}. Kh\xF4ng ho\xE0n t\xE1c thay \u0111\u1ED5i g\u1ED1c c\u1EE7a ng\u01B0\u1EDDi d\xF9ng; ch\u1EC9 g\u1EE1 ph\u1EA7n mode n\xE0y \u0111\xE3 s\u1EEDa, ho\u1EB7c c\u1EADp nh\u1EADt plan qua ${pack.planUpdateRoute}.`
+            });
+          }
+        }
+      }
+    }
+    return pack.evaluateModeCompletion({
+      taskDir: marker.task,
+      taskRef: marker.taskRef,
+      command: marker.command,
+      startedAt: Number(marker.startedAt || 0),
+      scope,
+      extraIssues
+    }).issues;
+  }
+  function finishMode(payload, marker) {
+    const problems = completionProblems(marker);
+    const attempt = (marker.blocks || 0) + 1;
+    const logEnd = (outcome) => logEvent(payload, marker.task, "mode_end", {
+      mode: marker.command,
+      agent: kitAgentName(payload.agent_type) || void 0,
+      outcome,
+      attempt,
+      duration_ms: Math.max(0, Date.now() - Number(marker.startedAt || 0)),
+      codes: [...new Set(problems.map((p) => p.code))]
+    });
+    if (!problems.length) {
+      writeMarker(payload.session_id, { ...marker, status: "done" });
+      logEnd("pass");
+      return;
+    }
+    const messages = problems.map((p) => p.message);
+    const reason = `${pack.label(marker.command)} cho ${marker.taskRef} ch\u01B0a \u0111\u1EA1t gate k\u1EBFt th\xFAc mode:
+- ${messages.join("\n- ")}
+S\u1EEDa c\xE1c \u0111i\u1EC3m tr\xEAn (c\u1EADp nh\u1EADt artifact v\xE0 ${pack.statusFile}) r\u1ED3i m\u1EDBi k\u1EBFt th\xFAc.`;
+    if (level() !== "enforce" || payload.stop_hook_active) {
+      writeMarker(payload.session_id, { ...marker, status: "done", unresolved: messages });
+      logEnd("released");
+      warn(reason);
+      return;
+    }
+    writeMarker(payload.session_id, { ...marker, blocks: attempt });
+    logEnd("blocked");
+    emit({ decision: "block", reason });
+  }
+  function onSubagentStop(payload) {
+    const marker = readMarker(payload.session_id);
+    if (!marker || marker.status !== "pending") return;
+    const agent = kitAgentName(payload.agent_type);
+    if (!agent || agent !== pack.agentFor[marker.command]) return;
+    finishMode(payload, marker);
+  }
+  function onStop(payload) {
+    const marker = readMarker(payload.session_id);
+    if (!marker || marker.status !== "pending") return;
+    if (marker.delegated) return;
+    finishMode(payload, marker);
+  }
+  return {
+    level,
+    handlers: {
+      UserPromptSubmit: onPrompt,
+      UserPromptExpansion: onPrompt,
+      PostToolUse: onBeginModeTool,
+      PreToolUse(payload) {
+        if (/^(Agent|Task)$/.test(payload.tool_name || "")) onDelegate(payload);
+        else if (/^(Bash|PowerShell)$/.test(payload.tool_name || "")) onShell(payload);
+        else onPreEdit(payload);
+      },
+      SubagentStop: onSubagentStop,
+      Stop: onStop
+    }
+  };
+}
+function readStdin() {
+  try {
+    return fs7.readFileSync(0, "utf8");
+  } catch {
+    return "";
+  }
+}
+function runHook(pack, opts = {}) {
+  const debugFile = process.env[`${pack.envPrefix}_HOOKS_DEBUG`];
+  try {
+    const raw = readStdin();
+    if (debugFile) fs7.appendFileSync(debugFile, raw.trim() + "\n");
+    const { level, handlers } = createHookHandlers(pack, opts);
+    if (level() !== "off") {
+      const payload = JSON.parse(raw || "{}");
+      const handler = handlers[payload.hook_event_name || process.argv[2]];
+      if (handler) handler(payload);
+    }
+  } catch (err) {
+    if (debugFile) fs7.appendFileSync(debugFile, `ERROR ${err.stack || err}
+`);
+  }
+  process.exit(0);
+}
+
+// packages/validators/src/parse.mjs
+var import_gray_matter3 = __toESM(require_gray_matter(), 1);
+
 // packages/validators/src/schema.mjs
 var GateStatus = external_exports.enum([
   "not_started",
@@ -22547,512 +23467,6 @@ var WorkflowStatusSchema = external_exports.object({
   pr_status: external_exports.enum(["not_started", "ready", "opened", "merged", "blocked"]),
   build_ready: external_exports.boolean()
 }).passthrough();
-
-// packages/engine/src/paths.mjs
-import path from "node:path";
-function toPosix(p) {
-  return String(p ?? "").replace(/\\/g, "/");
-}
-function isPathInside(parent, child) {
-  let a = path.resolve(parent);
-  let b = path.resolve(child);
-  if (process.platform === "win32") {
-    a = a.toLowerCase();
-    b = b.toLowerCase();
-  }
-  return b === a || b.startsWith(a.endsWith(path.sep) ? a : a + path.sep);
-}
-function resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot }) {
-  const root = path.resolve(workspaceRoot);
-  const input2 = String(taskFolder ?? "").trim().replace(/^["']|["']$/g, "");
-  if (!input2) throw new Error("Thi\u1EBFu task folder.");
-  const posix = toPosix(input2).replace(/\/+$/, "");
-  const candidate = path.isAbsolute(input2) ? path.resolve(input2) : path.resolve(root, posix.includes("/") ? posix : `${tasksRoot}/${posix}`);
-  if (!isPathInside(root, candidate)) {
-    throw new Error(`Task path n\u1EB1m ngo\xE0i workspace: ${taskFolder}`);
-  }
-  return candidate;
-}
-function relativePosix(root, target) {
-  if (!isPathInside(root, target)) return "";
-  return toPosix(path.relative(path.resolve(root), path.resolve(target)));
-}
-
-// packages/engine/src/scope.mjs
-import { spawnSync } from "node:child_process";
-import crypto from "node:crypto";
-import fs from "node:fs";
-import path2 from "node:path";
-var LOCKFILE_IGNORE = ["package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb"];
-function isPlaceholder(cell) {
-  const t = String(cell ?? "").trim();
-  if (!t) return true;
-  if (/^(n\/a|na|không áp dụng|khong ap dung|none|-|—|\.\.\.)$/i.test(t)) return true;
-  return /^<.*>$/.test(t);
-}
-function cleanPath(p) {
-  return toPosix(p).trim().replace(/^\.\//, "").replace(/^\/+/, "");
-}
-function parsePlannedFiles(planMarkdown, { heading }) {
-  const text = String(planMarkdown || "");
-  const section = text.match(new RegExp(`^##\\s+(?:\\d+\\.\\s*)?${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##\\s|(?![\\s\\S]))`, "im"));
-  if (!section) return [];
-  const files = [];
-  for (const line of section[1].split(/\r?\n/)) {
-    if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
-    const first = (line.split("|")[1] || "").trim();
-    if (/^file$/i.test(first) || isPlaceholder(first)) continue;
-    const ticked = [...first.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
-    const candidates = ticked.length ? ticked : first.split(/[,;]|<br\s*\/?>/i);
-    for (const c of candidates) {
-      const p = cleanPath(c).split(/\s+/)[0] || "";
-      if (p && !isPlaceholder(p) && /[/.]/.test(p)) files.push(p);
-    }
-  }
-  return [...new Set(files)];
-}
-function globToRegExp(glob) {
-  const escaped = glob.replace(/[.+^${}()|[\]\\]/g, "\\$&");
-  const pattern = escaped.replace(/\*\*\/?/g, "\0").replace(/\*/g, "[^/]*").replace(/\u0000/g, ".*");
-  return new RegExp(`^${pattern}$`);
-}
-function matchesPlanned(file2, planned) {
-  if (planned === file2) return true;
-  if (planned.endsWith("/")) return file2.startsWith(planned);
-  if (planned.includes("*")) return globToRegExp(planned).test(file2);
-  return file2.startsWith(planned + "/");
-}
-function isIgnored(file2, ignore) {
-  return ignore.some((rule) => rule.endsWith("/") ? file2.startsWith(rule) : file2 === rule || file2.endsWith("/" + rule));
-}
-function computeScopeDiff({ plannedFiles = [], changedFiles = [], ignore = LOCKFILE_IGNORE }) {
-  const planned = plannedFiles.map(cleanPath).filter(Boolean);
-  const inScope = [];
-  const outOfPlan = [];
-  const ignored = [];
-  for (const raw of [...new Set(changedFiles.map(cleanPath).filter(Boolean))]) {
-    if (isIgnored(raw, ignore)) ignored.push(raw);
-    else if (planned.some((p) => matchesPlanned(raw, p))) inScope.push(raw);
-    else outOfPlan.push(raw);
-  }
-  return {
-    ok: outOfPlan.length === 0,
-    plannedEmpty: planned.length === 0,
-    inScope,
-    outOfPlan,
-    ignored
-  };
-}
-function git(cwd, args) {
-  const r = spawnSync("git", args, { cwd, encoding: "utf8", windowsHide: true });
-  if (r.error || r.status !== 0) return null;
-  return r.stdout.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-}
-function detectBaseRef(cwd, env = process.env) {
-  if (env.FE_KIT_BASE_REF) return env.FE_KIT_BASE_REF;
-  if (env.GITHUB_BASE_REF) return `origin/${env.GITHUB_BASE_REF}`;
-  for (const ref of ["origin/main", "origin/master", "main", "master"]) {
-    if (git(cwd, ["rev-parse", "--verify", "--quiet", ref])) return ref;
-  }
-  return "";
-}
-function listChangedFiles({ cwd, base = "" }) {
-  if (!git(cwd, ["rev-parse", "--is-inside-work-tree"])) {
-    return { ok: false, reason: "Kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng c\xF3 l\u1EC7nh git." };
-  }
-  const files = /* @__PURE__ */ new Set();
-  if (base) {
-    const committed = git(cwd, ["diff", "--name-only", "--relative", `${base}...HEAD`]);
-    if (!committed) return { ok: false, reason: `Kh\xF4ng diff \u0111\u01B0\u1EE3c v\u1EDBi base ref "${base}".` };
-    committed.forEach((f) => files.add(f));
-  }
-  for (const args of [
-    ["diff", "--name-only", "--relative", "HEAD"],
-    ["ls-files", "--others", "--exclude-standard"]
-  ]) {
-    (git(cwd, args) || []).forEach((f) => files.add(f));
-  }
-  return { ok: true, files: [...files].map(toPosix), base };
-}
-var SNAPSHOT_MAX_FILES = 2e3;
-var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
-function fingerprintFile(absPath) {
-  try {
-    const st = fs.statSync(absPath);
-    if (!st.isFile()) return "unknown";
-    if (st.size > SNAPSHOT_MAX_BYTES) return `size:${st.size}:${st.mtimeMs}`;
-    return crypto.createHash("sha1").update(fs.readFileSync(absPath)).digest("hex");
-  } catch (e) {
-    return e && e.code === "ENOENT" ? "deleted" : "unknown";
-  }
-}
-function snapshotFiles(cwd, files) {
-  const snapshot = {};
-  files.forEach((f, i) => {
-    snapshot[f] = i < SNAPSHOT_MAX_FILES ? fingerprintFile(path2.join(cwd, f)) : "skipped";
-  });
-  return snapshot;
-}
-function filesTouchedSince(cwd, snapshot, currentFiles) {
-  const touched = [];
-  const preDirtyTouched = [];
-  const current = new Set(currentFiles);
-  for (const f of current) {
-    if (!Object.prototype.hasOwnProperty.call(snapshot, f)) {
-      touched.push(f);
-      continue;
-    }
-    const before = snapshot[f];
-    if (before === "skipped") continue;
-    if (before === "unknown" || fingerprintFile(path2.join(cwd, f)) !== before) {
-      touched.push(f);
-      preDirtyTouched.push(f);
-    }
-  }
-  for (const f of Object.keys(snapshot)) {
-    if (!current.has(f) && snapshot[f] !== "skipped") {
-      touched.push(f);
-      preDirtyTouched.push(f);
-    }
-  }
-  return { touched, preDirtyTouched };
-}
-
-// packages/engine/src/runlog.mjs
-import fs2 from "node:fs";
-import path3 from "node:path";
-import crypto2 from "node:crypto";
-var RUNLOG_FILE = "tracking/run-log.jsonl";
-var RUNLOG_VERSION = 1;
-var RUNLOG_MAX_BYTES = 5 * 1024 * 1024;
-var MAX_RECORD_BYTES = 4096;
-var RUNLOG_EVENTS = [
-  "mode_start",
-  "mode_end",
-  "entry_blocked",
-  "edit_denied",
-  "edit_warned",
-  "override_requested",
-  "mode_abandoned",
-  "validate"
-];
-var RunLogRecordSchema = external_exports.object({
-  v: external_exports.literal(RUNLOG_VERSION),
-  ts: external_exports.string(),
-  pack: external_exports.string(),
-  task: external_exports.string(),
-  event: external_exports.enum(RUNLOG_EVENTS),
-  mode: external_exports.string().optional(),
-  source: external_exports.enum(["hook", "mcp", "cli"]),
-  actor: external_exports.string().optional(),
-  level: external_exports.string().optional(),
-  outcome: external_exports.string().optional(),
-  codes: external_exports.array(external_exports.string()).optional(),
-  attempt: external_exports.number().int().positive().optional(),
-  duration_ms: external_exports.number().nonnegative().optional()
-}).passthrough();
-function hashSession(sessionId) {
-  if (!sessionId) return void 0;
-  return crypto2.createHash("sha256").update(String(sessionId)).digest("hex").slice(0, 12);
-}
-function enabled() {
-  return String(process.env.FE_KIT_RUNLOG || "").trim().toLowerCase() !== "off";
-}
-function appendRunLog(taskDir, record2) {
-  try {
-    if (!enabled() || !taskDir) return false;
-    const trackingDir = path3.join(taskDir, "tracking");
-    if (!fs2.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
-    const file2 = path3.join(taskDir, RUNLOG_FILE);
-    const size = fs2.statSync(file2, { throwIfNoEntry: false })?.size || 0;
-    if (size > RUNLOG_MAX_BYTES) return false;
-    const full = {
-      v: RUNLOG_VERSION,
-      ts: (/* @__PURE__ */ new Date()).toISOString(),
-      pack: record2?.pack,
-      task: path3.basename(taskDir),
-      ...dropEmpty(record2)
-    };
-    let line = JSON.stringify(full);
-    if (Buffer.byteLength(line) > MAX_RECORD_BYTES) {
-      line = JSON.stringify({ ...full, codes: full.codes?.slice(0, 20), files: full.files?.slice(0, 20), truncated: true });
-    }
-    fs2.appendFileSync(file2, line + "\n");
-    return true;
-  } catch {
-    return false;
-  }
-}
-function dropEmpty(record2) {
-  return Object.fromEntries(
-    Object.entries(record2 || {}).filter(([, v]) => v !== void 0 && v !== null && !(Array.isArray(v) && v.length === 0))
-  );
-}
-
-// packages/engine/src/project-config.mjs
-var import_gray_matter = __toESM(require_gray_matter(), 1);
-import fs3 from "node:fs";
-import path4 from "node:path";
-var PROJECT_CONFIG_DEFAULTS = Object.freeze({
-  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
-  require_task_for_source: "warn",
-  /** Thư mục được coi là source khi kiểm PR không gắn task. */
-  source_paths: ["src/", "app/", "apps/", "packages/"]
-});
-var VALIDATORS = {
-  require_task_for_source: (v) => ["off", "warn", "error"].includes(v),
-  source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === "string" && p.trim())
-};
-function loadProjectConfig(repoRoot, { file: configFile }) {
-  const file2 = path4.join(repoRoot, configFile);
-  const config2 = { ...PROJECT_CONFIG_DEFAULTS };
-  const warnings = [];
-  let raw;
-  try {
-    raw = fs3.readFileSync(file2, "utf8");
-  } catch {
-    return { config: config2, warnings, source: "default" };
-  }
-  let data = {};
-  try {
-    data = (0, import_gray_matter.default)(`---
-${raw}
----
-`).data || {};
-  } catch (err) {
-    warnings.push(`${configFile} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML (${err.message}); d\xF9ng c\u1EA5u h\xECnh m\u1EB7c \u0111\u1ECBnh.`);
-    return { config: config2, warnings, source: "default" };
-  }
-  for (const [key, valid] of Object.entries(VALIDATORS)) {
-    if (data[key] === void 0) continue;
-    if (valid(data[key])) config2[key] = data[key];
-    else warnings.push(`${configFile}: gi\xE1 tr\u1ECB ${key} kh\xF4ng h\u1EE3p l\u1EC7; d\xF9ng m\u1EB7c \u0111\u1ECBnh ${JSON.stringify(PROJECT_CONFIG_DEFAULTS[key])}.`);
-  }
-  config2.source_paths = config2.source_paths.map((p) => p.endsWith("/") ? p : `${p}/`);
-  return { config: config2, warnings, source: "file" };
-}
-
-// packages/engine/src/state-machine.mjs
-function norm(v) {
-  return String(v ?? "").trim().toLowerCase();
-}
-function bool(v) {
-  return v === true || norm(v) === "true";
-}
-function createStateMachine(spec) {
-  const COMMAND_TO_MODE2 = spec.commandToMode;
-  const COMMANDS2 = Object.keys(COMMAND_TO_MODE2);
-  const ALLOWED_NEXT2 = spec.allowedNext;
-  const ALIASES = spec.aliases || {};
-  const TERMINAL_NEXT = spec.terminalNext;
-  const ALWAYS_ALLOWED2 = spec.alwaysAllowed;
-  const MODE_TO_COMMAND = Object.fromEntries(Object.entries(COMMAND_TO_MODE2).map(([cmd, mode]) => [mode, cmd]));
-  const prefixRe = new RegExp(`^${spec.commandPrefix}`);
-  function normalizeCommand2(value) {
-    let v = norm(value);
-    if (!v) return "";
-    v = v.replace(/^\//, "").replace(prefixRe, "").split(/\s+/)[0];
-    if (MODE_TO_COMMAND[v]) return MODE_TO_COMMAND[v];
-    if (ALIASES[v]) return ALIASES[v];
-    return COMMANDS2.includes(v) ? v : "";
-  }
-  function checkRecordedNextMode2({ currentMode, nextMode }) {
-    const warnings = [];
-    const raw = norm(nextMode);
-    if (!raw || TERMINAL_NEXT.includes(raw)) return { warnings };
-    const next = normalizeCommand2(raw);
-    if (!next) {
-      warnings.push(`next_mode="${nextMode}" kh\xF4ng thu\u1ED9c danh s\xE1ch mode \u0111\xE3 bi\u1EBFt (${COMMANDS2.join(", ")}, none).`);
-      return { warnings };
-    }
-    const current = normalizeCommand2(currentMode);
-    if (current && !ALLOWED_NEXT2[current].includes(next)) {
-      warnings.push(`next_mode="${next}" sau mode "${current}" l\xE0 chuy\u1EC3n b\u01B0\u1EDBc b\u1EA5t th\u01B0\u1EDDng (th\u01B0\u1EDDng l\xE0: ${ALLOWED_NEXT2[current].join(", ")}).`);
-    }
-    return { warnings };
-  }
-  function evaluateModeEntry2({ requested, data = {}, taskRef = "<task-folder>", ...inputs }) {
-    const command = normalizeCommand2(requested);
-    const result = { allowed: true, command, mode: COMMAND_TO_MODE2[command] || "", reasons: [], reasonCodes: [], warnings: [], redirect: "" };
-    if (!command) {
-      result.allowed = false;
-      result.reasons.push(`Kh\xF4ng nh\u1EADn ra mode "${requested}". Mode h\u1EE3p l\u1EC7: ${COMMANDS2.join(", ")}.`);
-      result.reasonCodes.push("ENTRY_UNKNOWN_MODE");
-      return result;
-    }
-    for (const rule of spec.entryRules({ command, data, taskRef, alwaysAllowed: ALWAYS_ALLOWED2, bool, norm, ...inputs })) {
-      result.reasons.push(rule.reason);
-      result.reasonCodes.push(rule.code);
-      if (rule.redirect && !result.redirect) result.redirect = rule.redirect;
-    }
-    const recorded = normalizeCommand2(data.next_mode);
-    if (recorded && recorded !== command && !ALWAYS_ALLOWED2.includes(command)) {
-      result.warnings.push(`${spec.statusFileName} ghi b\u01B0\u1EDBc k\u1EBF ti\u1EBFp l\xE0 "${recorded}" nh\u01B0ng \u0111ang ch\u1EA1y "${command}".`);
-    }
-    if (result.reasons.length) {
-      if (bool(data.human_override)) {
-        result.warnings.push(...result.reasons.map((r) => `[human_override] ${r}`));
-        result.reasons = [];
-        result.reasonCodes = [];
-        result.redirect = "";
-      } else {
-        result.allowed = false;
-      }
-    }
-    return result;
-  }
-  return { COMMAND_TO_MODE: COMMAND_TO_MODE2, COMMANDS: COMMANDS2, ALLOWED_NEXT: ALLOWED_NEXT2, TERMINAL_NEXT, normalizeCommand: normalizeCommand2, checkRecordedNextMode: checkRecordedNextMode2, evaluateModeEntry: evaluateModeEntry2 };
-}
-
-// packages/engine/src/frontmatter.mjs
-var import_gray_matter2 = __toESM(require_gray_matter(), 1);
-function parseFrontMatterLoose(raw) {
-  const text = String(raw ?? "");
-  const hasFrontMatter = /^﻿?---\r?\n/.test(text);
-  if (!hasFrontMatter) return { data: {}, body: text, hasFrontMatter: false };
-  try {
-    const parsed = (0, import_gray_matter2.default)(text);
-    return { data: parsed.data || {}, body: parsed.content, hasFrontMatter: true };
-  } catch (err) {
-    return { data: {}, body: text, hasFrontMatter: true, error: err.message };
-  }
-}
-function realCell(v) {
-  const t = String(v ?? "").trim();
-  if (!t) return false;
-  if (/^(n\/a|na|không áp dụng|khong ap dung|none|-|—|\.\.\.)$/i.test(t)) return false;
-  if (/^<.*>$/.test(t)) return false;
-  return true;
-}
-
-// packages/engine/src/completion.mjs
-import fs4 from "node:fs";
-import path5 from "node:path";
-function createModeCompletion(pack) {
-  const statusName = path5.posix.basename(pack.statusFile);
-  return function evaluateModeCompletion2({ taskDir, taskRef, command, startedAt, scope, repoRoot, base, extraIssues = [] }) {
-    const done = (issues2, refused = false) => ({
-      ok: issues2.length === 0,
-      refused,
-      issues: issues2,
-      errors: issues2.map((i) => i.message)
-    });
-    const read = (rel) => {
-      const p = path5.join(taskDir, rel);
-      return fs4.existsSync(p) ? fs4.readFileSync(p, "utf8") : "";
-    };
-    const statusPath = path5.join(taskDir, pack.statusFile);
-    const raw = read(pack.statusFile);
-    if (!raw) return done([{ code: "END_STATUS_MISSING", message: `Ch\u01B0a c\xF3 ${taskRef}/${pack.statusFile}.` }]);
-    const loose = parseFrontMatterLoose(raw);
-    if (!loose.hasFrontMatter || loose.error) {
-      return done([
-        {
-          code: "END_STATUS_UNPARSEABLE",
-          message: `${pack.statusFile} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML frontmatter${loose.error ? `: ${loose.error}` : "."}`
-        }
-      ]);
-    }
-    const data = loose.data;
-    const entry = pack.evaluateModeEntry({ requested: command, data, ...pack.entryInputs({ data, read }), taskRef });
-    if (!entry.allowed) {
-      const refused = pack.validateWorkflow(taskDir);
-      if (refused.ok) return done([], true);
-      return done(
-        [
-          {
-            code: "END_REFUSED_ROUTE_INVALID",
-            message: `${pack.label(command)} \u0111ang b\u1ECB gate ch\u1EB7n (${entry.reasons.join(" ")}) n\xEAn kh\xF4ng c\u1EA7n artifact c\u1EE7a mode. Gi\u1EEF nguy\xEAn current_mode; ch\u1EC9 s\u1EEDa ${statusName} cho h\u1EE3p l\u1EC7 v\xE0 route sang: ${entry.redirect}`
-          },
-          ...refused.issues
-        ],
-        true
-      );
-    }
-    const issues = [];
-    if (startedAt !== void 0) {
-      let mtime = 0;
-      try {
-        mtime = fs4.statSync(statusPath).mtimeMs;
-      } catch {
-      }
-      if (mtime + 1e3 < startedAt) {
-        issues.push({
-          code: "END_STATUS_NOT_UPDATED",
-          message: `${pack.statusFile} ch\u01B0a \u0111\u01B0\u1EE3c c\u1EADp nh\u1EADt trong l\u01B0\u1EE3t n\xE0y (kh\xF4ng mode n\xE0o \u0111\u01B0\u1EE3c k\u1EBFt th\xFAc ch\u1EC9 b\u1EB1ng chat).`
-        });
-      }
-    }
-    const expected = pack.commandToMode[command];
-    if (String(data.current_mode || "") !== expected) {
-      issues.push({
-        code: "END_CURRENT_MODE_MISMATCH",
-        message: `current_mode trong ${statusName} ph\u1EA3i l\xE0 ${expected} (\u0111ang l\xE0 "${data.current_mode || ""}").`
-      });
-    }
-    for (const rel of pack.requiredArtifacts[command] || []) {
-      if (!fs4.existsSync(path5.join(taskDir, rel))) {
-        issues.push({ code: "END_ARTIFACT_MISSING", message: `Thi\u1EBFu artifact b\u1EAFt bu\u1ED9c c\u1EE7a ${pack.label(command)}: ${rel}` });
-      }
-    }
-    issues.push(...extraIssues);
-    const gates = repoRoot && !scope ? pack.validateWorkflowAtGate(taskDir, { repoRoot, base }) : pack.validateWorkflow(taskDir, { scope });
-    if (!gates.ok) issues.push(...gates.issues);
-    const seen = /* @__PURE__ */ new Set();
-    return done(issues.filter((i) => !seen.has(i.message) && seen.add(i.message)));
-  };
-}
-
-// packages/engine/src/briefing.mjs
-import fs5 from "node:fs";
-import path6 from "node:path";
-function readIfExists(p) {
-  return fs5.existsSync(p) ? fs5.readFileSync(p, "utf8") : "";
-}
-function createModeBriefing(pack) {
-  const statusName = path6.posix.basename(pack.statusFile);
-  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint }) {
-    const lines = [];
-    const statusPath = path6.join(taskDir, pack.statusFile);
-    if (!fs5.existsSync(statusPath)) {
-      lines.push(`GATE: CH\u01AFA C\xD3 TASK FOLDER H\u1EE2P L\u1EC6 (${taskRef}/${pack.statusFile} kh\xF4ng t\u1ED3n t\u1EA1i).`);
-      lines.push(newTaskHint);
-      return { ok: false, entry: null, text: lines.join("\n") };
-    }
-    const raw = fs5.readFileSync(statusPath, "utf8");
-    const strict = pack.parseStatus(raw);
-    const data = strict.ok ? strict.data : parseFrontMatterLoose(raw).data;
-    const read = (rel) => readIfExists(path6.join(taskDir, rel));
-    const entry = pack.evaluateModeEntry({ requested: command, data, ...pack.entryInputs({ data, read }), taskRef });
-    if (entry.allowed) {
-      lines.push(`GATE: \u0110\u01AF\u1EE2C CH\u1EA0Y ${pack.label(command)} (${entry.mode}) cho ${taskRef}.`);
-    } else {
-      lines.push(`GATE: B\u1ECA CH\u1EB6N \u2014 kh\xF4ng \u0111\u01B0\u1EE3c ch\u1EA1y ${pack.label(command)} cho ${taskRef}.`);
-      for (const r of entry.reasons) lines.push(`- ${r}`);
-      lines.push(`Vi\u1EC7c ph\u1EA3i l\xE0m: c\u1EADp nh\u1EADt ${pack.statusFile} (next_mode, next_prompt) v\xE0 d\u1EEBng. Prompt \u0111\xFAng: ${entry.redirect}`);
-      lines.push("Kh\xF4ng s\u1EEDa source code trong l\u01B0\u1EE3t n\xE0y.");
-    }
-    for (const w of entry.warnings) lines.push(`C\u1EA3nh b\xE1o: ${w}`);
-    if (!strict.ok) {
-      lines.push("", `${statusName} ch\u01B0a h\u1EE3p l\u1EC7 schema (s\u1EEDa trong l\u01B0\u1EE3t n\xE0y):`);
-      for (const e of strict.errors.slice(0, 10)) lines.push(`- ${e}`);
-    }
-    if (entry.allowed) {
-      const agent = pack.agentFor[command];
-      lines.push("", `Agent \u0111\u1EA3m nh\u1EADn: ${agent ? agent : "main thread (inline)"}`);
-      lines.push("", "Artifact b\u1EAFt bu\u1ED9c khi k\u1EBFt th\xFAc mode (t\u01B0\u01A1ng \u0111\u1ED1i task folder):");
-      for (const rel of pack.requiredArtifacts[command]) lines.push(`- ${rel}`);
-      lines.push(pack.readInputsHint);
-      lines.push(finishHint);
-      lines.push("", `=== RULE \xC1P D\u1EE4NG CHO ${pack.label(command)} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
-      for (const file2 of pack.rulesFor(command, data)) {
-        const body = readIfExists(path6.join(rulesDir, file2)).trim();
-        if (body) lines.push("", `--- ${file2} ---`, body);
-      }
-    }
-    return { ok: entry.allowed, entry, text: lines.join("\n") };
-  };
-}
 
 // packages/validators/src/parse.mjs
 function parseWorkflowStatus(raw) {
@@ -23667,8 +24081,8 @@ function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
 }
 
 // packages/validators/src/workflow.mjs
-import fs6 from "node:fs";
-import path7 from "node:path";
+import fs8 from "node:fs";
+import path9 from "node:path";
 
 // packages/validators/src/resolve.mjs
 var TASKS_ROOT = "docs/frontend-tasks";
@@ -23684,20 +24098,20 @@ function loadProjectConfig2(repoRoot) {
 
 // packages/validators/src/workflow.mjs
 function taskIo(taskDir) {
-  const exists = (rel) => fs6.existsSync(path7.join(taskDir, rel));
+  const exists = (rel) => fs8.existsSync(path9.join(taskDir, rel));
   const read = (rel) => {
-    const p = path7.join(taskDir, rel);
-    return fs6.existsSync(p) ? fs6.readFileSync(p, "utf8") : "";
+    const p = path9.join(taskDir, rel);
+    return fs8.existsSync(p) ? fs8.readFileSync(p, "utf8") : "";
   };
   return { exists, read };
 }
 function loadWorkflow(taskDir) {
-  const workflowPath = path7.join(taskDir, "tracking", "workflow-status.md");
-  if (!fs6.existsSync(workflowPath)) {
+  const workflowPath = path9.join(taskDir, "tracking", "workflow-status.md");
+  if (!fs8.existsSync(workflowPath)) {
     const errors = ["Thi\u1EBFu tracking/workflow-status.md"];
     return { ok: false, errors, issues: [{ code: "STATUS_MISSING", message: errors[0] }] };
   }
-  const parsed = parseWorkflowStatus(fs6.readFileSync(workflowPath, "utf8"));
+  const parsed = parseWorkflowStatus(fs8.readFileSync(workflowPath, "utf8"));
   if (parsed.ok) return parsed;
   return { ...parsed, issues: parsed.errors.map((message) => ({ code: "STATUS_SCHEMA_INVALID", message })) };
 }
@@ -23721,17 +24135,17 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   return { ...result, plannedFiles };
 }
 function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
-  if (!fs6.existsSync(tasksRoot)) return [];
+  if (!fs8.existsSync(tasksRoot)) return [];
   const planned = [];
-  for (const ent of fs6.readdirSync(tasksRoot, { withFileTypes: true })) {
+  for (const ent of fs8.readdirSync(tasksRoot, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === exclude) continue;
-    const plan = path7.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
-    if (fs6.existsSync(plan)) planned.push(...parsePlannedFiles2(fs6.readFileSync(plan, "utf8")));
+    const plan = path9.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
+    if (fs8.existsSync(plan)) planned.push(...parsePlannedFiles2(fs8.readFileSync(plan, "utf8")));
   }
   return planned;
 }
 function plannedFilesOfSiblingTasks(taskDir) {
-  return plannedFilesOfTasksIn(path7.dirname(taskDir), path7.basename(taskDir));
+  return plannedFilesOfTasksIn(path9.dirname(taskDir), path9.basename(taskDir));
 }
 function validateWorkflow(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
@@ -23764,14 +24178,45 @@ function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
   return { ...res, warnings: [...res.warnings, ...warnings], scopeSource, base: usedBase };
 }
 
+// packages/validators/src/scaffold.mjs
+var TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
+function scaffoldTask2({ workspaceRoot, name, templatesDir }) {
+  return scaffoldTask({
+    workspaceRoot,
+    name,
+    templatesDir,
+    tasksRoot: TASKS_ROOT,
+    templateFiles: TASK_TEMPLATE_FILES,
+    emptyFiles: [TASK_GITKEEP],
+    nameHint: "FE-<id>-<slug>"
+  });
+}
+
 // packages/validators/src/pack.mjs
 var fePack = {
   id: "fe",
+  displayName: "FE-Kit",
+  /** Namespace slash command và agent của plugin: `/fe:<mode>`, `fe:<agent>`. */
+  pluginName: "fe",
+  /** Tiền tố lệnh dạng chữ: `FE <mode> <task>`. */
+  promptPrefix: "FE",
+  /** Tiền tố biến môi trường: `FE_KIT_HOOKS`, `FE_KIT_BASH_GUARD`, `FE_KIT_HOOKS_DEBUG`. */
+  envPrefix: "FE_KIT",
+  agentPrefix: "frontend-",
+  tasksRoot: TASKS_ROOT,
   statusFile: "tracking/workflow-status.md",
-  label: (command) => `FE ${command}`,
+  writablePrefixes: KIT_WRITABLE_PREFIXES,
+  commands: COMMANDS,
   commandToMode: COMMAND_TO_MODE,
+  sourceEditCommands: SOURCE_EDIT_COMMANDS,
+  sourceEditAgent: SOURCE_EDIT_AGENT,
   requiredArtifacts: MODE_REQUIRED_ARTIFACTS,
   agentFor: AGENT_FOR_COMMAND,
+  label: (command) => `FE ${command}`,
+  /** Mode nào sửa lỗi source mà mode chỉ đọc phát hiện. */
+  sourceFixRoute: "FE bugfix/cook",
+  /** Mode cập nhật plan khi phạm vi đổi. */
+  planUpdateRoute: "input-sync",
   readInputsHint: 'Input c\u1EA7n \u0111\u1ECDc: m\u1EE5c "Input ledger b\u1EAFt bu\u1ED9c cho FE plan" trong tracking/workflow-status.md.',
   parseStatus: parseWorkflowStatus,
   rulesFor: (command, data) => rulesForMode(command, { figmaRequired: data.figma_required === true }),
@@ -23780,386 +24225,62 @@ var fePack = {
     openBlockingQuestions: countOpenBlockingQuestions(read("planning/questions.md")),
     openIssues: effectiveOpenIssues(data, countOpenIssuesInTask(read))
   }),
+  normalizeCommand,
   evaluateModeEntry,
+  resolveTaskDir: resolveTaskDir2,
+  scopeDiffForTask,
+  loadProjectConfig: loadProjectConfig2,
+  scaffoldTask: scaffoldTask2,
+  requiredTaskFiles: REQUIRED_TASK_FILES,
   validateWorkflow,
-  validateWorkflowAtGate
+  validateWorkflowAtGate,
+  /** Chuỗi và cấu hình riêng của FE cho MCP server (`createMcpTools` trong engine). */
+  mcp: {
+    serverName: "frontend-delivery",
+    toolPrefix: "fe",
+    configDir: ".frontend-delivery",
+    skillDir: "skills/frontend-delivery-standard",
+    nextPromptHeading: "Prompt b\u01B0\u1EDBc ti\u1EBFp theo",
+    firstCommand: "plan",
+    afterNewTask: (taskRef) => [`Task nh\u1ECF, r\u1EE7i ro th\u1EA5p c\xF3 th\u1EC3 d\xF9ng: FE quick ${taskRef}`],
+    taskPropDescription: "T\xEAn task (FE-123-abc) ho\u1EB7c \u0111\u01B0\u1EDDng d\u1EABn task folder.",
+    taskNameDescription: "T\xEAn task d\u1EA1ng FE-<id>-<slug>, vd FE-123-login-form.",
+    scopeSelfReported: "Scope: d\xF9ng scope_diff_status t\u1EF1 khai.",
+    scopeUnavailable: "Kh\xF4ng t\xEDnh \u0111\u01B0\u1EE3c scope diff (kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng diff \u0111\u01B0\u1EE3c base). Ghi scope_diff_status theo review th\u1EE7 c\xF4ng v\xE0 n\xEAu l\xFD do.",
+    plannedFilesMissing: 'implementation-plan.md ch\u01B0a khai file n\xE0o \u1EDF m\u1EE5c "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" n\xEAn kh\xF4ng \u0111\u1ED1i chi\u1EBFu \u0111\u01B0\u1EE3c.',
+    statusFields: [
+      "current_mode",
+      "next_mode",
+      "build_ready",
+      "questions_resolution_gate_status",
+      "blocking_questions_open",
+      "figma_required",
+      "figma_gate_status",
+      "review_status",
+      "critical_issues_open",
+      "high_issues_open",
+      "pr_status",
+      "human_override"
+    ],
+    statusExtras: (read) => [`blocking_questions_open (\u0111\u1EBFm t\u1EEB questions.md): ${countOpenBlockingQuestions(read("planning/questions.md"))}`],
+    descriptions: {
+      beginMode: "G\u1ECCI \u0110\u1EA6U TI\xCAN khi b\u1EAFt \u0111\u1EA7u b\u1EA5t k\u1EF3 mode FE n\xE0o (plan/quick/input-sync/figma/cook/bugfix/review/test/figma-review/pr). Tr\u1EA3 v\u1EC1: mode c\xF3 \u0111\u01B0\u1EE3c ch\u1EA1y kh\xF4ng (gate c\xE2u h\u1ECFi blocking, build_ready, Figma, review), prompt ph\u1EA3i ch\u1EA1y thay th\u1EBF n\u1EBFu b\u1ECB ch\u1EB7n, artifact b\u1EAFt bu\u1ED9c c\u1EE7a mode v\xE0 nguy\xEAn v\u0103n c\xE1c rule \xE1p d\u1EE5ng cho mode (kh\xF4ng c\u1EA7n \u0111\u1ECDc file rule ri\xEAng).",
+      newTask: "T\u1EA1o task folder chu\u1EA9n trong docs/frontend-tasks/<t\xEAn> t\u1EEB template c\u1EE7a kit (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). Kh\xF4ng ghi \u0111\xE8 file \u0111\xE3 c\xF3. D\xF9ng cho /fe:new-task thay v\xEC t\u1EF1 copy template.",
+      validateTask: "Ki\u1EC3m tra task folder c\xF3 \u0111\u1EE7 file b\u1EAFt bu\u1ED9c theo chu\u1EA9n Frontend Delivery kh\xF4ng (task.md, implementation-plan, build-checklist, questions, workflow-status, th\u01B0 m\u1EE5c figma screenshot). D\xF9ng tr\u01B0\u1EDBc khi chuy\u1EC3n mode.",
+      validateWorkflow: "Ch\u1EA1y to\xE0n b\u1ED9 gate c\u1EE7a workflow-status.md: schema, blocking-question gate, SRS/Figma gate, evidence gate, routing h\u1EE3p l\u1EC7. Task \u1EDF review/test/pr-ready th\xEC \u0111\u1ED1i chi\u1EBFu th\xEAm file \u0111\xE3 s\u1EEDa (git) v\u1EDBi plan. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC m\u1ECDi mode; \u0111\xE2y l\xE0 gate ch\xEDnh ch\u1EB7n agent nh\u1EA3y mode sai.",
+      scopeDiff: 'So file th\u1EF1c s\u1EF1 thay \u0111\u1ED5i (git) v\u1EDBi b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" trong implementation-plan.md. D\xF9ng trong cook/bugfix/review/pr \u0111\u1EC3 ph\xE1t hi\u1EC7n file s\u1EEDa ngo\xE0i plan thay v\xEC t\u1EF1 khai scope_diff_status.',
+      nextStep: "Tr\u1EA3 v\u1EC1 prompt b\u01B0\u1EDBc ti\u1EBFp theo \u0111\u1ECDc tr\u1EF1c ti\u1EBFp t\u1EEB tracking/workflow-status.md c\u1EE7a task. D\xF9ng khi kh\xF4ng ch\u1EAFc mode k\u1EBF ti\u1EBFp l\xE0 g\xEC.",
+      taskStatus: "\u0110\u1ECDc t\xF3m t\u1EAFt tr\u1EA1ng th\xE1i task: mode hi\u1EC7n t\u1EA1i, c\xE1c gate status ch\xEDnh, s\u1ED1 c\xE2u h\u1ECFi blocking, s\u1ED1 issue theo severity. Ch\u1EC9 \u0111\u1ECDc, kh\xF4ng s\u1EEDa file."
+    }
+  }
 };
 var evaluateModeCompletion = createModeCompletion(fePack);
+fePack.evaluateModeCompletion = evaluateModeCompletion;
 var modeBriefing = createModeBriefing(fePack);
-
-// packages/validators/src/runlog.mjs
-function appendRunLog2(taskDir, record2) {
-  return appendRunLog(taskDir, { pack: "fe", ...record2 });
-}
 
 // core/hooks/fe-hook.mjs
 var KIT_VERSION = true ? "2.3.0" : "dev";
-var DEFAULT_LEVEL = "warn";
-var MARKER_TTL_MS = 4 * 60 * 60 * 1e3;
-var KIT_AGENT_PREFIX = "frontend-";
-function level() {
-  const v = String(process.env.FE_KIT_HOOKS || process.env.EVAL_FE_KIT_HOOKS || "").trim().toLowerCase();
-  return ["off", "warn", "enforce"].includes(v) ? v : DEFAULT_LEVEL;
-}
-function stateDir() {
-  const base = process.env.CLAUDE_PLUGIN_DATA || path8.join(os.tmpdir(), "fe-kit-hooks");
-  return path8.join(base, "sessions");
-}
-function markerPath(sessionId) {
-  return path8.join(stateDir(), `${String(sessionId || "unknown").replace(/[^A-Za-z0-9_.-]/g, "_")}.json`);
-}
-function readMarker(sessionId) {
-  try {
-    const m = JSON.parse(fs7.readFileSync(markerPath(sessionId), "utf8"));
-    if (Date.now() - Number(m.startedAt || 0) > MARKER_TTL_MS) return null;
-    return m;
-  } catch {
-    return null;
-  }
-}
-function writeMarker(sessionId, marker) {
-  fs7.mkdirSync(stateDir(), { recursive: true });
-  fs7.writeFileSync(markerPath(sessionId), JSON.stringify(marker, null, 2));
-}
-function kitAgentName(agentType) {
-  const name = String(agentType || "").replace(/^fe:/, "");
-  return name.startsWith(KIT_AGENT_PREFIX) ? name : "";
-}
-function emit(obj) {
-  process.stdout.write(JSON.stringify(obj));
-}
-function warn(message) {
-  emit({ systemMessage: `[FE-Kit c\u1EA3nh b\xE1o] ${message}` });
-}
-function readFileSafe(p) {
-  try {
-    return fs7.readFileSync(p, "utf8");
-  } catch {
-    return "";
-  }
-}
-function logEvent(payload, taskDir, event, fields = {}) {
-  try {
-    appendRunLog2(taskDir, {
-      event,
-      source: "hook",
-      actor: "claude",
-      kit: KIT_VERSION,
-      level: level(),
-      session: hashSession(payload.session_id),
-      ...fields
-    });
-  } catch {
-  }
-}
-function loadTask(taskDir) {
-  const workflowPath = path8.join(taskDir, "tracking", "workflow-status.md");
-  const raw = readFileSafe(workflowPath);
-  const loose = parseFrontMatterLoose(raw);
-  const openBlockingQuestions = countOpenBlockingQuestions(
-    readFileSafe(path8.join(taskDir, "planning", "questions.md"))
-  );
-  const openIssues = effectiveOpenIssues(
-    loose.data,
-    countOpenIssuesInTask((rel) => readFileSafe(path8.join(taskDir, rel)))
-  );
-  return { workflowPath, raw, loose, data: loose.data, openBlockingQuestions, openIssues };
-}
-function parseFePrompt(prompt) {
-  const m = String(prompt || "").match(/^\s*(?:\/fe:|FE\s+)([a-z-]+)(?:\s+(\S+))?/i);
-  if (!m) return null;
-  const command = normalizeCommand(m[1]);
-  if (!command || !m[2]) return null;
-  return { command, taskArg: m[2] };
-}
-function beginMode(payload, { command, taskArg, workspace }) {
-  if (!COMMANDS.includes(command)) return null;
-  let taskDir;
-  try {
-    taskDir = resolveTaskDir2(workspace, taskArg);
-  } catch {
-    return null;
-  }
-  const existing = readMarker(payload.session_id);
-  if (existing && existing.status === "pending" && existing.task === taskDir && existing.command === command) {
-    return { marker: existing, replaced: null };
-  }
-  const replaced = existing && existing.status === "pending" ? existing : null;
-  const marker = {
-    task: taskDir,
-    taskRef: relativePosix(workspace, taskDir),
-    workspace,
-    command,
-    startedAt: Date.now(),
-    status: "pending",
-    delegated: false,
-    // path → dấu vân tay nội dung của file đang dirty lúc mở mode
-    baseline: {}
-  };
-  const changed = listChangedFiles({ cwd: workspace });
-  if (changed.ok) marker.baseline = snapshotFiles(workspace, changed.files);
-  writeMarker(payload.session_id, marker);
-  logEvent(payload, taskDir, "mode_start", { mode: command });
-  if (replaced) logEvent(payload, replaced.task, "mode_abandoned", { mode: replaced.command, replaced_by: command });
-  return { marker, replaced };
-}
-function replacedMessage(replaced) {
-  return `[FE-Kit c\u1EA3nh b\xE1o] FE ${replaced.command} cho ${replaced.taskRef} ch\u01B0a qua gate k\u1EBFt th\xFAc mode th\xEC \u0111\xE3 b\u1EAFt \u0111\u1EA7u l\u1EC7nh FE kh\xE1c. Ki\u1EC3m tra l\u1EA1i tracking/workflow-status.md c\u1EE7a ${replaced.taskRef} tr\u01B0\u1EDBc khi ti\u1EBFp t\u1EE5c task \u0111\xF3.`;
-}
-function onPrompt(payload) {
-  const parsed = parseFePrompt(payload.prompt);
-  if (!parsed) return;
-  const workspace = path8.resolve(payload.cwd || process.cwd());
-  const begun = beginMode(payload, { ...parsed, workspace });
-  if (!begun) return;
-  const { marker, replaced } = begun;
-  const out = replaced ? { systemMessage: replacedMessage(replaced) } : {};
-  const { data, openBlockingQuestions, openIssues, raw } = loadTask(marker.task);
-  const entry = raw ? evaluateModeEntry({ requested: marker.command, data, openBlockingQuestions, openIssues, taskRef: marker.taskRef }) : { allowed: true };
-  if (!entry.allowed) {
-    logEvent(payload, marker.task, "entry_blocked", { mode: marker.command, codes: entry.reasonCodes });
-    out.hookSpecificOutput = {
-      hookEventName: payload.hook_event_name,
-      additionalContext: `[FE-Kit gate] FE ${marker.command} \u0111ang B\u1ECA CH\u1EB6N cho ${marker.taskRef}: ${entry.reasons.join(" ")} Kh\xF4ng s\u1EEDa source. C\u1EADp nh\u1EADt tracking/workflow-status.md v\xE0 route sang: ${entry.redirect}`
-    };
-  }
-  if (Object.keys(out).length) emit(out);
-}
-function onBeginModeTool(payload) {
-  const input2 = payload.tool_input || {};
-  const command = normalizeCommand(input2.mode);
-  if (!command || !input2.task_folder) return;
-  const workspace = path8.resolve(input2.workspace_root || payload.cwd || process.cwd());
-  const begun = beginMode(payload, { command, taskArg: input2.task_folder, workspace });
-  if (begun?.replaced) emit({ systemMessage: replacedMessage(begun.replaced) });
-}
-function decide(payload, decision, reason) {
-  emit({
-    hookSpecificOutput: {
-      hookEventName: "PreToolUse",
-      permissionDecision: decision,
-      permissionDecisionReason: reason
-    }
-  });
-}
-function denyOrWarn(payload, reason, log) {
-  const enforce = level() === "enforce";
-  if (log?.taskDir) {
-    logEvent(payload, log.taskDir, enforce ? "edit_denied" : "edit_warned", {
-      mode: log.mode,
-      agent: kitAgentName(payload.agent_type) || void 0,
-      codes: log.codes,
-      file: log.file
-    });
-  }
-  if (enforce) decide(payload, "deny", reason);
-  else warn(reason);
-}
-function onDelegate(payload) {
-  const marker = readMarker(payload.session_id);
-  if (!marker || marker.status !== "pending") return;
-  const target = kitAgentName(payload.tool_input?.subagent_type);
-  if (target && target === AGENT_FOR_COMMAND[marker.command]) {
-    writeMarker(payload.session_id, { ...marker, delegated: true });
-  }
-}
-function turnsOnHumanOverride(filePath, toolInput) {
-  if (!/tracking[\\/]workflow-status\.md$/i.test(filePath)) return false;
-  const incoming = [toolInput.content, toolInput.new_string, ...(toolInput.edits || []).map((e) => e?.new_string)].filter(Boolean).join("\n");
-  if (!/^\s*human_override:\s*true\b/im.test(incoming)) return false;
-  return parseFrontMatterLoose(readFileSafe(filePath)).data.human_override !== true;
-}
-function onPreEdit(payload) {
-  const toolInput = payload.tool_input || {};
-  const rawPath = toolInput.file_path || toolInput.notebook_path;
-  if (!rawPath) return;
-  const marker = readMarker(payload.session_id);
-  const workspace = marker?.workspace || path8.resolve(payload.cwd || process.cwd());
-  const filePath = path8.resolve(workspace, rawPath);
-  if (!isPathInside(workspace, filePath)) return;
-  if (turnsOnHumanOverride(filePath, toolInput)) {
-    logEvent(payload, path8.dirname(path8.dirname(filePath)), "override_requested", {
-      mode: marker?.status === "pending" ? marker.command : void 0
-    });
-    decide(
-      payload,
-      "ask",
-      "Agent \u0111ang b\u1EADt human_override: true trong workflow-status.md. Field n\xE0y b\u1ECF qua gate c\u1EE7a FE-Kit n\xEAn c\u1EA7n ng\u01B0\u1EDDi d\xF9ng x\xE1c nh\u1EADn."
-    );
-    return;
-  }
-  const rel = relativePosix(workspace, filePath);
-  if (KIT_WRITABLE_PREFIXES.some((prefix) => rel.startsWith(prefix))) return;
-  const agent = kitAgentName(payload.agent_type);
-  if (agent && agent !== SOURCE_EDIT_AGENT) {
-    const active = marker?.status === "pending" ? marker : null;
-    denyOrWarn(
-      payload,
-      `Agent ${agent} kh\xF4ng \u0111\u01B0\u1EE3c s\u1EEDa source (${rel}). Ch\u1EC9 ${SOURCE_EDIT_AGENT} trong FE cook/bugfix/quick \u0111\u01B0\u1EE3c s\u1EEDa code; h\xE3y ghi ph\xE1t hi\u1EC7n v\xE0o artifact c\u1EE7a task trong docs/frontend-tasks/.`,
-      { taskDir: active?.task, mode: active?.command, codes: ["EDIT_ROLE_FORBIDDEN"], file: rel }
-    );
-    return;
-  }
-  if (!marker || marker.status !== "pending" || !SOURCE_EDIT_COMMANDS.includes(marker.command)) return;
-  const { data, openBlockingQuestions, raw } = loadTask(marker.task);
-  if (!raw) return;
-  const requested = marker.command === "quick" ? "quick" : marker.command;
-  const entry = evaluateModeEntry({ requested, data, openBlockingQuestions, taskRef: marker.taskRef });
-  if (entry.allowed) return;
-  denyOrWarn(
-    payload,
-    `FE ${marker.command} ch\u01B0a \u0111\u01B0\u1EE3c s\u1EEDa source cho ${marker.taskRef}: ${entry.reasons.join(" ")} Prompt \u0111\xFAng: ${entry.redirect}. (N\u1EBFu mode n\xE0y \u0111\xE3 b\u1ECB hu\u1EF7, ch\u1EA1y l\u1EC7nh FE kh\xE1c ho\u1EB7c \u0111\u1EB7t FE_KIT_HOOKS=off.)`,
-    { taskDir: marker.task, mode: marker.command, codes: ["EDIT_GATE_CLOSED", ...entry.reasonCodes], file: rel }
-  );
-}
-var SHELL_WRITE = /(^|[;&|(]\s*)(rm|mv|cp|tee|touch|truncate|dd)\s|(^|[^0-9&>=-])>>?\s*(?!\/dev\/null|&|nul\b)[^\s&|;=]|\bsed\s+(-[a-z]*i|--in-place)|\bgit\s+(checkout|restore|reset|apply|stash|clean)\b|\b(Set-Content|Add-Content|Out-File|Remove-Item|Move-Item|Copy-Item|New-Item)\b/i;
-function shellGuardEnabled() {
-  return String(process.env.FE_KIT_BASH_GUARD || "").trim().toLowerCase() !== "off";
-}
-function onShell(payload) {
-  if (!shellGuardEnabled()) return;
-  const agent = kitAgentName(payload.agent_type);
-  if (!agent || agent === SOURCE_EDIT_AGENT) return;
-  const command = String(payload.tool_input?.command || "");
-  if (!SHELL_WRITE.test(command)) return;
-  const marker = readMarker(payload.session_id);
-  if (marker?.status === "pending") {
-    logEvent(payload, marker.task, "edit_warned", { mode: marker.command, agent, codes: ["SHELL_WRITE_SUSPECTED"] });
-  }
-  warn(
-    `Agent ${agent} \u0111ang ch\u1EA1y l\u1EC7nh shell c\xF3 th\u1EC3 ghi file. Agent n\xE0y kh\xF4ng \u0111\u01B0\u1EE3c s\u1EEDa source; ch\u1EC9 ghi artifact trong docs/frontend-tasks/. Source b\u1ECB \u0111\u1ED5i trong mode s\u1EBD b\u1ECB ch\u1EB7n khi k\u1EBFt th\xFAc mode.`
-  );
-}
-function baselineOf(marker) {
-  if (marker.baseline && typeof marker.baseline === "object") return marker.baseline;
-  return Object.fromEntries((marker.baselineChanged || []).map((f) => [f, "skipped"]));
-}
-function sourceTouchedInReadOnlyMode(marker) {
-  if (!marker.baseline || typeof marker.baseline !== "object") return [];
-  const changed = listChangedFiles({ cwd: marker.workspace });
-  if (!changed.ok) return [];
-  const { touched } = filesTouchedSince(marker.workspace, marker.baseline, changed.files);
-  const { source_paths: sourcePaths } = loadProjectConfig2(marker.workspace).config;
-  return touched.filter(
-    (f) => !KIT_WRITABLE_PREFIXES.some((p) => f.startsWith(p)) && sourcePaths.some((p) => f.startsWith(p))
-  );
-}
-function completionProblems(marker) {
-  let scope;
-  const extraIssues = [];
-  if (!SOURCE_EDIT_COMMANDS.includes(marker.command)) {
-    const touched = sourceTouchedInReadOnlyMode(marker);
-    if (touched.length) {
-      extraIssues.push({
-        code: "END_SOURCE_TOUCHED_IN_READONLY_MODE",
-        message: `FE ${marker.command} kh\xF4ng \u0111\u01B0\u1EE3c s\u1EEDa source, nh\u01B0ng c\xE1c file sau \u0111\xE3 b\u1ECB \u0111\u1ED5i trong mode n\xE0y: ${touched.join(", ")}. Ho\xE0n t\xE1c ph\u1EA7n mode n\xE0y \u0111\xE3 s\u1EEDa (kh\xF4ng \u0111\u1EE5ng thay \u0111\u1ED5i c\xF3 s\u1EB5n c\u1EE7a ng\u01B0\u1EDDi d\xF9ng) v\xE0 ghi ph\xE1t hi\u1EC7n v\xE0o artifact \u0111\u1EC3 route FE bugfix/cook.`
-      });
-    }
-  } else {
-    const changed = listChangedFiles({ cwd: marker.workspace });
-    if (changed.ok) {
-      const { touched, preDirtyTouched } = filesTouchedSince(marker.workspace, baselineOf(marker), changed.files);
-      const diff = scopeDiffForTask(marker.task, { repoRoot: marker.workspace, changedFiles: touched });
-      if (diff && !diff.plannedEmpty) {
-        scope = diff;
-        const userFiles = diff.outOfPlan.filter((f) => preDirtyTouched.includes(f));
-        if (userFiles.length) {
-          extraIssues.push({
-            code: "END_PREDIRTY_OUT_OF_PLAN",
-            message: `C\xE1c file sau \u0111\xE3 c\xF3 thay \u0111\u1ED5i ch\u01B0a commit c\u1EE7a ng\u01B0\u1EDDi d\xF9ng t\u1EEB tr\u01B0\u1EDBc FE ${marker.command} v\xE0 b\u1ECB s\u1EEDa th\xEAm trong mode n\xE0y, ngo\xE0i plan: ${userFiles.join(", ")}. Kh\xF4ng ho\xE0n t\xE1c thay \u0111\u1ED5i g\u1ED1c c\u1EE7a ng\u01B0\u1EDDi d\xF9ng; ch\u1EC9 g\u1EE1 ph\u1EA7n mode n\xE0y \u0111\xE3 s\u1EEDa, ho\u1EB7c c\u1EADp nh\u1EADt plan qua input-sync.`
-          });
-        }
-      }
-    }
-  }
-  return evaluateModeCompletion({
-    taskDir: marker.task,
-    taskRef: marker.taskRef,
-    command: marker.command,
-    startedAt: Number(marker.startedAt || 0),
-    scope,
-    extraIssues
-  }).issues;
-}
-function finishMode(payload, marker) {
-  const problems = completionProblems(marker);
-  const attempt = (marker.blocks || 0) + 1;
-  const logEnd = (outcome) => logEvent(payload, marker.task, "mode_end", {
-    mode: marker.command,
-    agent: kitAgentName(payload.agent_type) || void 0,
-    outcome,
-    attempt,
-    duration_ms: Math.max(0, Date.now() - Number(marker.startedAt || 0)),
-    codes: [...new Set(problems.map((p) => p.code))]
-  });
-  if (!problems.length) {
-    writeMarker(payload.session_id, { ...marker, status: "done" });
-    logEnd("pass");
-    return;
-  }
-  const messages = problems.map((p) => p.message);
-  const reason = `FE ${marker.command} cho ${marker.taskRef} ch\u01B0a \u0111\u1EA1t gate k\u1EBFt th\xFAc mode:
-- ${messages.join("\n- ")}
-S\u1EEDa c\xE1c \u0111i\u1EC3m tr\xEAn (c\u1EADp nh\u1EADt artifact v\xE0 tracking/workflow-status.md) r\u1ED3i m\u1EDBi k\u1EBFt th\xFAc.`;
-  if (level() !== "enforce" || payload.stop_hook_active) {
-    writeMarker(payload.session_id, { ...marker, status: "done", unresolved: messages });
-    logEnd("released");
-    warn(reason);
-    return;
-  }
-  writeMarker(payload.session_id, { ...marker, blocks: attempt });
-  logEnd("blocked");
-  emit({ decision: "block", reason });
-}
-function onSubagentStop(payload) {
-  const marker = readMarker(payload.session_id);
-  if (!marker || marker.status !== "pending") return;
-  const agent = kitAgentName(payload.agent_type);
-  if (!agent || agent !== AGENT_FOR_COMMAND[marker.command]) return;
-  finishMode(payload, marker);
-}
-function onStop(payload) {
-  const marker = readMarker(payload.session_id);
-  if (!marker || marker.status !== "pending") return;
-  if (marker.delegated) return;
-  finishMode(payload, marker);
-}
-var HANDLERS = {
-  UserPromptSubmit: onPrompt,
-  UserPromptExpansion: onPrompt,
-  PostToolUse: onBeginModeTool,
-  PreToolUse(payload) {
-    if (/^(Agent|Task)$/.test(payload.tool_name || "")) onDelegate(payload);
-    else if (/^(Bash|PowerShell)$/.test(payload.tool_name || "")) onShell(payload);
-    else onPreEdit(payload);
-  },
-  SubagentStop: onSubagentStop,
-  Stop: onStop
-};
-function readStdin() {
-  try {
-    return fs7.readFileSync(0, "utf8");
-  } catch {
-    return "";
-  }
-}
-try {
-  const raw = readStdin();
-  if (process.env.FE_KIT_HOOKS_DEBUG) {
-    fs7.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, raw.trim() + "\n");
-  }
-  if (level() !== "off") {
-    const payload = JSON.parse(raw || "{}");
-    const handler = HANDLERS[payload.hook_event_name || process.argv[2]];
-    if (handler) handler(payload);
-  }
-} catch (err) {
-  if (process.env.FE_KIT_HOOKS_DEBUG) {
-    fs7.appendFileSync(process.env.FE_KIT_HOOKS_DEBUG, `ERROR ${err.stack || err}
-`);
-  }
-}
-process.exit(0);
+runHook(fePack, { version: KIT_VERSION });
 /*! Bundled license information:
 
 is-extendable/index.js:
