@@ -91,6 +91,7 @@ const VERSION_FILES = [
   ['core/skill-package.json', /("version":\s*")[^"]*(")/],
   ['.claude-plugin/marketplace.json', /("version":\s*")[^"]*(")/],
   ['packages/validators/package.json', /("version":\s*")[^"]*(")/],
+  ['packages/engine/package.json', /("version":\s*")[^"]*(")/],
   ['kit.yaml', /^(version:\s*)\S+()$/m],
   ['standard.yaml', /^(version:\s*)\S+()$/m],
   ['VERSION.md', /(Current version:\s*)\S+()/],

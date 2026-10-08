@@ -33721,12 +33721,8 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   return { ok: errors.length === 0, errors, warnings, issues };
 }
 
-// packages/validators/src/scope.mjs
-import { spawnSync } from "node:child_process";
-
-// packages/validators/src/resolve.mjs
+// packages/engine/src/paths.mjs
 import path from "node:path";
-var TASKS_ROOT = "docs/frontend-tasks";
 function toPosix(p) {
   return String(p ?? "").replace(/\\/g, "/");
 }
@@ -33739,12 +33735,12 @@ function isPathInside(parent, child) {
   }
   return b === a || b.startsWith(a.endsWith(path.sep) ? a : a + path.sep);
 }
-function resolveTaskDir(workspaceRoot, taskFolder) {
+function resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot }) {
   const root = path.resolve(workspaceRoot);
   const input2 = String(taskFolder ?? "").trim().replace(/^["']|["']$/g, "");
   if (!input2) throw new Error("Thi\u1EBFu task folder.");
   const posix = toPosix(input2).replace(/\/+$/, "");
-  const candidate = path.isAbsolute(input2) ? path.resolve(input2) : path.resolve(root, posix.includes("/") ? posix : `${TASKS_ROOT}/${posix}`);
+  const candidate = path.isAbsolute(input2) ? path.resolve(input2) : path.resolve(root, posix.includes("/") ? posix : `${tasksRoot}/${posix}`);
   if (!isPathInside(root, candidate)) {
     throw new Error(`Task path n\u1EB1m ngo\xE0i workspace: ${taskFolder}`);
   }
@@ -33755,16 +33751,9 @@ function relativePosix(root, target) {
   return toPosix(path.relative(path.resolve(root), path.resolve(target)));
 }
 
-// packages/validators/src/scope.mjs
-var DEFAULT_SCOPE_IGNORE = [
-  "docs/frontend-tasks/",
-  "docs/frontend-context/",
-  ".frontend-delivery/",
-  "package-lock.json",
-  "pnpm-lock.yaml",
-  "yarn.lock",
-  "bun.lockb"
-];
+// packages/engine/src/scope.mjs
+import { spawnSync } from "node:child_process";
+var LOCKFILE_IGNORE = ["package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb"];
 function isPlaceholder(cell) {
   const t = String(cell ?? "").trim();
   if (!t) return true;
@@ -33774,9 +33763,9 @@ function isPlaceholder(cell) {
 function cleanPath(p) {
   return toPosix(p).trim().replace(/^\.\//, "").replace(/^\/+/, "");
 }
-function parsePlannedFiles(planMarkdown) {
+function parsePlannedFiles(planMarkdown, { heading }) {
   const text = String(planMarkdown || "");
-  const section = text.match(/^##\s+(?:\d+\.\s*)?File sẽ tạo\s*\/\s*cập nhật[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im);
+  const section = text.match(new RegExp(`^##\\s+(?:\\d+\\.\\s*)?${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##\\s|(?![\\s\\S]))`, "im"));
   if (!section) return [];
   const files = [];
   for (const line of section[1].split(/\r?\n/)) {
@@ -33806,7 +33795,7 @@ function matchesPlanned(file2, planned) {
 function isIgnored(file2, ignore) {
   return ignore.some((rule) => rule.endsWith("/") ? file2.startsWith(rule) : file2 === rule || file2.endsWith("/" + rule));
 }
-function computeScopeDiff({ plannedFiles = [], changedFiles = [], ignore = DEFAULT_SCOPE_IGNORE }) {
+function computeScopeDiff({ plannedFiles = [], changedFiles = [], ignore = LOCKFILE_IGNORE }) {
   const planned = plannedFiles.map(cleanPath).filter(Boolean);
   const inScope = [];
   const outOfPlan = [];
@@ -33857,16 +33846,7 @@ function listChangedFiles({ cwd, base = "" }) {
 }
 var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
 
-// packages/validators/src/project-config.mjs
-var import_gray_matter2 = __toESM(require_gray_matter(), 1);
-var PROJECT_CONFIG_DEFAULTS = Object.freeze({
-  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
-  require_task_for_source: "warn",
-  /** Thư mục được coi là source khi kiểm PR không gắn task. */
-  source_paths: ["src/", "app/", "apps/", "packages/"]
-});
-
-// packages/validators/src/runlog.mjs
+// packages/engine/src/runlog.mjs
 import fs from "node:fs";
 import path2 from "node:path";
 var RUNLOG_FILE = "tracking/run-log.jsonl";
@@ -33912,7 +33892,7 @@ function appendRunLog(taskDir, record2) {
     const full = {
       v: RUNLOG_VERSION,
       ts: (/* @__PURE__ */ new Date()).toISOString(),
-      pack: "fe",
+      pack: record2?.pack,
       task: path2.basename(taskDir),
       ...dropEmpty(record2)
     };
@@ -33937,25 +33917,94 @@ function codesOf(result) {
   return [...new Set((result.issues || []).map((i) => i.code))];
 }
 
-// packages/validators/src/briefing.mjs
+// packages/engine/src/project-config.mjs
+var import_gray_matter2 = __toESM(require_gray_matter(), 1);
+var PROJECT_CONFIG_DEFAULTS = Object.freeze({
+  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
+  require_task_for_source: "warn",
+  /** Thư mục được coi là source khi kiểm PR không gắn task. */
+  source_paths: ["src/", "app/", "apps/", "packages/"]
+});
+
+// packages/engine/src/scaffold.mjs
 import fs2 from "node:fs";
 import path3 from "node:path";
+function isValidTaskName(name) {
+  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name || ""));
+}
+function scaffoldTask({ workspaceRoot, name, templatesDir, tasksRoot, templateFiles, emptyFiles = [], nameHint }) {
+  if (!isValidTaskName(name)) {
+    return { ok: false, error: `T\xEAn task kh\xF4ng h\u1EE3p l\u1EC7: "${name}". D\xF9ng d\u1EA1ng ${nameHint}, ch\u1EC9 g\u1ED3m ch\u1EEF, s\u1ED1, d\u1EA5u ch\u1EA5m, g\u1EA1ch d\u01B0\u1EDBi, g\u1EA1ch ngang.` };
+  }
+  const root = path3.resolve(workspaceRoot);
+  const taskDir = path3.join(root, tasksRoot, name);
+  if (!isPathInside(root, taskDir)) return { ok: false, error: "Task path n\u1EB1m ngo\xE0i workspace." };
+  const taskRef = toPosix(path3.relative(root, taskDir));
+  const fill = (text) => text.replaceAll("<task-folder>", taskRef).replaceAll("<task-id>", name).replaceAll("<TASK_ID>", name);
+  const created = [];
+  const skipped = [];
+  for (const rel of templateFiles) {
+    const dest = path3.join(taskDir, rel);
+    if (fs2.existsSync(dest)) {
+      skipped.push(rel);
+      continue;
+    }
+    const src = path3.join(templatesDir, rel);
+    const template = fs2.existsSync(src) ? fs2.readFileSync(src, "utf8") : "";
+    fs2.mkdirSync(path3.dirname(dest), { recursive: true });
+    fs2.writeFileSync(dest, fill(template));
+    created.push(rel);
+  }
+  for (const rel of emptyFiles) {
+    const file2 = path3.join(taskDir, rel);
+    if (fs2.existsSync(file2)) continue;
+    fs2.mkdirSync(path3.dirname(file2), { recursive: true });
+    fs2.writeFileSync(file2, "");
+    created.push(rel);
+  }
+  return { ok: true, taskDir, taskRef, created, skipped };
+}
+
+// packages/validators/src/scope.mjs
+var DEFAULT_SCOPE_IGNORE = ["docs/frontend-tasks/", "docs/frontend-context/", ".frontend-delivery/", ...LOCKFILE_IGNORE];
+var PLANNED_FILES_HEADING = "File s\u1EBD t\u1EA1o\\s*\\/\\s*c\u1EADp nh\u1EADt";
+function parsePlannedFiles2(planMarkdown) {
+  return parsePlannedFiles(planMarkdown, { heading: PLANNED_FILES_HEADING });
+}
+function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
+  return computeScopeDiff({ plannedFiles, changedFiles, ignore: ignore ?? DEFAULT_SCOPE_IGNORE });
+}
+
+// packages/validators/src/resolve.mjs
+var TASKS_ROOT = "docs/frontend-tasks";
+function resolveTaskDir2(workspaceRoot, taskFolder) {
+  return resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot: TASKS_ROOT });
+}
+
+// packages/validators/src/runlog.mjs
+function appendRunLog2(taskDir, record2) {
+  return appendRunLog(taskDir, { pack: "fe", ...record2 });
+}
+
+// packages/validators/src/briefing.mjs
+import fs3 from "node:fs";
+import path4 from "node:path";
 function readIfExists(p) {
-  return fs2.existsSync(p) ? fs2.readFileSync(p, "utf8") : "";
+  return fs3.existsSync(p) ? fs3.readFileSync(p, "utf8") : "";
 }
 function modeBriefing({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint }) {
   const lines = [];
-  const workflowPath = path3.join(taskDir, "tracking", "workflow-status.md");
-  if (!fs2.existsSync(workflowPath)) {
+  const workflowPath = path4.join(taskDir, "tracking", "workflow-status.md");
+  if (!fs3.existsSync(workflowPath)) {
     lines.push(`GATE: CH\u01AFA C\xD3 TASK FOLDER H\u1EE2P L\u1EC6 (${taskRef}/tracking/workflow-status.md kh\xF4ng t\u1ED3n t\u1EA1i).`);
     lines.push(newTaskHint);
     return { ok: false, entry: null, text: lines.join("\n") };
   }
-  const raw = fs2.readFileSync(workflowPath, "utf8");
+  const raw = fs3.readFileSync(workflowPath, "utf8");
   const strict = parseWorkflowStatus(raw);
   const data = strict.ok ? strict.data : parseFrontMatterLoose(raw).data;
-  const openBlockingQuestions = countOpenBlockingQuestions(readIfExists(path3.join(taskDir, "planning", "questions.md")));
-  const openIssues = effectiveOpenIssues(data, countOpenIssuesInTask((rel) => readIfExists(path3.join(taskDir, rel))));
+  const openBlockingQuestions = countOpenBlockingQuestions(readIfExists(path4.join(taskDir, "planning", "questions.md")));
+  const openIssues = effectiveOpenIssues(data, countOpenIssuesInTask((rel) => readIfExists(path4.join(taskDir, rel))));
   const entry = evaluateModeEntry({ requested: command, data, openBlockingQuestions, openIssues, taskRef });
   if (entry.allowed) {
     lines.push(`GATE: \u0110\u01AF\u1EE2C CH\u1EA0Y FE ${command} (${entry.mode}) cho ${taskRef}.`);
@@ -33979,7 +34028,7 @@ function modeBriefing({ taskDir, taskRef, command, rulesDir, rulesLabel, newTask
     lines.push(finishHint);
     lines.push("", `=== RULE \xC1P D\u1EE4NG CHO FE ${command} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
     for (const file2 of rulesForMode(command, { figmaRequired: data.figma_required === true })) {
-      const body = readIfExists(path3.join(rulesDir, file2)).trim();
+      const body = readIfExists(path4.join(rulesDir, file2)).trim();
       if (body) lines.push("", `--- ${file2} ---`, body);
     }
   }
@@ -33987,43 +34036,17 @@ function modeBriefing({ taskDir, taskRef, command, rulesDir, rulesLabel, newTask
 }
 
 // packages/validators/src/scaffold.mjs
-import fs3 from "node:fs";
-import path4 from "node:path";
 var TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
-var GITKEEP = TASK_GITKEEP;
-function isValidTaskName(name) {
-  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name || ""));
-}
-function scaffoldTask({ workspaceRoot, name, templatesDir }) {
-  if (!isValidTaskName(name)) {
-    return { ok: false, error: `T\xEAn task kh\xF4ng h\u1EE3p l\u1EC7: "${name}". D\xF9ng d\u1EA1ng FE-<id>-<slug>, ch\u1EC9 g\u1ED3m ch\u1EEF, s\u1ED1, d\u1EA5u ch\u1EA5m, g\u1EA1ch d\u01B0\u1EDBi, g\u1EA1ch ngang.` };
-  }
-  const root = path4.resolve(workspaceRoot);
-  const taskDir = path4.join(root, TASKS_ROOT, name);
-  if (!isPathInside(root, taskDir)) return { ok: false, error: "Task path n\u1EB1m ngo\xE0i workspace." };
-  const taskRef = toPosix(path4.relative(root, taskDir));
-  const fill = (text) => text.replaceAll("<task-folder>", taskRef).replaceAll("<task-id>", name).replaceAll("<TASK_ID>", name);
-  const created = [];
-  const skipped = [];
-  for (const rel of TASK_TEMPLATE_FILES) {
-    const dest = path4.join(taskDir, rel);
-    if (fs3.existsSync(dest)) {
-      skipped.push(rel);
-      continue;
-    }
-    const src = path4.join(templatesDir, rel);
-    const template = fs3.existsSync(src) ? fs3.readFileSync(src, "utf8") : "";
-    fs3.mkdirSync(path4.dirname(dest), { recursive: true });
-    fs3.writeFileSync(dest, fill(template));
-    created.push(rel);
-  }
-  const gitkeep = path4.join(taskDir, GITKEEP);
-  if (!fs3.existsSync(gitkeep)) {
-    fs3.mkdirSync(path4.dirname(gitkeep), { recursive: true });
-    fs3.writeFileSync(gitkeep, "");
-    created.push(GITKEEP);
-  }
-  return { ok: true, taskDir, taskRef, created, skipped };
+function scaffoldTask2({ workspaceRoot, name, templatesDir }) {
+  return scaffoldTask({
+    workspaceRoot,
+    name,
+    templatesDir,
+    tasksRoot: TASKS_ROOT,
+    templateFiles: TASK_TEMPLATE_FILES,
+    emptyFiles: [TASK_GITKEEP],
+    nameHint: "FE-<id>-<slug>"
+  });
 }
 
 // packages/validators/src/index.mjs
@@ -34053,11 +34076,11 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
     files = changed.files;
   }
   const { read } = taskIo(taskDir);
-  const plannedFiles = parsePlannedFiles(read("planning/implementation-plan.md"));
-  const result = computeScopeDiff({ plannedFiles, changedFiles: files });
+  const plannedFiles = parsePlannedFiles2(read("planning/implementation-plan.md"));
+  const result = computeScopeDiff2({ plannedFiles, changedFiles: files });
   const otherPlanned = plannedFilesOfSiblingTasks(taskDir);
   if (otherPlanned.length && result.outOfPlan.length) {
-    const others = computeScopeDiff({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
+    const others = computeScopeDiff2({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
     result.outOfPlan = others.outOfPlan;
     result.otherTasks = others.inScope;
     result.ok = result.outOfPlan.length === 0;
@@ -34070,7 +34093,7 @@ function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
   for (const ent of fs4.readdirSync(tasksRoot, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === exclude) continue;
     const plan = path5.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
-    if (fs4.existsSync(plan)) planned.push(...parsePlannedFiles(fs4.readFileSync(plan, "utf8")));
+    if (fs4.existsSync(plan)) planned.push(...parsePlannedFiles2(fs4.readFileSync(plan, "utf8")));
   }
   return planned;
 }
@@ -34229,7 +34252,7 @@ var handlers = {
     if (!command) {
       return textResult(`Kh\xF4ng nh\u1EADn ra mode "${mode}". Mode h\u1EE3p l\u1EC7: ${COMMANDS.join(", ")}.`, true);
     }
-    const taskDir = resolveTaskDir(workspace_root, task_folder);
+    const taskDir = resolveTaskDir2(workspace_root, task_folder);
     const taskRef = relativePosix(workspace_root, taskDir) || toPosix(task_folder);
     const rules = kitDir(workspace_root, "rules");
     const briefing = modeBriefing({
@@ -34245,7 +34268,7 @@ var handlers = {
   },
   fe_new_task({ workspace_root, task_name }) {
     const templates = kitDir(workspace_root, "templates");
-    const res = scaffoldTask({ workspaceRoot: workspace_root, name: task_name, templatesDir: templates.dir });
+    const res = scaffoldTask2({ workspaceRoot: workspace_root, name: task_name, templatesDir: templates.dir });
     if (!res.ok) return textResult(res.error, true);
     const lines = [
       `Task folder: ${res.taskRef}`,
@@ -34259,7 +34282,7 @@ var handlers = {
     return textResult(lines.join("\n"));
   },
   fe_validate_task({ workspace_root, task_folder }) {
-    const taskDir = resolveTaskDir(workspace_root, task_folder);
+    const taskDir = resolveTaskDir2(workspace_root, task_folder);
     if (!fs5.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
     const lines = [];
     let ok = true;
@@ -34275,10 +34298,10 @@ var handlers = {
     return textResult(lines.join("\n"), !ok);
   },
   fe_validate_workflow({ workspace_root, task_folder, base_ref }) {
-    const taskDir = resolveTaskDir(workspace_root, task_folder);
+    const taskDir = resolveTaskDir2(workspace_root, task_folder);
     if (!fs5.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
     const res = validateWorkflowAtGate(taskDir, { repoRoot: workspace_root, base: base_ref });
-    appendRunLog(taskDir, {
+    appendRunLog2(taskDir, {
       event: "validate",
       source: "mcp",
       actor: "claude",
@@ -34304,7 +34327,7 @@ var handlers = {
     );
   },
   fe_scope_diff({ workspace_root, task_folder, base_ref }) {
-    const taskDir = resolveTaskDir(workspace_root, task_folder);
+    const taskDir = resolveTaskDir2(workspace_root, task_folder);
     if (!fs5.existsSync(taskDir)) return textResult(`Kh\xF4ng t\xECm th\u1EA5y task folder: ${taskDir}`, true);
     const base = base_ref || detectBaseRef(workspace_root);
     const scope = scopeDiffForTask(taskDir, { repoRoot: workspace_root, base });
@@ -34328,7 +34351,7 @@ var handlers = {
     return textResult(lines.join("\n"));
   },
   fe_next_step({ workspace_root, task_folder }) {
-    const taskDir = resolveTaskDir(workspace_root, task_folder);
+    const taskDir = resolveTaskDir2(workspace_root, task_folder);
     const np = nextPrompt(taskDir);
     if (!np) {
       return textResult(
@@ -34339,7 +34362,7 @@ var handlers = {
     return textResult(np);
   },
   fe_task_status({ workspace_root, task_folder }) {
-    const taskDir = resolveTaskDir(workspace_root, task_folder);
+    const taskDir = resolveTaskDir2(workspace_root, task_folder);
     const wf = path6.join(taskDir, "tracking", "workflow-status.md");
     if (!fs5.existsSync(wf)) return textResult("Thi\u1EBFu tracking/workflow-status.md", true);
     const parsed = parseWorkflowStatus(fs5.readFileSync(wf, "utf8"));

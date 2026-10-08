@@ -23278,12 +23278,8 @@ function evaluatePrGates({ data, exists: exists3, read: read3, scope }) {
   return { ok: errors.length === 0, errors, warnings, issues };
 }
 
-// packages/validators/src/scope.mjs
-import { spawnSync } from "node:child_process";
-
-// packages/validators/src/resolve.mjs
+// packages/engine/src/paths.mjs
 import path from "node:path";
-var TASKS_ROOT = "docs/frontend-tasks";
 function toPosix(p) {
   return String(p ?? "").replace(/\\/g, "/");
 }
@@ -23296,12 +23292,12 @@ function isPathInside(parent, child) {
   }
   return b === a || b.startsWith(a.endsWith(path.sep) ? a : a + path.sep);
 }
-function resolveTaskDir(workspaceRoot, taskFolder) {
+function resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot }) {
   const root = path.resolve(workspaceRoot);
   const input2 = String(taskFolder ?? "").trim().replace(/^["']|["']$/g, "");
   if (!input2) throw new Error("Thi\u1EBFu task folder.");
   const posix = toPosix(input2).replace(/\/+$/, "");
-  const candidate = path.isAbsolute(input2) ? path.resolve(input2) : path.resolve(root, posix.includes("/") ? posix : `${TASKS_ROOT}/${posix}`);
+  const candidate = path.isAbsolute(input2) ? path.resolve(input2) : path.resolve(root, posix.includes("/") ? posix : `${tasksRoot}/${posix}`);
   if (!isPathInside(root, candidate)) {
     throw new Error(`Task path n\u1EB1m ngo\xE0i workspace: ${taskFolder}`);
   }
@@ -23312,16 +23308,9 @@ function relativePosix(root, target) {
   return toPosix(path.relative(path.resolve(root), path.resolve(target)));
 }
 
-// packages/validators/src/scope.mjs
-var DEFAULT_SCOPE_IGNORE = [
-  "docs/frontend-tasks/",
-  "docs/frontend-context/",
-  ".frontend-delivery/",
-  "package-lock.json",
-  "pnpm-lock.yaml",
-  "yarn.lock",
-  "bun.lockb"
-];
+// packages/engine/src/scope.mjs
+import { spawnSync } from "node:child_process";
+var LOCKFILE_IGNORE = ["package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb"];
 function isPlaceholder(cell) {
   const t = String(cell ?? "").trim();
   if (!t) return true;
@@ -23331,9 +23320,9 @@ function isPlaceholder(cell) {
 function cleanPath(p) {
   return toPosix(p).trim().replace(/^\.\//, "").replace(/^\/+/, "");
 }
-function parsePlannedFiles(planMarkdown) {
+function parsePlannedFiles(planMarkdown, { heading }) {
   const text = String(planMarkdown || "");
-  const section2 = text.match(/^##\s+(?:\d+\.\s*)?File sẽ tạo\s*\/\s*cập nhật[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im);
+  const section2 = text.match(new RegExp(`^##\\s+(?:\\d+\\.\\s*)?${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##\\s|(?![\\s\\S]))`, "im"));
   if (!section2) return [];
   const files = [];
   for (const line of section2[1].split(/\r?\n/)) {
@@ -23363,7 +23352,7 @@ function matchesPlanned(file2, planned) {
 function isIgnored(file2, ignore) {
   return ignore.some((rule) => rule.endsWith("/") ? file2.startsWith(rule) : file2 === rule || file2.endsWith("/" + rule));
 }
-function computeScopeDiff({ plannedFiles = [], changedFiles = [], ignore = DEFAULT_SCOPE_IGNORE }) {
+function computeScopeDiff({ plannedFiles = [], changedFiles = [], ignore = LOCKFILE_IGNORE }) {
   const planned = plannedFiles.map(cleanPath).filter(Boolean);
   const inScope = [];
   const outOfPlan = [];
@@ -23414,53 +23403,9 @@ function listChangedFiles({ cwd, base = "" }) {
 }
 var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
 
-// packages/validators/src/project-config.mjs
-var import_gray_matter2 = __toESM(require_gray_matter(), 1);
+// packages/engine/src/runlog.mjs
 import fs from "node:fs";
 import path2 from "node:path";
-var PROJECT_CONFIG_FILE = ".frontend-delivery/standard.yaml";
-var PROJECT_CONFIG_DEFAULTS = Object.freeze({
-  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
-  require_task_for_source: "warn",
-  /** Thư mục được coi là source khi kiểm PR không gắn task. */
-  source_paths: ["src/", "app/", "apps/", "packages/"]
-});
-var VALIDATORS = {
-  require_task_for_source: (v) => ["off", "warn", "error"].includes(v),
-  source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === "string" && p.trim())
-};
-function loadProjectConfig(repoRoot) {
-  const file2 = path2.join(repoRoot, PROJECT_CONFIG_FILE);
-  const config2 = { ...PROJECT_CONFIG_DEFAULTS };
-  const warnings = [];
-  let raw;
-  try {
-    raw = fs.readFileSync(file2, "utf8");
-  } catch {
-    return { config: config2, warnings, source: "default" };
-  }
-  let data = {};
-  try {
-    data = (0, import_gray_matter2.default)(`---
-${raw}
----
-`).data || {};
-  } catch (err) {
-    warnings.push(`${PROJECT_CONFIG_FILE} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML (${err.message}); d\xF9ng c\u1EA5u h\xECnh m\u1EB7c \u0111\u1ECBnh.`);
-    return { config: config2, warnings, source: "default" };
-  }
-  for (const [key, valid] of Object.entries(VALIDATORS)) {
-    if (data[key] === void 0) continue;
-    if (valid(data[key])) config2[key] = data[key];
-    else warnings.push(`${PROJECT_CONFIG_FILE}: gi\xE1 tr\u1ECB ${key} kh\xF4ng h\u1EE3p l\u1EC7; d\xF9ng m\u1EB7c \u0111\u1ECBnh ${JSON.stringify(PROJECT_CONFIG_DEFAULTS[key])}.`);
-  }
-  config2.source_paths = config2.source_paths.map((p) => p.endsWith("/") ? p : `${p}/`);
-  return { config: config2, warnings, source: "file" };
-}
-
-// packages/validators/src/runlog.mjs
-import fs2 from "node:fs";
-import path3 from "node:path";
 var RUNLOG_FILE = "tracking/run-log.jsonl";
 var RUNLOG_VERSION = 1;
 var RUNLOG_MAX_BYTES = 5 * 1024 * 1024;
@@ -23496,23 +23441,23 @@ function enabled() {
 function appendRunLog(taskDir, record2) {
   try {
     if (!enabled() || !taskDir) return false;
-    const trackingDir = path3.join(taskDir, "tracking");
-    if (!fs2.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
-    const file2 = path3.join(taskDir, RUNLOG_FILE);
-    const size = fs2.statSync(file2, { throwIfNoEntry: false })?.size || 0;
+    const trackingDir = path2.join(taskDir, "tracking");
+    if (!fs.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
+    const file2 = path2.join(taskDir, RUNLOG_FILE);
+    const size = fs.statSync(file2, { throwIfNoEntry: false })?.size || 0;
     if (size > RUNLOG_MAX_BYTES) return false;
     const full = {
       v: RUNLOG_VERSION,
       ts: (/* @__PURE__ */ new Date()).toISOString(),
-      pack: "fe",
-      task: path3.basename(taskDir),
+      pack: record2?.pack,
+      task: path2.basename(taskDir),
       ...dropEmpty(record2)
     };
     let line = JSON.stringify(full);
     if (Buffer.byteLength(line) > MAX_RECORD_BYTES) {
       line = JSON.stringify({ ...full, codes: full.codes?.slice(0, 20), files: full.files?.slice(0, 20), truncated: true });
     }
-    fs2.appendFileSync(file2, line + "\n");
+    fs.appendFileSync(file2, line + "\n");
     return true;
   } catch {
     return false;
@@ -23524,10 +23469,10 @@ function dropEmpty(record2) {
   );
 }
 function readRunLog(taskDir) {
-  const file2 = path3.join(taskDir, RUNLOG_FILE);
+  const file2 = path2.join(taskDir, RUNLOG_FILE);
   let text = "";
   try {
-    text = fs2.readFileSync(file2, "utf8");
+    text = fs.readFileSync(file2, "utf8");
   } catch {
     return { records: [], skipped: 0 };
   }
@@ -23551,9 +23496,9 @@ function codesOf(result) {
   return [...new Set((result.issues || []).map((i) => i.code))];
 }
 
-// packages/validators/src/report.mjs
-import fs3 from "node:fs";
-import path4 from "node:path";
+// packages/engine/src/report.mjs
+import fs2 from "node:fs";
+import path3 from "node:path";
 var bump = (obj, key, by = 1) => {
   obj[key] = (obj[key] || 0) + by;
 };
@@ -23627,22 +23572,22 @@ function summarizeRunLog(records, { since } = {}) {
   }
   return s;
 }
-function taskDirs(repoRoot, task) {
-  if (task) return [path4.isAbsolute(task) ? task : path4.resolve(repoRoot, task)];
-  const root = path4.join(repoRoot, TASKS_ROOT);
-  if (!fs3.existsSync(root)) return [];
-  return fs3.readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => path4.join(root, d.name)).sort();
+function taskDirs(repoRoot, tasksRoot, task) {
+  if (task) return [path3.isAbsolute(task) ? task : path3.resolve(repoRoot, task)];
+  const root = path3.join(repoRoot, tasksRoot);
+  if (!fs2.existsSync(root)) return [];
+  return fs2.readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => path3.join(root, d.name)).sort();
 }
-function buildReport({ repoRoot, task, since }) {
+function buildReport({ repoRoot, tasksRoot, task, since }) {
   const tasks = [];
   const all = [];
   let skipped = 0;
-  for (const dir of taskDirs(repoRoot, task)) {
+  for (const dir of taskDirs(repoRoot, tasksRoot, task)) {
     const { records, skipped: bad } = readRunLog(dir);
     skipped += bad;
     if (!records.length && !task) continue;
     all.push(...records);
-    tasks.push({ task: path4.basename(dir), summary: summarizeRunLog(records, { since }), skipped: bad });
+    tasks.push({ task: path3.basename(dir), summary: summarizeRunLog(records, { since }), skipped: bad });
   }
   return { since, tasks, total: summarizeRunLog(all, { since }), skipped };
 }
@@ -23675,12 +23620,12 @@ function modeTable(summary) {
   }
   return lines;
 }
-function renderReport(report2) {
+function renderReport(report2, { title, tasksRoot }) {
   const { total } = report2;
-  const lines = ["# B\xE1o c\xE1o run-log FE-Kit", ""];
+  const lines = [`# ${title}`, ""];
   if (report2.since) lines.push(`T\xEDnh t\u1EEB: ${report2.since}`, "");
   if (!report2.tasks.length) {
-    lines.push("Ch\u01B0a c\xF3 run-log n\xE0o trong docs/frontend-tasks/*/tracking/run-log.jsonl.");
+    lines.push(`Ch\u01B0a c\xF3 run-log n\xE0o trong ${tasksRoot}/*/${RUNLOG_FILE}.`);
     return lines.join("\n") + "\n";
   }
   lines.push(`Task c\xF3 run-log: ${report2.tasks.length}. S\u1EF1 ki\u1EC7n: ${total.events}.`, "");
@@ -23716,25 +23661,142 @@ function renderReport(report2) {
   return lines.join("\n") + "\n";
 }
 
-// packages/validators/src/briefing.mjs
+// packages/engine/src/project-config.mjs
+var import_gray_matter2 = __toESM(require_gray_matter(), 1);
+import fs3 from "node:fs";
+import path4 from "node:path";
+var PROJECT_CONFIG_DEFAULTS = Object.freeze({
+  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
+  require_task_for_source: "warn",
+  /** Thư mục được coi là source khi kiểm PR không gắn task. */
+  source_paths: ["src/", "app/", "apps/", "packages/"]
+});
+var VALIDATORS = {
+  require_task_for_source: (v) => ["off", "warn", "error"].includes(v),
+  source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === "string" && p.trim())
+};
+function loadProjectConfig(repoRoot, { file: configFile }) {
+  const file2 = path4.join(repoRoot, configFile);
+  const config2 = { ...PROJECT_CONFIG_DEFAULTS };
+  const warnings = [];
+  let raw;
+  try {
+    raw = fs3.readFileSync(file2, "utf8");
+  } catch {
+    return { config: config2, warnings, source: "default" };
+  }
+  let data = {};
+  try {
+    data = (0, import_gray_matter2.default)(`---
+${raw}
+---
+`).data || {};
+  } catch (err) {
+    warnings.push(`${configFile} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML (${err.message}); d\xF9ng c\u1EA5u h\xECnh m\u1EB7c \u0111\u1ECBnh.`);
+    return { config: config2, warnings, source: "default" };
+  }
+  for (const [key, valid] of Object.entries(VALIDATORS)) {
+    if (data[key] === void 0) continue;
+    if (valid(data[key])) config2[key] = data[key];
+    else warnings.push(`${configFile}: gi\xE1 tr\u1ECB ${key} kh\xF4ng h\u1EE3p l\u1EC7; d\xF9ng m\u1EB7c \u0111\u1ECBnh ${JSON.stringify(PROJECT_CONFIG_DEFAULTS[key])}.`);
+  }
+  config2.source_paths = config2.source_paths.map((p) => p.endsWith("/") ? p : `${p}/`);
+  return { config: config2, warnings, source: "file" };
+}
+
+// packages/engine/src/scaffold.mjs
 import fs4 from "node:fs";
 import path5 from "node:path";
+function isValidTaskName(name) {
+  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name || ""));
+}
+function scaffoldTask({ workspaceRoot, name, templatesDir, tasksRoot, templateFiles, emptyFiles = [], nameHint }) {
+  if (!isValidTaskName(name)) {
+    return { ok: false, error: `T\xEAn task kh\xF4ng h\u1EE3p l\u1EC7: "${name}". D\xF9ng d\u1EA1ng ${nameHint}, ch\u1EC9 g\u1ED3m ch\u1EEF, s\u1ED1, d\u1EA5u ch\u1EA5m, g\u1EA1ch d\u01B0\u1EDBi, g\u1EA1ch ngang.` };
+  }
+  const root = path5.resolve(workspaceRoot);
+  const taskDir = path5.join(root, tasksRoot, name);
+  if (!isPathInside(root, taskDir)) return { ok: false, error: "Task path n\u1EB1m ngo\xE0i workspace." };
+  const taskRef = toPosix(path5.relative(root, taskDir));
+  const fill = (text) => text.replaceAll("<task-folder>", taskRef).replaceAll("<task-id>", name).replaceAll("<TASK_ID>", name);
+  const created = [];
+  const skipped = [];
+  for (const rel of templateFiles) {
+    const dest = path5.join(taskDir, rel);
+    if (fs4.existsSync(dest)) {
+      skipped.push(rel);
+      continue;
+    }
+    const src = path5.join(templatesDir, rel);
+    const template = fs4.existsSync(src) ? fs4.readFileSync(src, "utf8") : "";
+    fs4.mkdirSync(path5.dirname(dest), { recursive: true });
+    fs4.writeFileSync(dest, fill(template));
+    created.push(rel);
+  }
+  for (const rel of emptyFiles) {
+    const file2 = path5.join(taskDir, rel);
+    if (fs4.existsSync(file2)) continue;
+    fs4.mkdirSync(path5.dirname(file2), { recursive: true });
+    fs4.writeFileSync(file2, "");
+    created.push(rel);
+  }
+  return { ok: true, taskDir, taskRef, created, skipped };
+}
+
+// packages/validators/src/scope.mjs
+var DEFAULT_SCOPE_IGNORE = ["docs/frontend-tasks/", "docs/frontend-context/", ".frontend-delivery/", ...LOCKFILE_IGNORE];
+var PLANNED_FILES_HEADING = "File s\u1EBD t\u1EA1o\\s*\\/\\s*c\u1EADp nh\u1EADt";
+function parsePlannedFiles2(planMarkdown) {
+  return parsePlannedFiles(planMarkdown, { heading: PLANNED_FILES_HEADING });
+}
+function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
+  return computeScopeDiff({ plannedFiles, changedFiles, ignore: ignore ?? DEFAULT_SCOPE_IGNORE });
+}
+
+// packages/validators/src/resolve.mjs
+var TASKS_ROOT = "docs/frontend-tasks";
+function resolveTaskDir2(workspaceRoot, taskFolder) {
+  return resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot: TASKS_ROOT });
+}
+
+// packages/validators/src/project-config.mjs
+var PROJECT_CONFIG_FILE = ".frontend-delivery/standard.yaml";
+function loadProjectConfig2(repoRoot) {
+  return loadProjectConfig(repoRoot, { file: PROJECT_CONFIG_FILE });
+}
+
+// packages/validators/src/runlog.mjs
+function appendRunLog2(taskDir, record2) {
+  return appendRunLog(taskDir, { pack: "fe", ...record2 });
+}
+
+// packages/validators/src/report.mjs
+function buildReport2({ repoRoot, task, since }) {
+  return buildReport({ repoRoot, tasksRoot: TASKS_ROOT, task, since });
+}
+function renderReport2(report2) {
+  return renderReport(report2, { title: "B\xE1o c\xE1o run-log FE-Kit", tasksRoot: TASKS_ROOT });
+}
+
+// packages/validators/src/briefing.mjs
+import fs5 from "node:fs";
+import path6 from "node:path";
 function readIfExists(p) {
-  return fs4.existsSync(p) ? fs4.readFileSync(p, "utf8") : "";
+  return fs5.existsSync(p) ? fs5.readFileSync(p, "utf8") : "";
 }
 function modeBriefing({ taskDir, taskRef, command: command2, rulesDir, rulesLabel, newTaskHint, finishHint }) {
   const lines = [];
-  const workflowPath = path5.join(taskDir, "tracking", "workflow-status.md");
-  if (!fs4.existsSync(workflowPath)) {
+  const workflowPath = path6.join(taskDir, "tracking", "workflow-status.md");
+  if (!fs5.existsSync(workflowPath)) {
     lines.push(`GATE: CH\u01AFA C\xD3 TASK FOLDER H\u1EE2P L\u1EC6 (${taskRef}/tracking/workflow-status.md kh\xF4ng t\u1ED3n t\u1EA1i).`);
     lines.push(newTaskHint);
     return { ok: false, entry: null, text: lines.join("\n") };
   }
-  const raw = fs4.readFileSync(workflowPath, "utf8");
+  const raw = fs5.readFileSync(workflowPath, "utf8");
   const strict = parseWorkflowStatus(raw);
   const data = strict.ok ? strict.data : parseFrontMatterLoose(raw).data;
-  const openBlockingQuestions = countOpenBlockingQuestions(readIfExists(path5.join(taskDir, "planning", "questions.md")));
-  const openIssues = effectiveOpenIssues(data, countOpenIssuesInTask((rel) => readIfExists(path5.join(taskDir, rel))));
+  const openBlockingQuestions = countOpenBlockingQuestions(readIfExists(path6.join(taskDir, "planning", "questions.md")));
+  const openIssues = effectiveOpenIssues(data, countOpenIssuesInTask((rel) => readIfExists(path6.join(taskDir, rel))));
   const entry = evaluateModeEntry({ requested: command2, data, openBlockingQuestions, openIssues, taskRef });
   if (entry.allowed) {
     lines.push(`GATE: \u0110\u01AF\u1EE2C CH\u1EA0Y FE ${command2} (${entry.mode}) cho ${taskRef}.`);
@@ -23758,7 +23820,7 @@ function modeBriefing({ taskDir, taskRef, command: command2, rulesDir, rulesLabe
     lines.push(finishHint);
     lines.push("", `=== RULE \xC1P D\u1EE4NG CHO FE ${command2} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
     for (const file2 of rulesForMode(command2, { figmaRequired: data.figma_required === true })) {
-      const body = readIfExists(path5.join(rulesDir, file2)).trim();
+      const body = readIfExists(path6.join(rulesDir, file2)).trim();
       if (body) lines.push("", `--- ${file2} ---`, body);
     }
   }
@@ -23766,16 +23828,16 @@ function modeBriefing({ taskDir, taskRef, command: command2, rulesDir, rulesLabe
 }
 
 // packages/validators/src/fe-checks.mjs
-import fs5 from "node:fs";
-import path6 from "node:path";
+import fs6 from "node:fs";
+import path7 from "node:path";
 var parseFrontMatter = parseFrontMatterLoose;
 function read(relOrAbs) {
-  const p = path6.resolve(relOrAbs);
-  if (!fs5.existsSync(p)) return "";
-  return fs5.readFileSync(p, "utf8");
+  const p = path7.resolve(relOrAbs);
+  if (!fs6.existsSync(p)) return "";
+  return fs6.readFileSync(p, "utf8");
 }
 function exists(p) {
-  return fs5.existsSync(p);
+  return fs6.existsSync(p);
 }
 function boolValue(v) {
   return v === true || String(v || "").toLowerCase() === "true" || String(v || "").toLowerCase() === "yes" || String(v || "").toLowerCase() === "c\xF3";
@@ -23784,9 +23846,9 @@ function normValue(v) {
   return String(v || "").trim().replace(/^['"]|['"]$/g, "").toLowerCase();
 }
 function imageFiles(dir, out = []) {
-  if (!fs5.existsSync(dir)) return out;
-  for (const ent of fs5.readdirSync(dir, { withFileTypes: true })) {
-    const p = path6.join(dir, ent.name);
+  if (!fs6.existsSync(dir)) return out;
+  for (const ent of fs6.readdirSync(dir, { withFileTypes: true })) {
+    const p = path7.join(dir, ent.name);
     if (ent.isDirectory()) imageFiles(p, out);
     else if (/\.(png|jpg|jpeg|webp)$/i.test(ent.name)) out.push(p);
   }
@@ -23803,7 +23865,7 @@ function hasRealScreenshotReference(summary, taskDir) {
     if (/user screenshot|manual screenshot|ảnh user|anh user|screenshot user|manual/i.test(line) && !/<|\.\.\./.test(line)) return true;
   }
   for (const rel of candidates) {
-    if (/^output\/figma-reference-screenshots\//.test(rel) && !exists(path6.join(taskDir, rel))) return false;
+    if (/^output\/figma-reference-screenshots\//.test(rel) && !exists(path7.join(taskDir, rel))) return false;
   }
   return candidates.length > 0;
 }
@@ -23852,8 +23914,8 @@ function tableItems(text, headerPhrase) {
   return items;
 }
 function validateFigmaEvidence(taskDir) {
-  const workflowPath = path6.join(taskDir, "tracking", "workflow-status.md");
-  const summaryPath = path6.join(taskDir, "output", "figma-extraction-summary.md");
+  const workflowPath = path7.join(taskDir, "tracking", "workflow-status.md");
+  const summaryPath = path7.join(taskDir, "output", "figma-extraction-summary.md");
   const errors = [];
   if (!exists(workflowPath)) return { ok: false, errors: ["Missing tracking/workflow-status.md. Cannot evaluate Figma evidence gate."] };
   const fm = parseFrontMatter(read(workflowPath));
@@ -23883,7 +23945,7 @@ function validateFigmaEvidence(taskDir) {
     if (figmaRequired && !/(Allowed deviation|Deviation log|deviation)/i.test(summary)) errors.push("UI Implementation Contract thi\u1EBFu allowed deviation/deviation log.");
     const needsScreenshotEvidence = gate !== "waived" && gate !== "substituted_by_source_pattern";
     if (needsScreenshotEvidence) {
-      const hasImage = imageFiles(path6.join(taskDir, "output", "figma-reference-screenshots")).length > 0;
+      const hasImage = imageFiles(path7.join(taskDir, "output", "figma-reference-screenshots")).length > 0;
       const hasReference = hasRealScreenshotReference(summary, taskDir);
       if (!hasImage && !hasReference) errors.push("Figma reference screenshot evidence is required: add output/figma-reference-screenshots/* or a concrete user/manual screenshot reference in figma-extraction-summary.md.");
     }
@@ -23897,8 +23959,8 @@ function validateFigmaEvidence(taskDir) {
   return { ok: errors.length === 0, errors };
 }
 function validateAssetGate(taskDir) {
-  const workflowPath = path6.join(taskDir, "tracking", "workflow-status.md");
-  const summaryPath = path6.join(taskDir, "output", "figma-extraction-summary.md");
+  const workflowPath = path7.join(taskDir, "tracking", "workflow-status.md");
+  const summaryPath = path7.join(taskDir, "output", "figma-extraction-summary.md");
   const workflow = read(workflowPath);
   const fm = parseFrontMatter(workflow);
   const figmaRequired = fm.hasFrontMatter && boolValue(fm.data.figma_required);
@@ -23955,9 +24017,9 @@ function validateAssetGate(taskDir) {
 }
 function validateSrsReference(taskDir) {
   const errors = [];
-  const task = read(path6.join(taskDir, "task.md"));
-  const plan = read(path6.join(taskDir, "planning", "implementation-plan.md"));
-  const checklist = read(path6.join(taskDir, "planning", "build-checklist.md"));
+  const task = read(path7.join(taskDir, "task.md"));
+  const plan = read(path7.join(taskDir, "planning", "implementation-plan.md"));
+  const checklist = read(path7.join(taskDir, "planning", "build-checklist.md"));
   if (!task) errors.push("Thi\u1EBFu task.md");
   if (task && !/Bản đồ tham chiếu SRS/i.test(task)) errors.push("task.md thi\u1EBFu B\u1EA3n \u0111\u1ED3 tham chi\u1EBFu SRS");
   if (task && !/Bản đồ sử dụng API contract/i.test(task)) errors.push("task.md thi\u1EBFu B\u1EA3n \u0111\u1ED3 s\u1EED d\u1EE5ng API contract");
@@ -23968,7 +24030,7 @@ function validateSrsReference(taskDir) {
 }
 function validateQuestionsRouting(taskDir) {
   const errors = [];
-  const q = read(path6.join(taskDir, "planning", "questions.md"));
+  const q = read(path7.join(taskDir, "planning", "questions.md"));
   if (!q) return { ok: false, errors: ["Thi\u1EBFu planning/questions.md"] };
   for (const h of ["M\u1EE5c \u0111\xEDch", "Quy t\u1EAFc route c\xE2u h\u1ECFi", "C\xE2u h\u1ECFi blocking", "C\xE2u h\u1ECFi non-blocking", "Quy\u1EBFt \u0111\u1ECBnh \u0111\xE3 x\xE1c nh\u1EADn"]) {
     if (!hasHeading(q, h)) errors.push(`questions.md thi\u1EBFu section: ${h}`);
@@ -23982,7 +24044,7 @@ function validateQuestionsRouting(taskDir) {
 }
 function validatePlanArchitecture(taskDir) {
   const errors = [];
-  const planPath = path6.join(taskDir, "planning", "implementation-plan.md");
+  const planPath = path7.join(taskDir, "planning", "implementation-plan.md");
   const plan = read(planPath);
   if (!plan) return { ok: false, errors: ["Thi\u1EBFu planning/implementation-plan.md"] };
   for (const phrase of ["Ma tr\u1EADn trace SRS \u2192 FE logic \u2192 UI \u2192 Test", "Quy\u1EBFt \u0111\u1ECBnh ki\u1EBFn tr\xFAc logic frontend", "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt", "Quy\u1EBFt \u0111\u1ECBnh hook / store", "Quy\u1EBFt \u0111\u1ECBnh v\u1ECB tr\xED state", "Quy\u1EBFt \u0111\u1ECBnh global state", "Quy\u1EBFt \u0111\u1ECBnh l\u1ED7i API v\xE0 hi\u1EC3n th\u1ECB l\u1ED7i FE", "UI Implementation Contract t\u1EEB Figma", "Lu\u1ED3ng ng\u01B0\u1EDDi d\xF9ng", "Lu\u1ED3ng API", "Lu\u1ED3ng l\u1ED7i", "K\u1EBF ho\u1EA1ch test"]) {
@@ -23995,8 +24057,8 @@ function validatePlanArchitecture(taskDir) {
 }
 function validatePlanChecklistSync(taskDir) {
   const errors = [];
-  const plan = read(path6.join(taskDir, "planning", "implementation-plan.md"));
-  const checklist = read(path6.join(taskDir, "planning", "build-checklist.md"));
+  const plan = read(path7.join(taskDir, "planning", "implementation-plan.md"));
+  const checklist = read(path7.join(taskDir, "planning", "build-checklist.md"));
   if (!plan || !checklist) return { ok: false, errors: ["Thi\u1EBFu plan ho\u1EB7c checklist \u0111\u1EC3 sync"] };
   const plannedFiles = tableItems(plan, "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt").filter((x) => /[/.]/.test(x));
   const plannedHooks = tableItems(plan, "Quy\u1EBFt \u0111\u1ECBnh hook / store").filter((x) => /use[A-Z]|Store|Context|Query|Mutation/i.test(x));
@@ -24010,8 +24072,8 @@ function validatePlanChecklistSync(taskDir) {
 }
 function validateInputSyncReport(taskDir) {
   const errors = [];
-  const reportPath = path6.join(taskDir, "tracking", "input-sync-report.md");
-  const workflowPath = path6.join(taskDir, "tracking", "workflow-status.md");
+  const reportPath = path7.join(taskDir, "tracking", "input-sync-report.md");
+  const workflowPath = path7.join(taskDir, "tracking", "workflow-status.md");
   const workflow = read(workflowPath);
   const fm = parseFrontMatter(workflow);
   const syncStatus = fm.hasFrontMatter ? normValue(fm.data.input_sync_status) : "";
@@ -24031,43 +24093,17 @@ function validateInputSyncReport(taskDir) {
 }
 
 // packages/validators/src/scaffold.mjs
-import fs6 from "node:fs";
-import path7 from "node:path";
 var TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
-var GITKEEP = TASK_GITKEEP;
-function isValidTaskName(name) {
-  return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name || ""));
-}
-function scaffoldTask({ workspaceRoot, name, templatesDir }) {
-  if (!isValidTaskName(name)) {
-    return { ok: false, error: `T\xEAn task kh\xF4ng h\u1EE3p l\u1EC7: "${name}". D\xF9ng d\u1EA1ng FE-<id>-<slug>, ch\u1EC9 g\u1ED3m ch\u1EEF, s\u1ED1, d\u1EA5u ch\u1EA5m, g\u1EA1ch d\u01B0\u1EDBi, g\u1EA1ch ngang.` };
-  }
-  const root = path7.resolve(workspaceRoot);
-  const taskDir = path7.join(root, TASKS_ROOT, name);
-  if (!isPathInside(root, taskDir)) return { ok: false, error: "Task path n\u1EB1m ngo\xE0i workspace." };
-  const taskRef = toPosix(path7.relative(root, taskDir));
-  const fill = (text) => text.replaceAll("<task-folder>", taskRef).replaceAll("<task-id>", name).replaceAll("<TASK_ID>", name);
-  const created = [];
-  const skipped = [];
-  for (const rel of TASK_TEMPLATE_FILES) {
-    const dest = path7.join(taskDir, rel);
-    if (fs6.existsSync(dest)) {
-      skipped.push(rel);
-      continue;
-    }
-    const src = path7.join(templatesDir, rel);
-    const template = fs6.existsSync(src) ? fs6.readFileSync(src, "utf8") : "";
-    fs6.mkdirSync(path7.dirname(dest), { recursive: true });
-    fs6.writeFileSync(dest, fill(template));
-    created.push(rel);
-  }
-  const gitkeep = path7.join(taskDir, GITKEEP);
-  if (!fs6.existsSync(gitkeep)) {
-    fs6.mkdirSync(path7.dirname(gitkeep), { recursive: true });
-    fs6.writeFileSync(gitkeep, "");
-    created.push(GITKEEP);
-  }
-  return { ok: true, taskDir, taskRef, created, skipped };
+function scaffoldTask2({ workspaceRoot, name, templatesDir }) {
+  return scaffoldTask({
+    workspaceRoot,
+    name,
+    templatesDir,
+    tasksRoot: TASKS_ROOT,
+    templateFiles: TASK_TEMPLATE_FILES,
+    emptyFiles: [TASK_GITKEEP],
+    nameHint: "FE-<id>-<slug>"
+  });
 }
 
 // packages/validators/src/index.mjs
@@ -24097,11 +24133,11 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
     files = changed.files;
   }
   const { read: read3 } = taskIo(taskDir);
-  const plannedFiles = parsePlannedFiles(read3("planning/implementation-plan.md"));
-  const result = computeScopeDiff({ plannedFiles, changedFiles: files });
+  const plannedFiles = parsePlannedFiles2(read3("planning/implementation-plan.md"));
+  const result = computeScopeDiff2({ plannedFiles, changedFiles: files });
   const otherPlanned = plannedFilesOfSiblingTasks(taskDir);
   if (otherPlanned.length && result.outOfPlan.length) {
-    const others = computeScopeDiff({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
+    const others = computeScopeDiff2({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
     result.outOfPlan = others.outOfPlan;
     result.otherTasks = others.inScope;
     result.ok = result.outOfPlan.length === 0;
@@ -24112,7 +24148,7 @@ function findUntrackedSourceChanges(repoRoot, { base = "", sourcePaths = PROJECT
   const changed = listChangedFiles({ cwd: repoRoot, base });
   if (!changed.ok) return null;
   const planned = plannedFilesOfTasksIn(path8.join(repoRoot, TASKS_ROOT));
-  const diff = computeScopeDiff({ plannedFiles: planned, changedFiles: changed.files });
+  const diff = computeScopeDiff2({ plannedFiles: planned, changedFiles: changed.files });
   const files = diff.outOfPlan.filter((f) => sourcePaths.some((p) => f.startsWith(p)));
   return { files, base: changed.base, plannedCount: planned.length };
 }
@@ -24122,7 +24158,7 @@ function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
   for (const ent of fs7.readdirSync(tasksRoot, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === exclude) continue;
     const plan = path8.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
-    if (fs7.existsSync(plan)) planned.push(...parsePlannedFiles(fs7.readFileSync(plan, "utf8")));
+    if (fs7.existsSync(plan)) planned.push(...parsePlannedFiles2(fs7.readFileSync(plan, "utf8")));
   }
   return planned;
 }
@@ -24547,7 +24583,7 @@ function resolveTask(input2, target = process.cwd()) {
   const fromTarget = path9.resolve(target, input2);
   if (fs8.existsSync(fromTarget)) return fromTarget;
   try {
-    return resolveTaskDir(target, input2);
+    return resolveTaskDir2(target, input2);
   } catch {
     return "";
   }
@@ -24705,7 +24741,7 @@ function newTask() {
     console.error("Kh\xF4ng t\xECm th\u1EA5y th\u01B0 m\u1EE5c templates (.frontend-delivery/templates). Ch\u1EA1y fe-kit init tr\u01B0\u1EDBc.");
     process.exit(1);
   }
-  const scaffold = scaffoldTask({ workspaceRoot: target, name: slug, templatesDir });
+  const scaffold = scaffoldTask2({ workspaceRoot: target, name: slug, templatesDir });
   if (!scaffold.ok) {
     console.error(scaffold.error);
     process.exit(1);
@@ -24868,7 +24904,7 @@ function validateTaskLean() {
 }
 function validateOrphans() {
   const target = path9.resolve(argValue("--target", process.cwd()));
-  const { config: config2, warnings } = loadProjectConfig(target);
+  const { config: config2, warnings } = loadProjectConfig2(target);
   for (const w of warnings) console.warn("C\u1EA3nh b\xE1o: " + w);
   if (config2.require_task_for_source === "off") {
     console.log("validate-pr --orphans: b\u1ECF qua (require_task_for_source: off).");
@@ -24916,7 +24952,7 @@ function cliActor() {
 }
 function logCli(taskDir, record2) {
   if (args.includes("--no-log") || String(process.env.CI || "").toLowerCase() === "true") return;
-  appendRunLog(taskDir, { source: "cli", actor: cliActor(), kit: readKitVersion(), ...record2 });
+  appendRunLog2(taskDir, { source: "cli", actor: cliActor(), kit: readKitVersion(), ...record2 });
 }
 function logValidate(taskDir, check2, ok, codes) {
   logCli(taskDir, { event: "validate", check: check2, outcome: ok ? "ok" : "failed", codes: [...new Set(codes)] });
@@ -24997,9 +25033,9 @@ function modeEnd({ target, taskDir, taskRef, command: command2 }) {
 function report() {
   const target = path9.resolve(argValue("--target", process.cwd()));
   const task = args[1] && !args[1].startsWith("--") ? resolveTask(args[1], target) : void 0;
-  const result = buildReport({ repoRoot: target, task, since: argValueFlexible("--since", "") || void 0 });
+  const result = buildReport2({ repoRoot: target, task, since: argValueFlexible("--since", "") || void 0 });
   if (args.includes("--json")) console.log(JSON.stringify(result, null, 2));
-  else process.stdout.write(renderReport(result));
+  else process.stdout.write(renderReport2(result));
 }
 function help() {
   console.log(`Frontend Delivery Agent Kit CLI v${readKitVersion()}

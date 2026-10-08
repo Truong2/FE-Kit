@@ -3548,24 +3548,16 @@ var REQUIRED_TASK_DOCS = [
 ];
 var REQUIRED_TASK_FILES = [...REQUIRED_TASK_DOCS, TASK_GITKEEP];
 
-// packages/validators/src/scope.mjs
+// packages/engine/src/scope.mjs
 import { spawnSync } from "node:child_process";
 
-// packages/validators/src/resolve.mjs
+// packages/engine/src/paths.mjs
 function toPosix(p) {
   return String(p ?? "").replace(/\\/g, "/");
 }
 
-// packages/validators/src/scope.mjs
-var DEFAULT_SCOPE_IGNORE = [
-  "docs/frontend-tasks/",
-  "docs/frontend-context/",
-  ".frontend-delivery/",
-  "package-lock.json",
-  "pnpm-lock.yaml",
-  "yarn.lock",
-  "bun.lockb"
-];
+// packages/engine/src/scope.mjs
+var LOCKFILE_IGNORE = ["package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb"];
 function isPlaceholder(cell) {
   const t = String(cell ?? "").trim();
   if (!t) return true;
@@ -3575,9 +3567,9 @@ function isPlaceholder(cell) {
 function cleanPath(p) {
   return toPosix(p).trim().replace(/^\.\//, "").replace(/^\/+/, "");
 }
-function parsePlannedFiles(planMarkdown) {
+function parsePlannedFiles(planMarkdown, { heading }) {
   const text = String(planMarkdown || "");
-  const section = text.match(/^##\s+(?:\d+\.\s*)?File sẽ tạo\s*\/\s*cập nhật[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im);
+  const section = text.match(new RegExp(`^##\\s+(?:\\d+\\.\\s*)?${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##\\s|(?![\\s\\S]))`, "im"));
   if (!section) return [];
   const files = [];
   for (const line of section[1].split(/\r?\n/)) {
@@ -3607,7 +3599,7 @@ function matchesPlanned(file2, planned) {
 function isIgnored(file2, ignore) {
   return ignore.some((rule) => rule.endsWith("/") ? file2.startsWith(rule) : file2 === rule || file2.endsWith("/" + rule));
 }
-function computeScopeDiff({ plannedFiles = [], changedFiles = [], ignore = DEFAULT_SCOPE_IGNORE }) {
+function computeScopeDiff({ plannedFiles = [], changedFiles = [], ignore = LOCKFILE_IGNORE }) {
   const planned = plannedFiles.map(cleanPath).filter(Boolean);
   const inScope = [];
   const outOfPlan = [];
@@ -3657,13 +3649,6 @@ function listChangedFiles({ cwd, base = "" }) {
   return { ok: true, files: [...files].map(toPosix), base };
 }
 var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
-
-// packages/validators/src/index.mjs
-import fs from "node:fs";
-import path from "node:path";
-
-// packages/validators/src/parse.mjs
-var import_gray_matter = __toESM(require_gray_matter(), 1);
 
 // node_modules/zod/v4/classic/external.js
 var external_exports = {};
@@ -22531,6 +22516,61 @@ function date4(params) {
   return _coercedDate(ZodDate, params);
 }
 
+// packages/engine/src/runlog.mjs
+var RUNLOG_VERSION = 1;
+var RUNLOG_MAX_BYTES = 5 * 1024 * 1024;
+var RUNLOG_EVENTS = [
+  "mode_start",
+  "mode_end",
+  "entry_blocked",
+  "edit_denied",
+  "edit_warned",
+  "override_requested",
+  "mode_abandoned",
+  "validate"
+];
+var RunLogRecordSchema = external_exports.object({
+  v: external_exports.literal(RUNLOG_VERSION),
+  ts: external_exports.string(),
+  pack: external_exports.string(),
+  task: external_exports.string(),
+  event: external_exports.enum(RUNLOG_EVENTS),
+  mode: external_exports.string().optional(),
+  source: external_exports.enum(["hook", "mcp", "cli"]),
+  actor: external_exports.string().optional(),
+  level: external_exports.string().optional(),
+  outcome: external_exports.string().optional(),
+  codes: external_exports.array(external_exports.string()).optional(),
+  attempt: external_exports.number().int().positive().optional(),
+  duration_ms: external_exports.number().nonnegative().optional()
+}).passthrough();
+
+// packages/engine/src/project-config.mjs
+var import_gray_matter = __toESM(require_gray_matter(), 1);
+var PROJECT_CONFIG_DEFAULTS = Object.freeze({
+  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
+  require_task_for_source: "warn",
+  /** Thư mục được coi là source khi kiểm PR không gắn task. */
+  source_paths: ["src/", "app/", "apps/", "packages/"]
+});
+
+// packages/validators/src/scope.mjs
+var DEFAULT_SCOPE_IGNORE = ["docs/frontend-tasks/", "docs/frontend-context/", ".frontend-delivery/", ...LOCKFILE_IGNORE];
+var PLANNED_FILES_HEADING = "File s\u1EBD t\u1EA1o\\s*\\/\\s*c\u1EADp nh\u1EADt";
+function parsePlannedFiles2(planMarkdown) {
+  return parsePlannedFiles(planMarkdown, { heading: PLANNED_FILES_HEADING });
+}
+function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
+  return computeScopeDiff({ plannedFiles, changedFiles, ignore: ignore ?? DEFAULT_SCOPE_IGNORE });
+}
+
+// packages/validators/src/index.mjs
+import fs from "node:fs";
+import path from "node:path";
+
+// packages/validators/src/parse.mjs
+var import_gray_matter2 = __toESM(require_gray_matter(), 1);
+
 // packages/validators/src/schema.mjs
 var GateStatus = external_exports.enum([
   "not_started",
@@ -22674,7 +22714,7 @@ function parseWorkflowStatus(raw) {
   let frontMatter;
   let body;
   try {
-    const parsed = (0, import_gray_matter.default)(raw);
+    const parsed = (0, import_gray_matter2.default)(raw);
     frontMatter = parsed.data;
     body = parsed.content;
   } catch (err) {
@@ -23245,44 +23285,6 @@ function evaluatePrGates({ data, exists, read, scope }) {
   return { ok: errors.length === 0, errors, warnings, issues };
 }
 
-// packages/validators/src/project-config.mjs
-var import_gray_matter2 = __toESM(require_gray_matter(), 1);
-var PROJECT_CONFIG_DEFAULTS = Object.freeze({
-  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
-  require_task_for_source: "warn",
-  /** Thư mục được coi là source khi kiểm PR không gắn task. */
-  source_paths: ["src/", "app/", "apps/", "packages/"]
-});
-
-// packages/validators/src/runlog.mjs
-var RUNLOG_VERSION = 1;
-var RUNLOG_MAX_BYTES = 5 * 1024 * 1024;
-var RUNLOG_EVENTS = [
-  "mode_start",
-  "mode_end",
-  "entry_blocked",
-  "edit_denied",
-  "edit_warned",
-  "override_requested",
-  "mode_abandoned",
-  "validate"
-];
-var RunLogRecordSchema = external_exports.object({
-  v: external_exports.literal(RUNLOG_VERSION),
-  ts: external_exports.string(),
-  pack: external_exports.string(),
-  task: external_exports.string(),
-  event: external_exports.enum(RUNLOG_EVENTS),
-  mode: external_exports.string().optional(),
-  source: external_exports.enum(["hook", "mcp", "cli"]),
-  actor: external_exports.string().optional(),
-  level: external_exports.string().optional(),
-  outcome: external_exports.string().optional(),
-  codes: external_exports.array(external_exports.string()).optional(),
-  attempt: external_exports.number().int().positive().optional(),
-  duration_ms: external_exports.number().nonnegative().optional()
-}).passthrough();
-
 // packages/validators/src/index.mjs
 function taskIo(taskDir) {
   const exists = (rel) => fs.existsSync(path.join(taskDir, rel));
@@ -23310,11 +23312,11 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
     files = changed.files;
   }
   const { read } = taskIo(taskDir);
-  const plannedFiles = parsePlannedFiles(read("planning/implementation-plan.md"));
-  const result = computeScopeDiff({ plannedFiles, changedFiles: files });
+  const plannedFiles = parsePlannedFiles2(read("planning/implementation-plan.md"));
+  const result = computeScopeDiff2({ plannedFiles, changedFiles: files });
   const otherPlanned = plannedFilesOfSiblingTasks(taskDir);
   if (otherPlanned.length && result.outOfPlan.length) {
-    const others = computeScopeDiff({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
+    const others = computeScopeDiff2({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
     result.outOfPlan = others.outOfPlan;
     result.otherTasks = others.inScope;
     result.ok = result.outOfPlan.length === 0;
@@ -23327,7 +23329,7 @@ function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
   for (const ent of fs.readdirSync(tasksRoot, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === exclude) continue;
     const plan = path.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
-    if (fs.existsSync(plan)) planned.push(...parsePlannedFiles(fs.readFileSync(plan, "utf8")));
+    if (fs.existsSync(plan)) planned.push(...parsePlannedFiles2(fs.readFileSync(plan, "utf8")));
   }
   return planned;
 }

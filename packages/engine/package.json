@@ -1,0 +1,21 @@
+{
+  "name": "@frontend-delivery-kit/engine",
+  "version": "2.3.0",
+  "private": true,
+  "description": "Engine dùng chung của kit: state machine của mode, gate kết thúc mode, scope diff, run-log, báo cáo, hook và MCP. Không chứa khái niệm của domain nào; domain pack (vd pack-fe) cung cấp dữ liệu và gate riêng.",
+  "type": "module",
+  "main": "./src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.11"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests"
+  }
+}

@@ -23183,15 +23183,8 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   return { ok: errors.length === 0, errors, warnings, issues };
 }
 
-// packages/validators/src/scope.mjs
-import { spawnSync } from "node:child_process";
-import crypto from "node:crypto";
-import fs from "node:fs";
-import path2 from "node:path";
-
-// packages/validators/src/resolve.mjs
+// packages/engine/src/paths.mjs
 import path from "node:path";
-var TASKS_ROOT = "docs/frontend-tasks";
 function toPosix(p) {
   return String(p ?? "").replace(/\\/g, "/");
 }
@@ -23204,12 +23197,12 @@ function isPathInside(parent, child) {
   }
   return b === a || b.startsWith(a.endsWith(path.sep) ? a : a + path.sep);
 }
-function resolveTaskDir(workspaceRoot, taskFolder) {
+function resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot }) {
   const root = path.resolve(workspaceRoot);
   const input2 = String(taskFolder ?? "").trim().replace(/^["']|["']$/g, "");
   if (!input2) throw new Error("Thi\u1EBFu task folder.");
   const posix = toPosix(input2).replace(/\/+$/, "");
-  const candidate = path.isAbsolute(input2) ? path.resolve(input2) : path.resolve(root, posix.includes("/") ? posix : `${TASKS_ROOT}/${posix}`);
+  const candidate = path.isAbsolute(input2) ? path.resolve(input2) : path.resolve(root, posix.includes("/") ? posix : `${tasksRoot}/${posix}`);
   if (!isPathInside(root, candidate)) {
     throw new Error(`Task path n\u1EB1m ngo\xE0i workspace: ${taskFolder}`);
   }
@@ -23220,16 +23213,12 @@ function relativePosix(root, target) {
   return toPosix(path.relative(path.resolve(root), path.resolve(target)));
 }
 
-// packages/validators/src/scope.mjs
-var DEFAULT_SCOPE_IGNORE = [
-  "docs/frontend-tasks/",
-  "docs/frontend-context/",
-  ".frontend-delivery/",
-  "package-lock.json",
-  "pnpm-lock.yaml",
-  "yarn.lock",
-  "bun.lockb"
-];
+// packages/engine/src/scope.mjs
+import { spawnSync } from "node:child_process";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path2 from "node:path";
+var LOCKFILE_IGNORE = ["package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb"];
 function isPlaceholder(cell) {
   const t = String(cell ?? "").trim();
   if (!t) return true;
@@ -23239,9 +23228,9 @@ function isPlaceholder(cell) {
 function cleanPath(p) {
   return toPosix(p).trim().replace(/^\.\//, "").replace(/^\/+/, "");
 }
-function parsePlannedFiles(planMarkdown) {
+function parsePlannedFiles(planMarkdown, { heading }) {
   const text = String(planMarkdown || "");
-  const section = text.match(/^##\s+(?:\d+\.\s*)?File sẽ tạo\s*\/\s*cập nhật[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im);
+  const section = text.match(new RegExp(`^##\\s+(?:\\d+\\.\\s*)?${heading}[^\\n]*\\n([\\s\\S]*?)(?=\\n##\\s|(?![\\s\\S]))`, "im"));
   if (!section) return [];
   const files = [];
   for (const line of section[1].split(/\r?\n/)) {
@@ -23271,7 +23260,7 @@ function matchesPlanned(file2, planned) {
 function isIgnored(file2, ignore) {
   return ignore.some((rule) => rule.endsWith("/") ? file2.startsWith(rule) : file2 === rule || file2.endsWith("/" + rule));
 }
-function computeScopeDiff({ plannedFiles = [], changedFiles = [], ignore = DEFAULT_SCOPE_IGNORE }) {
+function computeScopeDiff({ plannedFiles = [], changedFiles = [], ignore = LOCKFILE_IGNORE }) {
   const planned = plannedFiles.map(cleanPath).filter(Boolean);
   const inScope = [];
   const outOfPlan = [];
@@ -23364,53 +23353,9 @@ function filesTouchedSince(cwd, snapshot, currentFiles) {
   return { touched, preDirtyTouched };
 }
 
-// packages/validators/src/project-config.mjs
-var import_gray_matter2 = __toESM(require_gray_matter(), 1);
+// packages/engine/src/runlog.mjs
 import fs2 from "node:fs";
 import path3 from "node:path";
-var PROJECT_CONFIG_FILE = ".frontend-delivery/standard.yaml";
-var PROJECT_CONFIG_DEFAULTS = Object.freeze({
-  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
-  require_task_for_source: "warn",
-  /** Thư mục được coi là source khi kiểm PR không gắn task. */
-  source_paths: ["src/", "app/", "apps/", "packages/"]
-});
-var VALIDATORS = {
-  require_task_for_source: (v) => ["off", "warn", "error"].includes(v),
-  source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === "string" && p.trim())
-};
-function loadProjectConfig(repoRoot) {
-  const file2 = path3.join(repoRoot, PROJECT_CONFIG_FILE);
-  const config2 = { ...PROJECT_CONFIG_DEFAULTS };
-  const warnings = [];
-  let raw;
-  try {
-    raw = fs2.readFileSync(file2, "utf8");
-  } catch {
-    return { config: config2, warnings, source: "default" };
-  }
-  let data = {};
-  try {
-    data = (0, import_gray_matter2.default)(`---
-${raw}
----
-`).data || {};
-  } catch (err) {
-    warnings.push(`${PROJECT_CONFIG_FILE} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML (${err.message}); d\xF9ng c\u1EA5u h\xECnh m\u1EB7c \u0111\u1ECBnh.`);
-    return { config: config2, warnings, source: "default" };
-  }
-  for (const [key, valid] of Object.entries(VALIDATORS)) {
-    if (data[key] === void 0) continue;
-    if (valid(data[key])) config2[key] = data[key];
-    else warnings.push(`${PROJECT_CONFIG_FILE}: gi\xE1 tr\u1ECB ${key} kh\xF4ng h\u1EE3p l\u1EC7; d\xF9ng m\u1EB7c \u0111\u1ECBnh ${JSON.stringify(PROJECT_CONFIG_DEFAULTS[key])}.`);
-  }
-  config2.source_paths = config2.source_paths.map((p) => p.endsWith("/") ? p : `${p}/`);
-  return { config: config2, warnings, source: "file" };
-}
-
-// packages/validators/src/runlog.mjs
-import fs3 from "node:fs";
-import path4 from "node:path";
 import crypto2 from "node:crypto";
 var RUNLOG_FILE = "tracking/run-log.jsonl";
 var RUNLOG_VERSION = 1;
@@ -23451,23 +23396,23 @@ function enabled() {
 function appendRunLog(taskDir, record2) {
   try {
     if (!enabled() || !taskDir) return false;
-    const trackingDir = path4.join(taskDir, "tracking");
-    if (!fs3.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
-    const file2 = path4.join(taskDir, RUNLOG_FILE);
-    const size = fs3.statSync(file2, { throwIfNoEntry: false })?.size || 0;
+    const trackingDir = path3.join(taskDir, "tracking");
+    if (!fs2.statSync(trackingDir, { throwIfNoEntry: false })?.isDirectory()) return false;
+    const file2 = path3.join(taskDir, RUNLOG_FILE);
+    const size = fs2.statSync(file2, { throwIfNoEntry: false })?.size || 0;
     if (size > RUNLOG_MAX_BYTES) return false;
     const full = {
       v: RUNLOG_VERSION,
       ts: (/* @__PURE__ */ new Date()).toISOString(),
-      pack: "fe",
-      task: path4.basename(taskDir),
+      pack: record2?.pack,
+      task: path3.basename(taskDir),
       ...dropEmpty(record2)
     };
     let line = JSON.stringify(full);
     if (Buffer.byteLength(line) > MAX_RECORD_BYTES) {
       line = JSON.stringify({ ...full, codes: full.codes?.slice(0, 20), files: full.files?.slice(0, 20), truncated: true });
     }
-    fs3.appendFileSync(file2, line + "\n");
+    fs2.appendFileSync(file2, line + "\n");
     return true;
   } catch {
     return false;
@@ -23477,6 +23422,76 @@ function dropEmpty(record2) {
   return Object.fromEntries(
     Object.entries(record2 || {}).filter(([, v]) => v !== void 0 && v !== null && !(Array.isArray(v) && v.length === 0))
   );
+}
+
+// packages/engine/src/project-config.mjs
+var import_gray_matter2 = __toESM(require_gray_matter(), 1);
+import fs3 from "node:fs";
+import path4 from "node:path";
+var PROJECT_CONFIG_DEFAULTS = Object.freeze({
+  /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
+  require_task_for_source: "warn",
+  /** Thư mục được coi là source khi kiểm PR không gắn task. */
+  source_paths: ["src/", "app/", "apps/", "packages/"]
+});
+var VALIDATORS = {
+  require_task_for_source: (v) => ["off", "warn", "error"].includes(v),
+  source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === "string" && p.trim())
+};
+function loadProjectConfig(repoRoot, { file: configFile }) {
+  const file2 = path4.join(repoRoot, configFile);
+  const config2 = { ...PROJECT_CONFIG_DEFAULTS };
+  const warnings = [];
+  let raw;
+  try {
+    raw = fs3.readFileSync(file2, "utf8");
+  } catch {
+    return { config: config2, warnings, source: "default" };
+  }
+  let data = {};
+  try {
+    data = (0, import_gray_matter2.default)(`---
+${raw}
+---
+`).data || {};
+  } catch (err) {
+    warnings.push(`${configFile} kh\xF4ng parse \u0111\u01B0\u1EE3c YAML (${err.message}); d\xF9ng c\u1EA5u h\xECnh m\u1EB7c \u0111\u1ECBnh.`);
+    return { config: config2, warnings, source: "default" };
+  }
+  for (const [key, valid] of Object.entries(VALIDATORS)) {
+    if (data[key] === void 0) continue;
+    if (valid(data[key])) config2[key] = data[key];
+    else warnings.push(`${configFile}: gi\xE1 tr\u1ECB ${key} kh\xF4ng h\u1EE3p l\u1EC7; d\xF9ng m\u1EB7c \u0111\u1ECBnh ${JSON.stringify(PROJECT_CONFIG_DEFAULTS[key])}.`);
+  }
+  config2.source_paths = config2.source_paths.map((p) => p.endsWith("/") ? p : `${p}/`);
+  return { config: config2, warnings, source: "file" };
+}
+
+// packages/validators/src/scope.mjs
+var DEFAULT_SCOPE_IGNORE = ["docs/frontend-tasks/", "docs/frontend-context/", ".frontend-delivery/", ...LOCKFILE_IGNORE];
+var PLANNED_FILES_HEADING = "File s\u1EBD t\u1EA1o\\s*\\/\\s*c\u1EADp nh\u1EADt";
+function parsePlannedFiles2(planMarkdown) {
+  return parsePlannedFiles(planMarkdown, { heading: PLANNED_FILES_HEADING });
+}
+function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
+  return computeScopeDiff({ plannedFiles, changedFiles, ignore: ignore ?? DEFAULT_SCOPE_IGNORE });
+}
+
+// packages/validators/src/resolve.mjs
+var TASKS_ROOT = "docs/frontend-tasks";
+function resolveTaskDir2(workspaceRoot, taskFolder) {
+  return resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot: TASKS_ROOT });
+}
+
+// packages/validators/src/project-config.mjs
+var PROJECT_CONFIG_FILE = ".frontend-delivery/standard.yaml";
+function loadProjectConfig2(repoRoot) {
+  return loadProjectConfig(repoRoot, { file: PROJECT_CONFIG_FILE });
+}
+
+// packages/validators/src/runlog.mjs
+function appendRunLog2(taskDir, record2) {
+  return appendRunLog(taskDir, { pack: "fe", ...record2 });
 }
 
 // packages/validators/src/index.mjs
@@ -23506,11 +23521,11 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
     files = changed.files;
   }
   const { read } = taskIo(taskDir);
-  const plannedFiles = parsePlannedFiles(read("planning/implementation-plan.md"));
-  const result = computeScopeDiff({ plannedFiles, changedFiles: files });
+  const plannedFiles = parsePlannedFiles2(read("planning/implementation-plan.md"));
+  const result = computeScopeDiff2({ plannedFiles, changedFiles: files });
   const otherPlanned = plannedFilesOfSiblingTasks(taskDir);
   if (otherPlanned.length && result.outOfPlan.length) {
-    const others = computeScopeDiff({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
+    const others = computeScopeDiff2({ plannedFiles: otherPlanned, changedFiles: result.outOfPlan, ignore: [] });
     result.outOfPlan = others.outOfPlan;
     result.otherTasks = others.inScope;
     result.ok = result.outOfPlan.length === 0;
@@ -23523,7 +23538,7 @@ function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
   for (const ent of fs4.readdirSync(tasksRoot, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === exclude) continue;
     const plan = path5.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
-    if (fs4.existsSync(plan)) planned.push(...parsePlannedFiles(fs4.readFileSync(plan, "utf8")));
+    if (fs4.existsSync(plan)) planned.push(...parsePlannedFiles2(fs4.readFileSync(plan, "utf8")));
   }
   return planned;
 }
@@ -23683,7 +23698,7 @@ function readFileSafe(p) {
 }
 function logEvent(payload, taskDir, event, fields = {}) {
   try {
-    appendRunLog(taskDir, {
+    appendRunLog2(taskDir, {
       event,
       source: "hook",
       actor: "claude",
@@ -23719,7 +23734,7 @@ function beginMode(payload, { command, taskArg, workspace }) {
   if (!COMMANDS.includes(command)) return null;
   let taskDir;
   try {
-    taskDir = resolveTaskDir(workspace, taskArg);
+    taskDir = resolveTaskDir2(workspace, taskArg);
   } catch {
     return null;
   }
@@ -23882,7 +23897,7 @@ function sourceTouchedInReadOnlyMode(marker) {
   const changed = listChangedFiles({ cwd: marker.workspace });
   if (!changed.ok) return [];
   const { touched } = filesTouchedSince(marker.workspace, marker.baseline, changed.files);
-  const { source_paths: sourcePaths } = loadProjectConfig(marker.workspace).config;
+  const { source_paths: sourcePaths } = loadProjectConfig2(marker.workspace).config;
   return touched.filter(
     (f) => !KIT_WRITABLE_PREFIXES.some((p) => f.startsWith(p)) && sourcePaths.some((p) => f.startsWith(p))
   );
