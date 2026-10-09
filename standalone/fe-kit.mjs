@@ -23205,7 +23205,7 @@ function readIfExists(p) {
 }
 function createModeBriefing(pack) {
   const statusName = path7.posix.basename(pack.statusFile);
-  return function modeBriefing2({ taskDir, taskRef, command: command2, rulesDir, rulesLabel, newTaskHint, finishHint, workspaceRoot }) {
+  return function modeBriefing2({ taskDir, taskRef, command: command2, rulesDir, rulesLabel, newTaskHint, finishHint, workspaceRoot, templatesDir }) {
     const lines = [];
     const statusPath = path7.join(taskDir, pack.statusFile);
     if (!fs6.existsSync(statusPath)) {
@@ -23235,9 +23235,32 @@ function createModeBriefing(pack) {
       const agent = pack.agentFor[command2];
       lines.push("", `Agent \u0111\u1EA3m nh\u1EADn: ${agent ? agent : "main thread (inline)"}`);
       lines.push("", "Artifact b\u1EAFt bu\u1ED9c khi k\u1EBFt th\xFAc mode (t\u01B0\u01A1ng \u0111\u1ED1i task folder):");
-      for (const rel of pack.requiredArtifacts[command2]) lines.push(`- ${rel}`);
+      const embedded = [];
+      for (const rel of pack.requiredArtifacts[command2]) {
+        if (fs6.existsSync(path7.join(taskDir, rel))) {
+          lines.push(`- ${rel} (\u0111\xE3 c\xF3)`);
+          continue;
+        }
+        const template = templatesDir ? path7.join(templatesDir, rel) : "";
+        if (!template || !fs6.existsSync(template)) {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3)`);
+          continue;
+        }
+        const fromRoot = workspaceRoot ? path7.relative(path7.resolve(workspaceRoot), template) : "";
+        const insideWorkspace = Boolean(fromRoot) && !fromRoot.startsWith("..") && !path7.isAbsolute(fromRoot);
+        if (insideWorkspace) {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3 \u2014 t\u1EA1o t\u1EEB template ${relativePosix(workspaceRoot, template)}, gi\u1EEF nguy\xEAn ti\xEAu \u0111\u1EC1 v\xE0 t\xEAn c\u1ED9t)`);
+        } else {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3 \u2014 t\u1EA1o t\u1EEB template in b\xEAn d\u01B0\u1EDBi, gi\u1EEF nguy\xEAn ti\xEAu \u0111\u1EC1 v\xE0 t\xEAn c\u1ED9t)`);
+          embedded.push(rel);
+        }
+      }
+      lines.push(`Khi k\u1EBFt th\xFAc: \u0111\u1EB7t current_mode: ${entry.mode} trong ${statusName}.`);
       lines.push(pack.readInputsHint);
       lines.push(finishHint);
+      for (const rel of embedded) {
+        lines.push("", `=== TEMPLATE ${rel} ===`, readIfExists(path7.join(templatesDir, rel)).trim());
+      }
       lines.push("", `=== RULE \xC1P D\u1EE4NG CHO ${pack.label(command2)} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
       for (const file2 of pack.rulesFor(command2, data)) {
         const body = readIfExists(path7.join(rulesDir, file2)).trim();
@@ -25558,11 +25581,7 @@ function newTask() {
     process.exit(1);
   }
   const target = path12.resolve(argValue("--target", process.cwd()));
-  const templatesDir = [
-    path12.join(target, ".frontend-delivery", "templates"),
-    path12.join(kitRoot, "templates"),
-    path12.join(kitRoot, ".frontend-delivery", "templates")
-  ].find((dir) => fs11.existsSync(dir));
+  const templatesDir = templatesDirFor(target);
   if (!templatesDir) {
     console.error("Kh\xF4ng t\xECm th\u1EA5y th\u01B0 m\u1EE5c templates (.frontend-delivery/templates). Ch\u1EA1y fe-kit init tr\u01B0\u1EDBc.");
     process.exit(1);
@@ -25793,6 +25812,13 @@ function lastModeRun(taskDir, command2) {
   const failedEnds = records.slice(start + 1).filter((r) => r.event === "mode_end" && r.mode === command2 && r.outcome === "failed").length;
   return { startedAt: Date.parse(records[start].ts), failedEnds };
 }
+function templatesDirFor(target) {
+  return [
+    path12.join(target, ".frontend-delivery", "templates"),
+    path12.join(kitRoot, "templates"),
+    path12.join(kitRoot, ".frontend-delivery", "templates")
+  ].find((dir) => fs11.existsSync(dir));
+}
 function rulesDirFor(target) {
   const project = path12.join(target, ".frontend-delivery", "rules");
   if (fs11.existsSync(project)) return { dir: project, label: ".frontend-delivery/rules c\u1EE7a repo" };
@@ -25822,7 +25848,8 @@ function modeBegin({ target, taskDir, taskRef, command: command2 }) {
     rulesLabel: rules.label,
     newTaskHint: `Ch\u1EA1y node bin/fe-kit.mjs new-task ${path12.basename(taskDir)} \u0111\u1EC3 t\u1EA1o task t\u1EEB template, r\u1ED3i ch\u1EA1y l\u1EA1i: node bin/fe-kit.mjs mode begin ${taskRef} ${command2}`,
     finishHint: `Tr\u01B0\u1EDBc khi k\u1EBFt th\xFAc: c\u1EADp nh\u1EADt tracking/workflow-status.md r\u1ED3i ch\u1EA1y node bin/fe-kit.mjs mode end ${taskRef} ${command2}.`,
-    workspaceRoot: target
+    workspaceRoot: target,
+    templatesDir: templatesDirFor(target)
   });
   console.log(briefing.text);
   if (briefing.entry) {

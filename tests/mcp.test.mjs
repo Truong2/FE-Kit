@@ -15,9 +15,11 @@ const SERVER = path.join(ROOT, 'plugins', 'fe', 'mcp', 'fe-kit-mcp.mjs');
 const FIXTURE = path.join(ROOT, 'packages', 'validators', 'test', 'fixtures', 'task-ready-to-cook');
 
 /** Gọi một tool rồi đóng server; trả về `result` của lời gọi tool. */
-function callTool(name, args) {
+function callTool(name, args, { cwd } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [SERVER], { env: { ...process.env, CLAUDE_PLUGIN_ROOT: path.join(ROOT, 'plugins', 'fe') } });
+    const env = { ...process.env, CLAUDE_PLUGIN_ROOT: path.join(ROOT, 'plugins', 'fe') };
+    delete env.CLAUDE_PROJECT_DIR;
+    const child = spawn(process.execPath, [SERVER], { env, cwd });
     let buf = '';
     const timer = setTimeout(() => {
       child.kill();
@@ -38,8 +40,9 @@ function callTool(name, args) {
           send({ id: 2, method: 'tools/call', params: { name, arguments: args } });
         } else if (msg.id === 2) {
           clearTimeout(timer);
+          // Đợi server thoát hẳn: trên Windows tiến trình còn sống thì vẫn khoá thư mục cwd của nó.
+          child.once('exit', () => resolve(msg.result));
           child.kill();
-          resolve(msg.result);
         }
       }
     });
@@ -66,7 +69,47 @@ beforeEach(() => {
   git('-c', 'user.email=a@b', '-c', 'user.name=a', 'commit', '-qm', 'base');
 });
 
-afterEach(() => fs.rmSync(repo, { recursive: true, force: true }));
+// Windows: server vừa bị kill có thể chưa nhả thư mục (cwd của nó) → thử xoá lại vài lần.
+afterEach(() => fs.rmSync(repo, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+
+describe('tham số của tool', () => {
+  const TASK = 'docs/frontend-tasks/FE-1';
+  const text = (r) => r.content.map((c) => c.text).join('\n');
+
+  it('thiếu workspace_root: dùng thư mục dự án mà server đang chạy', async () => {
+    const r = await callTool('fe_task_status', { task_folder: TASK }, { cwd: repo });
+    expect(r.isError).toBeFalsy();
+    expect(text(r)).not.toMatch(/paths\[0\]/);
+  });
+
+  it('thiếu tham số bắt buộc khác: báo rõ tên tham số thay vì lỗi kiểu dữ liệu', async () => {
+    const r = await callTool('fe_begin_mode', { workspace_root: repo, mode: 'cook' });
+    expect(r.isError).toBe(true);
+    expect(text(r)).toMatch(/^Thiếu tham số bắt buộc của fe_begin_mode: task_folder/);
+  });
+});
+
+describe('fe_begin_mode: artifact và current_mode', () => {
+  const TASK = 'docs/frontend-tasks/FE-1';
+  const text = (r) => r.content.map((c) => c.text).join('\n');
+
+  it('artifact chưa có: đưa nguyên văn template của plugin (ngoài workspace); nêu current_mode phải đặt', async () => {
+    const r = text(await callTool('fe_begin_mode', { workspace_root: repo, task_folder: TASK, mode: 'input-sync' }));
+    expect(r).toMatch(/- tracking\/input-sync-report\.md \(chưa có — tạo từ template in bên dưới, giữ nguyên tiêu đề và tên cột\)/);
+    expect(r).toMatch(/- tracking\/workflow-status\.md \(đã có\)/);
+    expect(r).toMatch(/=== TEMPLATE tracking\/input-sync-report\.md ===\n# Báo cáo input-sync/);
+    expect(r).toMatch(/Khi kết thúc: đặt current_mode: input-sync-mode trong workflow-status\.md\./);
+  });
+
+  it('template của repo (.frontend-delivery/templates) thì đưa đường dẫn, không chép nguyên văn', async () => {
+    const tpl = path.join(repo, '.frontend-delivery', 'templates', 'tracking', 'input-sync-report.md');
+    fs.mkdirSync(path.dirname(tpl), { recursive: true });
+    fs.writeFileSync(tpl, '# Báo cáo input-sync của team\n');
+    const r = text(await callTool('fe_begin_mode', { workspace_root: repo, task_folder: TASK, mode: 'input-sync' }));
+    expect(r).toMatch(/tạo từ template \.frontend-delivery\/templates\/tracking\/input-sync-report\.md, giữ nguyên tiêu đề và tên cột/);
+    expect(r).not.toMatch(/=== TEMPLATE/);
+  });
+});
 
 describe('fe_validate_workflow', () => {
   it('task ở review-mode có file sửa ngoài plan thì FAILED và nêu tên file', async () => {

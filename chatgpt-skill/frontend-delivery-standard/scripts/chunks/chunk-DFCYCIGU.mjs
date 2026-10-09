@@ -3564,6 +3564,10 @@ function resolveTaskDir(workspaceRoot, taskFolder, { tasksRoot }) {
   }
   return candidate;
 }
+function relativePosix(root, target) {
+  if (!isPathInside(root, target)) return "";
+  return toPosix(path.relative(path.resolve(root), path.resolve(target)));
+}
 
 // packages/engine/src/scope.mjs
 var LOCKFILE_IGNORE = ["package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb"];
@@ -22927,7 +22931,7 @@ function readIfExists(p) {
 }
 function createModeBriefing(pack) {
   const statusName = path6.posix.basename(pack.statusFile);
-  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint, workspaceRoot }) {
+  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint, workspaceRoot, templatesDir }) {
     const lines = [];
     const statusPath = path6.join(taskDir, pack.statusFile);
     if (!fs5.existsSync(statusPath)) {
@@ -22957,9 +22961,32 @@ function createModeBriefing(pack) {
       const agent = pack.agentFor[command];
       lines.push("", `Agent \u0111\u1EA3m nh\u1EADn: ${agent ? agent : "main thread (inline)"}`);
       lines.push("", "Artifact b\u1EAFt bu\u1ED9c khi k\u1EBFt th\xFAc mode (t\u01B0\u01A1ng \u0111\u1ED1i task folder):");
-      for (const rel of pack.requiredArtifacts[command]) lines.push(`- ${rel}`);
+      const embedded = [];
+      for (const rel of pack.requiredArtifacts[command]) {
+        if (fs5.existsSync(path6.join(taskDir, rel))) {
+          lines.push(`- ${rel} (\u0111\xE3 c\xF3)`);
+          continue;
+        }
+        const template = templatesDir ? path6.join(templatesDir, rel) : "";
+        if (!template || !fs5.existsSync(template)) {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3)`);
+          continue;
+        }
+        const fromRoot = workspaceRoot ? path6.relative(path6.resolve(workspaceRoot), template) : "";
+        const insideWorkspace = Boolean(fromRoot) && !fromRoot.startsWith("..") && !path6.isAbsolute(fromRoot);
+        if (insideWorkspace) {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3 \u2014 t\u1EA1o t\u1EEB template ${relativePosix(workspaceRoot, template)}, gi\u1EEF nguy\xEAn ti\xEAu \u0111\u1EC1 v\xE0 t\xEAn c\u1ED9t)`);
+        } else {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3 \u2014 t\u1EA1o t\u1EEB template in b\xEAn d\u01B0\u1EDBi, gi\u1EEF nguy\xEAn ti\xEAu \u0111\u1EC1 v\xE0 t\xEAn c\u1ED9t)`);
+          embedded.push(rel);
+        }
+      }
+      lines.push(`Khi k\u1EBFt th\xFAc: \u0111\u1EB7t current_mode: ${entry.mode} trong ${statusName}.`);
       lines.push(pack.readInputsHint);
       lines.push(finishHint);
+      for (const rel of embedded) {
+        lines.push("", `=== TEMPLATE ${rel} ===`, readIfExists(path6.join(templatesDir, rel)).trim());
+      }
       lines.push("", `=== RULE \xC1P D\u1EE4NG CHO ${pack.label(command)} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
       for (const file2 of pack.rulesFor(command, data)) {
         const body = readIfExists(path6.join(rulesDir, file2)).trim();

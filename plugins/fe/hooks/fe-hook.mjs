@@ -23012,7 +23012,7 @@ function readIfExists(p) {
 }
 function createModeBriefing(pack) {
   const statusName = path7.posix.basename(pack.statusFile);
-  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint, workspaceRoot }) {
+  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint, workspaceRoot, templatesDir }) {
     const lines = [];
     const statusPath = path7.join(taskDir, pack.statusFile);
     if (!fs6.existsSync(statusPath)) {
@@ -23042,9 +23042,32 @@ function createModeBriefing(pack) {
       const agent = pack.agentFor[command];
       lines.push("", `Agent \u0111\u1EA3m nh\u1EADn: ${agent ? agent : "main thread (inline)"}`);
       lines.push("", "Artifact b\u1EAFt bu\u1ED9c khi k\u1EBFt th\xFAc mode (t\u01B0\u01A1ng \u0111\u1ED1i task folder):");
-      for (const rel of pack.requiredArtifacts[command]) lines.push(`- ${rel}`);
+      const embedded = [];
+      for (const rel of pack.requiredArtifacts[command]) {
+        if (fs6.existsSync(path7.join(taskDir, rel))) {
+          lines.push(`- ${rel} (\u0111\xE3 c\xF3)`);
+          continue;
+        }
+        const template = templatesDir ? path7.join(templatesDir, rel) : "";
+        if (!template || !fs6.existsSync(template)) {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3)`);
+          continue;
+        }
+        const fromRoot = workspaceRoot ? path7.relative(path7.resolve(workspaceRoot), template) : "";
+        const insideWorkspace = Boolean(fromRoot) && !fromRoot.startsWith("..") && !path7.isAbsolute(fromRoot);
+        if (insideWorkspace) {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3 \u2014 t\u1EA1o t\u1EEB template ${relativePosix(workspaceRoot, template)}, gi\u1EEF nguy\xEAn ti\xEAu \u0111\u1EC1 v\xE0 t\xEAn c\u1ED9t)`);
+        } else {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3 \u2014 t\u1EA1o t\u1EEB template in b\xEAn d\u01B0\u1EDBi, gi\u1EEF nguy\xEAn ti\xEAu \u0111\u1EC1 v\xE0 t\xEAn c\u1ED9t)`);
+          embedded.push(rel);
+        }
+      }
+      lines.push(`Khi k\u1EBFt th\xFAc: \u0111\u1EB7t current_mode: ${entry.mode} trong ${statusName}.`);
       lines.push(pack.readInputsHint);
       lines.push(finishHint);
+      for (const rel of embedded) {
+        lines.push("", `=== TEMPLATE ${rel} ===`, readIfExists(path7.join(templatesDir, rel)).trim());
+      }
       lines.push("", `=== RULE \xC1P D\u1EE4NG CHO ${pack.label(command)} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
       for (const file2 of pack.rulesFor(command, data)) {
         const body = readIfExists(path7.join(rulesDir, file2)).trim();

@@ -306,6 +306,16 @@ describe('CLI bundle trong repo dự án (không có node_modules)', () => {
       expect(r.out).toMatch(/mode end docs\/frontend-tasks\/FE-7-log plan/);
     });
 
+    it('mode begin chỉ template của repo cho artifact chưa có và nêu current_mode phải đặt', () => {
+      const r = project('mode', 'begin', TASK, 'input-sync');
+      expect(r.status).toBe(0);
+      expect(r.out).toMatch(
+        /- tracking\/input-sync-report\.md \(chưa có — tạo từ template \.frontend-delivery\/templates\/tracking\/input-sync-report\.md, giữ nguyên tiêu đề và tên cột\)/
+      );
+      expect(r.out).toMatch(/- planning\/questions\.md \(đã có\)/);
+      expect(r.out).toMatch(/Khi kết thúc: đặt current_mode: input-sync-mode trong workflow-status\.md\./);
+    });
+
     it('mode end: chưa sửa workflow-status.md thì fail, sửa rồi thì pass, attempt tăng', () => {
       const status = path.join(target, TASK, 'tracking', 'workflow-status.md');
       const past = new Date(Date.now() - 60_000);

@@ -49,7 +49,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
     return match ? match[1].trim() : '';
   }
 
-  const workspaceProp = { type: 'string', description: 'Đường dẫn tuyệt đối tới repo dự án.' };
+  const workspaceProp = { type: 'string', description: 'Đường dẫn tuyệt đối tới repo dự án. Bỏ trống: thư mục dự án đang mở.' };
   const taskProp = { type: 'string', description: m.taskPropDescription };
   const baseRefProp = (description) => ({ type: 'string', description });
 
@@ -64,7 +64,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
           task_folder: taskProp,
           mode: { type: 'string', description: `Mode muốn chạy: ${pack.commands.join(', ')}.` },
         },
-        required: ['workspace_root', 'task_folder', 'mode'],
+        required: ['task_folder', 'mode'],
       },
     },
     {
@@ -76,7 +76,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
           workspace_root: workspaceProp,
           task_name: { type: 'string', description: m.taskNameDescription },
         },
-        required: ['workspace_root', 'task_name'],
+        required: ['task_name'],
       },
     },
     {
@@ -85,7 +85,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
       inputSchema: {
         type: 'object',
         properties: { workspace_root: workspaceProp, task_folder: taskProp },
-        required: ['workspace_root', 'task_folder'],
+        required: ['task_folder'],
       },
     },
     {
@@ -98,7 +98,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
           task_folder: taskProp,
           base_ref: baseRefProp('Nhánh/commit gốc để tính scope ở review/test/pr (vd origin/main). Bỏ trống thì tự dò.'),
         },
-        required: ['workspace_root', 'task_folder'],
+        required: ['task_folder'],
       },
     },
     {
@@ -111,7 +111,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
           task_folder: taskProp,
           base_ref: baseRefProp('Nhánh/commit gốc để so (vd origin/main). Bỏ trống thì tự dò; không dò được thì chỉ xét thay đổi chưa commit.'),
         },
-        required: ['workspace_root', 'task_folder'],
+        required: ['task_folder'],
       },
     },
     {
@@ -120,7 +120,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
       inputSchema: {
         type: 'object',
         properties: { workspace_root: workspaceProp, task_folder: taskProp },
-        required: ['workspace_root', 'task_folder'],
+        required: ['task_folder'],
       },
     },
     {
@@ -129,7 +129,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
       inputSchema: {
         type: 'object',
         properties: { workspace_root: workspaceProp, task_folder: taskProp },
-        required: ['workspace_root', 'task_folder'],
+        required: ['task_folder'],
       },
     },
     {
@@ -138,7 +138,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
       inputSchema: {
         type: 'object',
         properties: { workspace_root: workspaceProp },
-        required: ['workspace_root'],
+        required: [],
       },
     },
   ];
@@ -155,7 +155,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
             since: { type: 'string', description: 'Chỉ tính task có hoạt động từ ngày này (YYYY-MM-DD). Bỏ trống = mọi task.' },
             date: { type: 'string', description: 'Tên thư mục retro (YYYY-MM-DD). Bỏ trống = hôm nay.' },
           },
-          required: ['workspace_root'],
+          required: [],
         },
       },
       {
@@ -167,7 +167,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
             workspace_root: workspaceProp,
             retro_folder: { type: 'string', description: `Thư mục retro, vd ${pack.retro.root}/2026-10-08.` },
           },
-          required: ['workspace_root', 'retro_folder'],
+          required: ['retro_folder'],
         },
       }
     );
@@ -182,7 +182,9 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
       const taskDir = pack.resolveTaskDir(workspace_root, task_folder);
       const taskRef = relativePosix(workspace_root, taskDir) || toPosix(task_folder);
       const rules = kitDir(workspace_root, 'rules');
+      const templates = kitDir(workspace_root, 'templates');
       const briefing = modeBriefing({
+        templatesDir: templates.dir,
         taskDir,
         taskRef,
         command,
@@ -340,8 +342,20 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
     const prefix = `${m.toolPrefix}_`;
     const handler = name.startsWith(prefix) ? handlers[name.slice(prefix.length)] : undefined;
     if (!handler) return textResult(`Tool không tồn tại: ${name}`, true);
+    // Model hay gọi tool trước khi nạp schema, nên tham số có thể rỗng: mặc định workspace_root
+    // là thư mục dự án (server chạy tại đó), và báo rõ tham số bắt buộc còn thiếu.
+    const def = tools.find((t) => t.name === name);
+    const input = { ...(args ?? {}) };
+    if (def?.inputSchema?.properties?.workspace_root && !input.workspace_root) {
+      input.workspace_root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+    }
+    const missing = (def?.inputSchema?.required || []).filter((k) => input[k] === undefined || input[k] === '');
+    if (missing.length) {
+      const describe = (k) => `${k} (${def.inputSchema.properties[k]?.description || ''})`;
+      return textResult(`Thiếu tham số bắt buộc của ${name}: ${missing.map(describe).join('; ')}.`, true);
+    }
     try {
-      return handler(args ?? {});
+      return handler(input);
     } catch (err) {
       return textResult(`Lỗi khi chạy ${name}: ${err.message}`, true);
     }

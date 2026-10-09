@@ -33482,7 +33482,7 @@ function readIfExists(p) {
 }
 function createModeBriefing(pack) {
   const statusName = path6.posix.basename(pack.statusFile);
-  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint, workspaceRoot }) {
+  return function modeBriefing2({ taskDir, taskRef, command, rulesDir, rulesLabel, newTaskHint, finishHint, workspaceRoot, templatesDir }) {
     const lines = [];
     const statusPath = path6.join(taskDir, pack.statusFile);
     if (!fs5.existsSync(statusPath)) {
@@ -33512,9 +33512,32 @@ function createModeBriefing(pack) {
       const agent = pack.agentFor[command];
       lines.push("", `Agent \u0111\u1EA3m nh\u1EADn: ${agent ? agent : "main thread (inline)"}`);
       lines.push("", "Artifact b\u1EAFt bu\u1ED9c khi k\u1EBFt th\xFAc mode (t\u01B0\u01A1ng \u0111\u1ED1i task folder):");
-      for (const rel of pack.requiredArtifacts[command]) lines.push(`- ${rel}`);
+      const embedded = [];
+      for (const rel of pack.requiredArtifacts[command]) {
+        if (fs5.existsSync(path6.join(taskDir, rel))) {
+          lines.push(`- ${rel} (\u0111\xE3 c\xF3)`);
+          continue;
+        }
+        const template = templatesDir ? path6.join(templatesDir, rel) : "";
+        if (!template || !fs5.existsSync(template)) {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3)`);
+          continue;
+        }
+        const fromRoot = workspaceRoot ? path6.relative(path6.resolve(workspaceRoot), template) : "";
+        const insideWorkspace = Boolean(fromRoot) && !fromRoot.startsWith("..") && !path6.isAbsolute(fromRoot);
+        if (insideWorkspace) {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3 \u2014 t\u1EA1o t\u1EEB template ${relativePosix(workspaceRoot, template)}, gi\u1EEF nguy\xEAn ti\xEAu \u0111\u1EC1 v\xE0 t\xEAn c\u1ED9t)`);
+        } else {
+          lines.push(`- ${rel} (ch\u01B0a c\xF3 \u2014 t\u1EA1o t\u1EEB template in b\xEAn d\u01B0\u1EDBi, gi\u1EEF nguy\xEAn ti\xEAu \u0111\u1EC1 v\xE0 t\xEAn c\u1ED9t)`);
+          embedded.push(rel);
+        }
+      }
+      lines.push(`Khi k\u1EBFt th\xFAc: \u0111\u1EB7t current_mode: ${entry.mode} trong ${statusName}.`);
       lines.push(pack.readInputsHint);
       lines.push(finishHint);
+      for (const rel of embedded) {
+        lines.push("", `=== TEMPLATE ${rel} ===`, readIfExists(path6.join(templatesDir, rel)).trim());
+      }
       lines.push("", `=== RULE \xC1P D\u1EE4NG CHO ${pack.label(command)} (ngu\u1ED3n: ${rulesLabel}) \u2014 kh\xF4ng c\u1EA7n \u0111\u1ECDc l\u1EA1i file rule ===`);
       for (const file2 of pack.rulesFor(command, data)) {
         const body = readIfExists(path6.join(rulesDir, file2)).trim();
@@ -33557,7 +33580,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
     const match = readIfExists2(path7.join(taskDir, pack.statusFile)).match(nextPromptRe);
     return match ? match[1].trim() : "";
   }
-  const workspaceProp = { type: "string", description: "\u0110\u01B0\u1EDDng d\u1EABn tuy\u1EC7t \u0111\u1ED1i t\u1EDBi repo d\u1EF1 \xE1n." };
+  const workspaceProp = { type: "string", description: "\u0110\u01B0\u1EDDng d\u1EABn tuy\u1EC7t \u0111\u1ED1i t\u1EDBi repo d\u1EF1 \xE1n. B\u1ECF tr\u1ED1ng: th\u01B0 m\u1EE5c d\u1EF1 \xE1n \u0111ang m\u1EDF." };
   const taskProp = { type: "string", description: m2.taskPropDescription };
   const baseRefProp = (description) => ({ type: "string", description });
   const tools2 = [
@@ -33571,7 +33594,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
           task_folder: taskProp,
           mode: { type: "string", description: `Mode mu\u1ED1n ch\u1EA1y: ${pack.commands.join(", ")}.` }
         },
-        required: ["workspace_root", "task_folder", "mode"]
+        required: ["task_folder", "mode"]
       }
     },
     {
@@ -33583,7 +33606,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
           workspace_root: workspaceProp,
           task_name: { type: "string", description: m2.taskNameDescription }
         },
-        required: ["workspace_root", "task_name"]
+        required: ["task_name"]
       }
     },
     {
@@ -33592,7 +33615,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
       inputSchema: {
         type: "object",
         properties: { workspace_root: workspaceProp, task_folder: taskProp },
-        required: ["workspace_root", "task_folder"]
+        required: ["task_folder"]
       }
     },
     {
@@ -33605,7 +33628,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
           task_folder: taskProp,
           base_ref: baseRefProp("Nh\xE1nh/commit g\u1ED1c \u0111\u1EC3 t\xEDnh scope \u1EDF review/test/pr (vd origin/main). B\u1ECF tr\u1ED1ng th\xEC t\u1EF1 d\xF2.")
         },
-        required: ["workspace_root", "task_folder"]
+        required: ["task_folder"]
       }
     },
     {
@@ -33618,7 +33641,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
           task_folder: taskProp,
           base_ref: baseRefProp("Nh\xE1nh/commit g\u1ED1c \u0111\u1EC3 so (vd origin/main). B\u1ECF tr\u1ED1ng th\xEC t\u1EF1 d\xF2; kh\xF4ng d\xF2 \u0111\u01B0\u1EE3c th\xEC ch\u1EC9 x\xE9t thay \u0111\u1ED5i ch\u01B0a commit.")
         },
-        required: ["workspace_root", "task_folder"]
+        required: ["task_folder"]
       }
     },
     {
@@ -33627,7 +33650,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
       inputSchema: {
         type: "object",
         properties: { workspace_root: workspaceProp, task_folder: taskProp },
-        required: ["workspace_root", "task_folder"]
+        required: ["task_folder"]
       }
     },
     {
@@ -33636,7 +33659,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
       inputSchema: {
         type: "object",
         properties: { workspace_root: workspaceProp, task_folder: taskProp },
-        required: ["workspace_root", "task_folder"]
+        required: ["task_folder"]
       }
     },
     {
@@ -33645,7 +33668,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
       inputSchema: {
         type: "object",
         properties: { workspace_root: workspaceProp },
-        required: ["workspace_root"]
+        required: []
       }
     }
   ];
@@ -33661,7 +33684,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
             since: { type: "string", description: "Ch\u1EC9 t\xEDnh task c\xF3 ho\u1EA1t \u0111\u1ED9ng t\u1EEB ng\xE0y n\xE0y (YYYY-MM-DD). B\u1ECF tr\u1ED1ng = m\u1ECDi task." },
             date: { type: "string", description: "T\xEAn th\u01B0 m\u1EE5c retro (YYYY-MM-DD). B\u1ECF tr\u1ED1ng = h\xF4m nay." }
           },
-          required: ["workspace_root"]
+          required: []
         }
       },
       {
@@ -33673,7 +33696,7 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
             workspace_root: workspaceProp,
             retro_folder: { type: "string", description: `Th\u01B0 m\u1EE5c retro, vd ${pack.retro.root}/2026-10-08.` }
           },
-          required: ["workspace_root", "retro_folder"]
+          required: ["retro_folder"]
         }
       }
     );
@@ -33687,7 +33710,9 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
       const taskDir = pack.resolveTaskDir(workspace_root, task_folder);
       const taskRef = relativePosix(workspace_root, taskDir) || toPosix(task_folder);
       const rules = kitDir(workspace_root, "rules");
+      const templates = kitDir(workspace_root, "templates");
       const briefing = modeBriefing2({
+        templatesDir: templates.dir,
         taskDir,
         taskRef,
         command,
@@ -33829,8 +33854,18 @@ function createMcpTools(pack, { version: version2 = "dev", pluginRoot: pluginRoo
     const prefix = `${m2.toolPrefix}_`;
     const handler = name2.startsWith(prefix) ? handlers[name2.slice(prefix.length)] : void 0;
     if (!handler) return textResult(`Tool kh\xF4ng t\u1ED3n t\u1EA1i: ${name2}`, true);
+    const def = tools2.find((t) => t.name === name2);
+    const input2 = { ...args ?? {} };
+    if (def?.inputSchema?.properties?.workspace_root && !input2.workspace_root) {
+      input2.workspace_root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+    }
+    const missing = (def?.inputSchema?.required || []).filter((k) => input2[k] === void 0 || input2[k] === "");
+    if (missing.length) {
+      const describe3 = (k) => `${k} (${def.inputSchema.properties[k]?.description || ""})`;
+      return textResult(`Thi\u1EBFu tham s\u1ED1 b\u1EAFt bu\u1ED9c c\u1EE7a ${name2}: ${missing.map(describe3).join("; ")}.`, true);
+    }
     try {
-      return handler(args ?? {});
+      return handler(input2);
     } catch (err) {
       return textResult(`L\u1ED7i khi ch\u1EA1y ${name2}: ${err.message}`, true);
     }

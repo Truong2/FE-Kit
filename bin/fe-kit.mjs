@@ -548,13 +548,8 @@ function newTask() {
     process.exit(1);
   }
   const target = path.resolve(argValue('--target', process.cwd()));
-  // Template: override của repo đích nếu có, nếu không thì bản của kit. Logic
-  // tạo file dùng chung với MCP tool `fe_new_task` (packages/validators/src/scaffold.mjs).
-  const templatesDir = [
-    path.join(target, '.frontend-delivery', 'templates'),
-    path.join(kitRoot, 'templates'),
-    path.join(kitRoot, '.frontend-delivery', 'templates'),
-  ].find((dir) => fs.existsSync(dir));
+  // Logic tạo file dùng chung với MCP tool `fe_new_task` (packages/validators/src/scaffold.mjs).
+  const templatesDir = templatesDirFor(target);
   if (!templatesDir) {
     console.error('Không tìm thấy thư mục templates (.frontend-delivery/templates). Chạy fe-kit init trước.');
     process.exit(1);
@@ -788,6 +783,15 @@ function lastModeRun(taskDir, command) {
   return { startedAt: Date.parse(records[start].ts), failedEnds };
 }
 
+/** Template artifact: override của repo đích nếu có, nếu không thì bản của kit. */
+function templatesDirFor(target) {
+  return [
+    path.join(target, '.frontend-delivery', 'templates'),
+    path.join(kitRoot, 'templates'),
+    path.join(kitRoot, '.frontend-delivery', 'templates'),
+  ].find((dir) => fs.existsSync(dir));
+}
+
 function rulesDirFor(target) {
   const project = path.join(target, '.frontend-delivery', 'rules');
   if (fs.existsSync(project)) return { dir: project, label: '.frontend-delivery/rules của repo' };
@@ -820,6 +824,7 @@ function modeBegin({ target, taskDir, taskRef, command }) {
     newTaskHint: `Chạy node bin/fe-kit.mjs new-task ${path.basename(taskDir)} để tạo task từ template, rồi chạy lại: node bin/fe-kit.mjs mode begin ${taskRef} ${command}`,
     finishHint: `Trước khi kết thúc: cập nhật tracking/workflow-status.md rồi chạy node bin/fe-kit.mjs mode end ${taskRef} ${command}.`,
     workspaceRoot: target,
+    templatesDir: templatesDirFor(target),
   });
   console.log(briefing.text);
   if (briefing.entry) {

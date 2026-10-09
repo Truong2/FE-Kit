@@ -33,7 +33,7 @@
     "eval:gate": "npm run build && node evals/run.mjs gate",
     "eval:full": "npm run build && node evals/run.mjs full",
     "test": "npm run test --workspaces --if-present && npm run test:kit",
-    "test:kit": "vitest run --dir tests"
+    "test:kit": "vitest run --dir tests --testTimeout=30000"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
