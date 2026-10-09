@@ -22800,6 +22800,7 @@ function summarizeRunLog(records, { since } = {}) {
     denials: {},
     codes: {},
     actors: {},
+    kits: {},
     overrides: 0,
     approvals: 0,
     abandoned: 0,
@@ -22809,6 +22810,7 @@ function summarizeRunLog(records, { since } = {}) {
     if (since && String(r.ts) < since) continue;
     s.events++;
     if (r.actor) bump(s.actors, r.actor);
+    if (r.kit) bump(s.kits, r.kit);
     const mode = r.mode ? s.modes[r.mode] ||= emptyMode() : null;
     switch (r.event) {
       case "mode_start":
@@ -22911,7 +22913,15 @@ function modeTable(summary) {
   }
   return lines;
 }
-function renderReport(report2, { title, tasksRoot, runLogFile }) {
+function compareVersions(a, b) {
+  const pa = String(a).split(".").map((n) => parseInt(n, 10) || 0);
+  const pb = String(b).split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
+  }
+  return 0;
+}
+function renderReport(report2, { title, tasksRoot, runLogFile, currentVersion, updateHint = "" }) {
   const { total } = report2;
   const lines = [`# ${title}`, ""];
   if (report2.since) lines.push(`T\xEDnh t\u1EEB: ${report2.since}`, "");
@@ -22939,6 +22949,12 @@ function renderReport(report2, { title, tasksRoot, runLogFile }) {
     `- Theo actor: ${Object.entries(total.actors).map(([a, n]) => `${a} ${n}`).join(", ") || "\u2014"}`
   );
   if (report2.skipped) lines.push(`- D\xF2ng run-log h\u1ECFng ho\u1EB7c sai version, \u0111\xE3 b\u1ECF qua: ${report2.skipped}`);
+  const kits = Object.entries(total.kits || {}).sort(([a], [b]) => compareVersions(a, b));
+  if (kits.length) lines.push(`- Phi\xEAn b\u1EA3n kit trong run-log: ${kits.map(([v, n]) => `${v} (${n})`).join(", ")}`);
+  const older = currentVersion ? kits.filter(([v]) => compareVersions(v, currentVersion) < 0).map(([v]) => v) : [];
+  if (older.length) {
+    lines.push("", `> C\u1EA3nh b\xE1o: c\xF3 phi\xEAn ch\u1EA1y b\u1EB1ng b\u1EA3n ${older.join(", ")}, c\u0169 h\u01A1n b\u1EA3n hi\u1EC7n t\u1EA1i ${currentVersion}. ${updateHint}`.trimEnd());
+  }
   if (report2.tasks.length > 1) {
     lines.push("", "## Theo task", "", "| Task | S\u1EF1 ki\u1EC7n | L\u01B0\u1EE3t ho\xE0n t\u1EA5t | Pass ngay l\u1EA7n \u0111\u1EA7u | V\xF2ng b\u1ECB ch\u1EB7n |", "|---|---|---|---|---|");
     for (const { task, summary } of report2.tasks) {
@@ -24827,8 +24843,14 @@ var modeBriefing = createModeBriefing(fePack);
 function buildReport2({ repoRoot, task, since }) {
   return buildReport({ repoRoot, tasksRoot: TASKS_ROOT, runLogFile: RUNLOG_FILE, task, since });
 }
-function renderReport2(report2) {
-  return renderReport(report2, { title: "B\xE1o c\xE1o run-log FE-Kit", tasksRoot: TASKS_ROOT, runLogFile: RUNLOG_FILE });
+function renderReport2(report2, { currentVersion } = {}) {
+  return renderReport(report2, {
+    title: "B\xE1o c\xE1o run-log FE-Kit",
+    tasksRoot: TASKS_ROOT,
+    runLogFile: RUNLOG_FILE,
+    currentVersion,
+    updateHint: "C\u1EADp nh\u1EADt plugin: `claude plugin marketplace update frontend-delivery` r\u1ED3i `claude plugin update fe@frontend-delivery`, m\u1EDF phi\xEAn m\u1EDBi."
+  });
 }
 
 // packages/pack-fe/src/fe-checks.mjs
@@ -25523,6 +25545,35 @@ async function init() {
   console.log("Installed agent targets: " + agentList(agents));
   console.log("Next: edit docs/frontend-context/*.md and inspect .frontend-delivery/rules/, then run: node bin/fe-kit.mjs new-task FE-123-name --target <repo>");
 }
+function missingCommandPermissions(target) {
+  let scripts;
+  try {
+    scripts = JSON.parse(fs11.readFileSync(path12.join(target, "package.json"), "utf8")).scripts || {};
+  } catch {
+    return [];
+  }
+  const commands = ["test", "typecheck", "build", "lint"].filter((s) => scripts[s]).map((s) => s === "test" ? "npm test" : `npm run ${s}`);
+  const allow = [];
+  for (const file2 of ["settings.json", "settings.local.json"]) {
+    try {
+      allow.push(...JSON.parse(fs11.readFileSync(path12.join(target, ".claude", file2), "utf8")).permissions?.allow || []);
+    } catch {
+    }
+  }
+  const escape = (s) => s.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+  const covered = (tool, cmd) => allow.some((rule) => {
+    if (rule === tool) return true;
+    const m2 = String(rule).match(/^(\w+)\((.*)\)$/);
+    if (!m2 || m2[1] !== tool) return false;
+    const pattern = m2[2].replace(/:\*$/, "*");
+    return new RegExp("^" + pattern.split("*").map(escape).join(".*") + "$").test(cmd);
+  });
+  const missing = [];
+  for (const tool of ["Bash", "PowerShell"]) {
+    for (const cmd of commands) if (!covered(tool, cmd)) missing.push(`${tool}(${cmd}:*)`);
+  }
+  return missing;
+}
 function doctor() {
   const target = path12.resolve(argValue("--target", process.cwd()));
   const strict = args.includes("--strict");
@@ -25578,6 +25629,13 @@ function doctor() {
     for (const rel of legacyClaudeCopies(target)) {
       console.log("TR\xD9NG " + rel + " \u2014 b\u1EA3n copy v1.x, xo\xE1 \u0111i \u0111\u1EC3 kh\xF4ng tr\xF9ng v\u1EDBi plugin");
       ok = false;
+    }
+    const missing = missingCommandPermissions(target);
+    if (missing.length) {
+      console.log(
+        "L\u01AFU \xDD quy\u1EC1n ch\u1EA1y l\u1EC7nh: agent test/review c\u1EA7n ch\u1EA1y l\u1EC7nh c\u1EE7a d\u1EF1 \xE1n nh\u01B0ng .claude/settings*.json ch\u01B0a cho ph\xE9p (tr\xEAn Windows Claude Code d\xF9ng tool PowerShell). N\u1EBFu team \u0111\u1ED3ng \xFD, th\xEAm v\xE0o permissions.allow:"
+      );
+      console.log(JSON.stringify({ permissions: { allow: missing } }, null, 2));
     }
   }
   if (!ok) {
@@ -25907,7 +25965,7 @@ function report() {
   const task = args[1] && !args[1].startsWith("--") ? resolveTask(args[1], target) : void 0;
   const result = buildReport2({ repoRoot: target, task, since: argValueFlexible("--since", "") || void 0 });
   if (args.includes("--json")) console.log(JSON.stringify(result, null, 2));
-  else process.stdout.write(renderReport2(result));
+  else process.stdout.write(renderReport2(result, { currentVersion: readKitVersion() }));
 }
 function retro() {
   const target = path12.resolve(argValue("--target", process.cwd()));

@@ -215,4 +215,10 @@ node bin/fe-kit.mjs retro --write                 # số liệu cho /fe:retro
 | `FE_KIT_BASH_GUARD` | `warn` (mặc định), `off` | Cảnh báo khi agent không phải developer ghi file qua shell |
 | `FE_KIT_RUNLOG` | `off` | Tắt ghi run-log. CLI cũng không ghi khi `CI=true` hoặc có `--no-log` |
 
+## Trước khi team dùng
+
+- **Quyền chạy lệnh:** agent cần chạy thật `npm test`/`typecheck`/`build`. Trên Windows Claude Code dùng tool PowerShell, nên cần cho phép cả `Bash(...)` và `PowerShell(...)`. `node bin/fe-kit.mjs doctor` in đoạn `permissions.allow` còn thiếu để team tự thêm. Chi tiết: [INSTALL.md](INSTALL.md#quyền-chạy-lệnh-của-dự-án).
+- **Mỗi task một nhánh:** làm thẳng trên `main` thì scope diff không thấy thay đổi đã commit; kit cảnh báo khi gặp trường hợp này.
+- **Cập nhật plugin:** plugin không tự lên bản mới. `fe-kit report` cảnh báo khi run-log có phiên chạy bằng bản cũ.
+
 Ghi chú v1.0.0: Câu hỏi blocking/open trong `planning/questions.md` sẽ chặn `FE cook`; `workflow-status.md` bắt buộc route sang `FE input-sync` cho tới khi câu trả lời được đồng bộ vào questions/plan/checklist và `questions_resolution_gate_status: passed`. Từ v2.0.0 gate này còn được thực thi bằng `fe_begin_mode` và hook. Xem `CHANGELOG.md`.

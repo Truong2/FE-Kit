@@ -33165,6 +33165,7 @@ function summarizeRunLog(records, { since } = {}) {
     denials: {},
     codes: {},
     actors: {},
+    kits: {},
     overrides: 0,
     approvals: 0,
     abandoned: 0,
@@ -33174,6 +33175,7 @@ function summarizeRunLog(records, { since } = {}) {
     if (since && String(r.ts) < since) continue;
     s.events++;
     if (r.actor) bump(s.actors, r.actor);
+    if (r.kit) bump(s.kits, r.kit);
     const mode = r.mode ? s.modes[r.mode] ||= emptyMode() : null;
     switch (r.event) {
       case "mode_start":

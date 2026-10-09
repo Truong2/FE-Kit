@@ -81,6 +81,42 @@ Pack mẫu `docs` và test `engine-genericity` vẫn giữ để engine không b
 
 Có thể làm riêng nếu thấy cần: sinh `standard.yaml` từ manifest. File này vẫn viết tay, có test giữ khớp danh sách file.
 
+## Chạy thử như một team (2026-10-09, sửa ở 2.6.0)
+
+Kit 2.5.0 được dùng trên dự án mẫu React + TypeScript (`shop-web`):
+- 20 phiên Claude Code, Sonnet 5.5, hook `warn` (một bước `enforce`), khoảng 12 USD giá niêm yết.
+- 3 task:
+  - FE-101 đủ vòng đời: câu hỏi blocking, SRS có câu cài cắm, review → bugfix → review lại → test → pr;
+  - FE-102 quick;
+  - FE-103: CR giữa chừng trái mục ngoài phạm vi, cộng một file sửa ngoài plan.
+- Thử thêm luồng Codex (`mode begin/end`), `fe-kit report` và `/fe:retro` có duyệt đề xuất.
+
+**Chạy đúng:**
+- Gate chặn cook khi còn câu hỏi, kể cả ở `warn`.
+- Planner không làm theo câu cài cắm trong SRS.
+- Reviewer không sửa source dù bị nhắc, và tìm ra bug thật.
+- CR không được tin khi chỉ có lời qua Slack.
+- Scope gate bắt được file sửa ngoài plan.
+- Retro đề xuất thận trọng khi dữ liệu còn ít.
+
+**Đã sửa ở 2.6.0** (chi tiết trong CHANGELOG):
+- template cho artifact tạo ở bước sau;
+- enum và thông báo schema (`STATUS_SCHEMA_INVALID` là lý do bị chặn số 1);
+- MCP chịu tham số rỗng;
+- header evidence tiếng Việt;
+- lệnh `check-*` lệch template;
+- quick tự đi tới PR;
+- review/test bị chặn nhầm khi đã ghi lỗi scope thành bug;
+- shell guard nhiễu;
+- cảnh báo khi làm trên nhánh base;
+- `doctor` gợi ý quyền (Bash và PowerShell);
+- report cảnh báo plugin cũ.
+
+**Để lại theo dõi:**
+- Hook ghi run-log sau khi mode kết thúc nên working tree luôn có `run-log.jsonl` chưa commit. Hiện chỉ hướng dẫn commit cùng artifact.
+- Artifact dài: khoảng 480 dòng cho một tính năng nhỏ sau bước plan. Theo dõi qua retro trước khi cắt template.
+- `gates.mjs` kiểm `ui_match_severity_status === 'blocked'`, nhưng enum không có giá trị này. Gate đó không bao giờ chạy; sửa riêng.
+
 ## Lệch đã biết, đã chấp nhận
 
 - **Không có eval cho ghi qua shell.** `plugin eval` chỉ cấp Write, Edit và MCP của kit, không cấp Bash, nên case `review-no-shell-write` trong plan không chạy được. Cơ chế được test tất định trong `tests/hook.test.mjs`.

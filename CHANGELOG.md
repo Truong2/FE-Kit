@@ -5,9 +5,38 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
-## [Chưa phát hành]
+## [2.6.0] — 2026-10-09
 
-### Sửa
+Sửa các vấn đề tìm ra khi chạy thử kit 2.5.0 như một team trên dự án mẫu React + TypeScript: 20 phiên Claude Code thật, 3 task (đủ vòng đời, quick, CR giữa chừng và sửa ngoài scope), luồng Codex, report và retro. Quy trình, gate và phân vai đã chạy đúng; các thay đổi dưới đây bỏ những chỗ báo lỗi nhầm và tốn vòng.
+
+### Có thể ảnh hưởng repo dự án
+
+- `FE quick` giờ đi thẳng tới PR: cuối lượt phải có `output/review-report.md` (tự review) và `output/test-summary.md` (lệnh đã chạy thật), cùng bảng file ngắn trong plan. Task quick dở dang từ bản cũ sẽ bị báo thiếu hai file này khi kết thúc mode.
+- `workflow-status.md` nhận thêm giá trị: `review_status: needs_recheck` (bugfix đã sửa, chờ review lại), `not_required` cho `review_bug_status` và `ui_match_severity_status`. Không xoá giá trị nào.
+- Thông báo lỗi schema viết tiếng Việt, nêu tên trường, giá trị đang ghi và các giá trị hợp lệ. Template `workflow-status.md` ghi giá trị hợp lệ ở comment cạnh từng trường enum.
+- Mode review/test ghi file ngoài plan thành bug và route sang `bugfix`/`input-sync` không còn bị chặn khi kết thúc mode (chỉ cảnh báo); gate PR vẫn chặn như cũ.
+
+### Sửa sau buổi chạy thử
+
+- Nội dung mở mode (`fe_begin_mode`, `fe-kit mode begin`) ghi mỗi artifact bắt buộc là đã có hay chưa có; artifact chưa có kèm template (đường dẫn nếu template nằm trong repo, nguyên văn nếu chỉ có trong cache plugin), và nêu giá trị `current_mode` phải đặt. Trước đây agent tự đặt định dạng cho input-sync-report, review-bugs, test-summary… nên gate báo lỗi, và `STATUS_SCHEMA_INVALID` là lý do bị chặn nhiều nhất (8 lần).
+- Tool MCP mặc định `workspace_root` là thư mục dự án và báo rõ tham số bắt buộc còn thiếu, thay cho lỗi `The "paths[0]" argument must be of type string` khi model gọi tool trước khi nạp schema.
+- Bảng Command evidence log nhận tiêu đề tiếng Việt (`Lệnh`, mục `Nhật ký lệnh`); trước đây dòng tiêu đề bị đọc thành một lệnh thiếu dữ liệu.
+- `check-plan-architecture`, `check-srs-reference` kiểm theo tiêu đề của template hiện tại (plan theo template cũ vẫn qua). `check-plan-checklist-sync` tính file đã verify qua mã ở cột "Checklist ref" và bỏ qua dòng có điều kiện hoặc "không sửa".
+- Shell guard không cảnh báo lệnh chỉ ghi artifact của kit.
+- Scope diff cảnh báo khi HEAD chưa có commit nào so với base (làm thẳng trên nhánh base thì thay đổi đã commit không lộ ra).
+- `fe-kit doctor` gợi ý `permissions.allow` còn thiếu cho `npm test`/`typecheck`/`build`/`lint`, cả `Bash` lẫn `PowerShell`; không tự ghi, không làm `--strict` fail.
+- `fe-kit report` liệt kê phiên bản kit trong run-log và cảnh báo khi có phiên chạy bằng plugin cũ hơn CLI.
+- Giao thức agent: giữ nguyên tiêu đề và tên cột của template, viết lại file một lần thay vì nhiều lần sửa nhỏ, chạy từng lệnh shell một tại gốc dự án.
+- Test chạy tiến trình con (`tests/`) có trần 30 giây; test MCP đợi server thoát trước khi dọn thư mục (Windows còn khoá thư mục).
+
+### Golden chụp lại có chủ đích
+
+- Output `check-*` trên fixture tối thiểu (báo theo tiêu đề template mới).
+- Chữ của thông báo `STATUS_SCHEMA_INVALID`.
+- `tools/list` của MCP (`workspace_root` không còn bắt buộc), nội dung `begin_mode` và `mode begin` (trạng thái artifact, dòng `current_mode`, rule output của quick).
+- Hằng số của quick (artifact, thứ tự `next`) và export `onBaseWarning`.
+
+### Sửa trước đó trong bản này
 
 - `check-input-sync-report` kiểm theo template hiện tại (4 mục: Nguồn input, Kết quả phân tích impact, File đã cập nhật, Kết luận sync). Trước đây gate vẫn đòi 11 mục của template cũ nên report viết đúng template luôn bị báo lỗi. Gate mới còn kiểm ba dòng đã được chọn giá trị, không để trống hay để nguyên chuỗi lựa chọn: `Loại input`, `UI/Figma`, `Impact`. Report viết theo template cũ (`# Báo cáo đồng bộ input`) vẫn được kiểm như trước, nên repo dự án không phải viết lại report cũ.
 

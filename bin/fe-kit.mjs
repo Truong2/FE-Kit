@@ -475,6 +475,42 @@ async function init() {
   console.log('Next: edit docs/frontend-context/*.md and inspect .frontend-delivery/rules/, then run: node bin/fe-kit.mjs new-task FE-123-name --target <repo>');
 }
 
+/**
+ * Quy tắc `permissions.allow` còn thiếu để agent chạy được test/typecheck/build/lint của dự án,
+ * cho cả tool Bash và PowerShell. Nhận cú pháp `Tool(lệnh:*)` (tiền tố) và `*` (wildcard).
+ */
+function missingCommandPermissions(target) {
+  let scripts;
+  try {
+    scripts = JSON.parse(fs.readFileSync(path.join(target, 'package.json'), 'utf8')).scripts || {};
+  } catch {
+    return [];
+  }
+  const commands = ['test', 'typecheck', 'build', 'lint'].filter((s) => scripts[s]).map((s) => (s === 'test' ? 'npm test' : `npm run ${s}`));
+  const allow = [];
+  for (const file of ['settings.json', 'settings.local.json']) {
+    try {
+      allow.push(...(JSON.parse(fs.readFileSync(path.join(target, '.claude', file), 'utf8')).permissions?.allow || []));
+    } catch {
+      /* không có file hoặc JSON hỏng: coi như chưa cho phép gì */
+    }
+  }
+  const escape = (s) => s.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+  const covered = (tool, cmd) =>
+    allow.some((rule) => {
+      if (rule === tool) return true;
+      const m = String(rule).match(/^(\w+)\((.*)\)$/);
+      if (!m || m[1] !== tool) return false;
+      const pattern = m[2].replace(/:\*$/, '*');
+      return new RegExp('^' + pattern.split('*').map(escape).join('.*') + '$').test(cmd);
+    });
+  const missing = [];
+  for (const tool of ['Bash', 'PowerShell']) {
+    for (const cmd of commands) if (!covered(tool, cmd)) missing.push(`${tool}(${cmd}:*)`);
+  }
+  return missing;
+}
+
 function doctor() {
   const target = path.resolve(argValue('--target', process.cwd()));
   const strict = args.includes('--strict');
@@ -528,6 +564,15 @@ function doctor() {
     for (const rel of legacyClaudeCopies(target)) {
       console.log('TRÙNG ' + rel + ' — bản copy v1.x, xoá đi để không trùng với plugin');
       ok = false;
+    }
+    // Chỉ gợi ý, không tự ghi và không làm --strict fail: mở quyền là quyết định của team.
+    const missing = missingCommandPermissions(target);
+    if (missing.length) {
+      console.log(
+        'LƯU Ý quyền chạy lệnh: agent test/review cần chạy lệnh của dự án nhưng .claude/settings*.json chưa cho phép ' +
+          '(trên Windows Claude Code dùng tool PowerShell). Nếu team đồng ý, thêm vào permissions.allow:'
+      );
+      console.log(JSON.stringify({ permissions: { allow: missing } }, null, 2));
     }
   }
   if (!ok) {
@@ -869,7 +914,7 @@ function report() {
   const task = args[1] && !args[1].startsWith('--') ? resolveTask(args[1], target) : undefined;
   const result = buildReport({ repoRoot: target, task, since: argValueFlexible('--since', '') || undefined });
   if (args.includes('--json')) console.log(JSON.stringify(result, null, 2));
-  else process.stdout.write(renderReport(result));
+  else process.stdout.write(renderReport(result, { currentVersion: readKitVersion() }));
 }
 
 /**

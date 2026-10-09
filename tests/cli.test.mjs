@@ -102,6 +102,24 @@ describe('CLI bundle trong repo dự án (không có node_modules)', () => {
     expect(r.status).toBe(0);
   });
 
+  it('doctor gợi ý quyền chạy lệnh của dự án (Bash và PowerShell), không tự ghi và không làm --strict fail', () => {
+    fs.writeFileSync(path.join(target, 'package.json'), JSON.stringify({ scripts: { test: 'vitest run', typecheck: 'tsc --noEmit' } }));
+    const before = read('.claude/settings.json');
+    const r = project('doctor', '--strict');
+    expect(r.status).toBe(0);
+    expect(r.out).toMatch(/LƯU Ý quyền chạy lệnh/);
+    for (const rule of ['Bash(npm test:*)', 'Bash(npm run typecheck:*)', 'PowerShell(npm test:*)', 'PowerShell(npm run typecheck:*)']) {
+      expect(r.out).toContain(rule);
+    }
+    expect(read('.claude/settings.json')).toBe(before);
+
+    // Đã cho phép (cú pháp tiền tố hoặc wildcard) thì không gợi ý nữa.
+    const settings = JSON.parse(before);
+    settings.permissions = { allow: ['Bash(npm test:*)', 'Bash(npm run *)', 'PowerShell(npm test*)', 'PowerShell(npm run typecheck:*)'] };
+    fs.writeFileSync(path.join(target, '.claude', 'settings.json'), JSON.stringify(settings));
+    expect(project('doctor', '--strict').out).not.toMatch(/LƯU Ý quyền chạy lệnh/);
+  });
+
   it('doctor báo bản copy v1.x gây trùng với plugin', () => {
     fs.mkdirSync(path.join(target, '.claude', 'commands', 'fe'), { recursive: true });
     const r = project('doctor', '--strict');

@@ -84,6 +84,20 @@ describe('buildReport / renderReport', () => {
     expect(md).toMatch(/## Theo task/);
   });
 
+  it('run-log có phiên chạy bằng plugin cũ hơn kit hiện tại: liệt kê version và cảnh báo cập nhật', () => {
+    repo = fs.mkdtempSync(path.join(os.tmpdir(), 'fe-report-'));
+    writeLog('FE-1', [ev('mode_start', { mode: 'plan', kit: '2.1.0' }), ev('mode_start', { mode: 'cook', kit: '2.10.0' })]);
+    const report = buildReport({ repoRoot: repo });
+    expect(report.total.kits).toEqual({ '2.1.0': 1, '2.10.0': 1 });
+
+    const md = renderReport(report, { currentVersion: '2.10.0' });
+    expect(md).toMatch(/- Phiên bản kit trong run-log: 2\.1\.0 \(1\), 2\.10\.0 \(1\)/);
+    expect(md).toMatch(/> Cảnh báo: có phiên chạy bằng bản 2\.1\.0, cũ hơn bản hiện tại 2\.10\.0\. Cập nhật plugin: `claude plugin marketplace update frontend-delivery`/);
+    // Cùng bản hiện tại (hoặc không biết bản hiện tại) thì không cảnh báo.
+    expect(renderReport(report, { currentVersion: '2.1.0' })).not.toMatch(/Cảnh báo/);
+    expect(renderReport(report)).not.toMatch(/Cảnh báo/);
+  });
+
   it('một task cụ thể vẫn có mục dù chưa có log', () => {
     repo = fs.mkdtempSync(path.join(os.tmpdir(), 'fe-report-'));
     const report = buildReport({ repoRoot: repo, task: 'docs/frontend-tasks/FE-9' });

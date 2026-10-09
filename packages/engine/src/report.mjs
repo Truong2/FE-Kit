@@ -32,6 +32,7 @@ export function summarizeRunLog(records, { since } = {}) {
     denials: {},
     codes: {},
     actors: {},
+    kits: {},
     overrides: 0,
     approvals: 0,
     abandoned: 0,
@@ -41,6 +42,7 @@ export function summarizeRunLog(records, { since } = {}) {
     if (since && String(r.ts) < since) continue;
     s.events++;
     if (r.actor) bump(s.actors, r.actor);
+    if (r.kit) bump(s.kits, r.kit);
     const mode = r.mode ? (s.modes[r.mode] ||= emptyMode()) : null;
     switch (r.event) {
       case 'mode_start':
@@ -162,12 +164,23 @@ function modeTable(summary) {
   return lines;
 }
 
+/** So sánh version dạng `x.y.z` (phần không phải số coi như 0). */
+export function compareVersions(a, b) {
+  const pa = String(a).split('.').map((n) => parseInt(n, 10) || 0);
+  const pb = String(b).split('.').map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
+  }
+  return 0;
+}
+
 /**
  * Báo cáo Markdown tiếng Việt.
  * @param {object} report kết quả `buildReport`
- * @param {{ title: string, tasksRoot: string, runLogFile: string }} opts
+ * @param {{ title: string, tasksRoot: string, runLogFile: string, currentVersion?: string, updateHint?: string }} opts
+ *   `currentVersion`: version của kit đang chạy báo cáo; run-log có bản cũ hơn thì cảnh báo kèm `updateHint`.
  */
-export function renderReport(report, { title, tasksRoot, runLogFile }) {
+export function renderReport(report, { title, tasksRoot, runLogFile, currentVersion, updateHint = '' }) {
   const { total } = report;
   const lines = [`# ${title}`, ''];
   if (report.since) lines.push(`Tính từ: ${report.since}`, '');
@@ -198,6 +211,12 @@ export function renderReport(report, { title, tasksRoot, runLogFile }) {
     `- Theo actor: ${Object.entries(total.actors).map(([a, n]) => `${a} ${n}`).join(', ') || '—'}`
   );
   if (report.skipped) lines.push(`- Dòng run-log hỏng hoặc sai version, đã bỏ qua: ${report.skipped}`);
+  const kits = Object.entries(total.kits || {}).sort(([a], [b]) => compareVersions(a, b));
+  if (kits.length) lines.push(`- Phiên bản kit trong run-log: ${kits.map(([v, n]) => `${v} (${n})`).join(', ')}`);
+  const older = currentVersion ? kits.filter(([v]) => compareVersions(v, currentVersion) < 0).map(([v]) => v) : [];
+  if (older.length) {
+    lines.push('', `> Cảnh báo: có phiên chạy bằng bản ${older.join(', ')}, cũ hơn bản hiện tại ${currentVersion}. ${updateHint}`.trimEnd());
+  }
 
   if (report.tasks.length > 1) {
     lines.push('', '## Theo task', '', '| Task | Sự kiện | Lượt hoàn tất | Pass ngay lần đầu | Vòng bị chặn |', '|---|---|---|---|---|');

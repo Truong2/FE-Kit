@@ -145,6 +145,28 @@ Plugin kèm hook chặn gate lúc chạy (sửa source sai vai, cook khi còn c�
 
 Đặt cho cả team trong `.claude/settings.json` của repo: `"env": { "FE_KIT_HOOKS": "enforce" }`.
 
+### Quyền chạy lệnh của dự án
+
+Agent test, review và quick phải chạy thật `npm test`, `npm run typecheck`, `npm run build` để ghi evidence. Thiếu quyền thì agent bị từ chối và phải ghi "chưa chạy được". Trên Windows, Claude Code chạy lệnh qua tool **PowerShell** chứ không phải Bash, nên cần cho phép cả hai.
+
+`node bin/fe-kit.mjs doctor` đọc script trong `package.json` và in đoạn `permissions.allow` còn thiếu. Kit không tự ghi: team xem rồi tự thêm vào `.claude/settings.json`, ví dụ:
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(npm test:*)", "Bash(npm run typecheck:*)", "Bash(npm run build:*)", "PowerShell(npm test:*)", "PowerShell(npm run typecheck:*)", "PowerShell(npm run build:*)"]
+  }
+}
+```
+
+### Làm trên nhánh tính năng
+
+Scope diff so file đã sửa với bảng file của plan, tính từ nhánh base (`origin/main`, `main`…). Làm thẳng trên nhánh base thì thay đổi đã commit không lộ ra, và kit sẽ cảnh báo "HEAD chưa có commit nào so với base". Mỗi task nên làm trên một nhánh riêng, ví dụ `feat/FE-123-ten-task`.
+
+### Biết đang chạy bản plugin nào
+
+Plugin không tự lên bản mới. `node bin/fe-kit.mjs report` liệt kê các phiên bản kit xuất hiện trong run-log và cảnh báo khi có phiên chạy bằng bản cũ hơn CLI của repo. Khi đó chạy lệnh cập nhật ở mục [Cập nhật, gỡ, kiểm tra](#cập-nhật-gỡ-kiểm-tra).
+
 ---
 
 ## 2. `fe-kit init` (rule, context, CLI cho CI)

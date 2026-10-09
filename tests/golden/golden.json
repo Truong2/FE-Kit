@@ -17631,7 +17631,7 @@
   },
   "report json": {
    "status": 0,
-   "out": "{\n  \"tasks\": [\n    {\n      \"task\": \"C-ready\",\n      \"summary\": {\n        \"events\": 0,\n        \"modes\": {},\n        \"entryBlocked\": {},\n        \"denials\": {},\n        \"codes\": {},\n        \"actors\": {},\n        \"overrides\": 0,\n        \"approvals\": 0,\n        \"abandoned\": 0,\n        \"validates\": {\n          \"ok\": 0,\n          \"failed\": 0\n        }\n      },\n      \"skipped\": 0\n    }\n  ],\n  \"total\": {\n    \"events\": 0,\n    \"modes\": {},\n    \"entryBlocked\": {},\n    \"denials\": {},\n    \"codes\": {},\n    \"actors\": {},\n    \"overrides\": 0,\n    \"approvals\": 0,\n    \"abandoned\": 0,\n    \"validates\": {\n      \"ok\": 0,\n      \"failed\": 0\n    }\n  },\n  \"skipped\": 0\n}\n"
+   "out": "{\n  \"tasks\": [\n    {\n      \"task\": \"C-ready\",\n      \"summary\": {\n        \"events\": 0,\n        \"modes\": {},\n        \"entryBlocked\": {},\n        \"denials\": {},\n        \"codes\": {},\n        \"actors\": {},\n        \"kits\": {},\n        \"overrides\": 0,\n        \"approvals\": 0,\n        \"abandoned\": 0,\n        \"validates\": {\n          \"ok\": 0,\n          \"failed\": 0\n        }\n      },\n      \"skipped\": 0\n    }\n  ],\n  \"total\": {\n    \"events\": 0,\n    \"modes\": {},\n    \"entryBlocked\": {},\n    \"denials\": {},\n    \"codes\": {},\n    \"actors\": {},\n    \"kits\": {},\n    \"overrides\": 0,\n    \"approvals\": 0,\n    \"abandoned\": 0,\n    \"validates\": {\n      \"ok\": 0,\n      \"failed\": 0\n    }\n  },\n  \"skipped\": 0\n}\n"
   },
   "validate-pr orphans no git": {
    "status": 0,
