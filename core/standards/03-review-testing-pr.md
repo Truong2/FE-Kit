@@ -41,8 +41,8 @@ Critical/High còn open thì block PR.
 Sau mỗi review, `tracking/workflow-status.md` phải update:
 
 - `current_mode: review-mode`
-- `review_status: passed | needs_bugfix | blocked | insufficient_evidence`
-- `review_bug_status: none | open | fixed | waived | blocked`
+- `review_status: passed | needs_bugfix | blocked | insufficient_evidence` (bugfix đặt `needs_recheck` khi đã sửa, chờ review lại)
+- `review_bug_status: none | open | fixed | resolved | closed | waived | blocked` (`not_required` tương đương `none`)
 - `critical_issues_open`
 - `high_issues_open`
 - `medium_issues_open`

@@ -22521,7 +22521,7 @@ var WorkflowStatusSchema = external_exports.object({
   figma_node_matrix_status: SelfReported,
   figma_component_binding_status: SelfReported,
   ui_match_review_status: GateStatus,
-  ui_match_severity_status: external_exports.enum(["unknown", "none", "low", "medium", "high", "critical"]),
+  ui_match_severity_status: external_exports.enum(["unknown", "none", "not_required", "low", "medium", "high", "critical"]),
   // --- Mode output status (suy ra được từ file tồn tại → optional) ---
   input_sync_report_status: SelfReported,
   figma_summary_status: SelfReported,
@@ -22530,13 +22530,15 @@ var WorkflowStatusSchema = external_exports.object({
     "not_started",
     "passed",
     "needs_bugfix",
+    // Bugfix đã sửa xong, chờ review lại (thêm ở v2.6.0).
+    "needs_recheck",
     "blocked",
     "insufficient_evidence",
     "not_required"
   ]),
   review_report_status: SelfReported,
   // 'resolved', 'fixed', 'waived' có trong template/standard từ v1.x nhưng schema thiếu.
-  review_bug_status: external_exports.enum(["none", "open", "blocked", "closed", "resolved", "fixed", "waived"]),
+  review_bug_status: external_exports.enum(["none", "not_required", "open", "blocked", "closed", "resolved", "fixed", "waived"]),
   critical_issues_open: external_exports.number().int().min(0),
   high_issues_open: external_exports.number().int().min(0),
   // Medium/Low tự đếm được từ bảng issue (`countOpenIssuesBySeverity`).
@@ -23486,12 +23488,22 @@ function parseWorkflowStatus(raw) {
   }
   const result = WorkflowStatusSchema.safeParse(frontMatter);
   if (!result.success) {
-    const errors = result.error.issues.map(
-      (issue2) => `workflow-status.md frontmatter \u2014 ${issue2.path.join(".")}: ${issue2.message}`
-    );
+    const errors = result.error.issues.map((issue2) => schemaIssueMessage(issue2, frontMatter));
     return { ok: false, errors };
   }
   return { ok: true, data: result.data, body };
+}
+function schemaIssueMessage(issue2, data) {
+  const field = issue2.path.join(".") || "(frontmatter)";
+  const actual = issue2.path.reduce((o, k) => o == null ? void 0 : o[k], data);
+  const shown = JSON.stringify(actual);
+  if (issue2.code === "invalid_value" && Array.isArray(issue2.values)) {
+    return actual === void 0 ? `workflow-status.md frontmatter \u2014 thi\u1EBFu tr\u01B0\u1EDDng ${field}. Gi\xE1 tr\u1ECB h\u1EE3p l\u1EC7: ${issue2.values.join(" | ")}.` : `workflow-status.md frontmatter \u2014 ${field} = ${shown} kh\xF4ng h\u1EE3p l\u1EC7. Gi\xE1 tr\u1ECB h\u1EE3p l\u1EC7: ${issue2.values.join(" | ")}.`;
+  }
+  if (issue2.code === "invalid_type") {
+    return actual === void 0 ? `workflow-status.md frontmatter \u2014 thi\u1EBFu tr\u01B0\u1EDDng ${field} (ki\u1EC3u ${issue2.expected}).` : `workflow-status.md frontmatter \u2014 ${field} = ${shown} sai ki\u1EC3u, c\u1EA7n ${issue2.expected}.`;
+  }
+  return `workflow-status.md frontmatter \u2014 ${field}: ${issue2.message}`;
 }
 
 // packages/pack-fe/src/manifest.gen.mjs
@@ -24246,7 +24258,7 @@ function evaluateWorkflowGates({ data, body, exists: exists3, read: read3, scope
   const scopeDiff = norm2(data.scope_diff_status);
   const commandEvidence = norm2(data.command_evidence_status);
   const playwrightDiff = norm2(data.playwright_screenshot_diff_status);
-  const reviewRun = exists3("output/review-report.md") || mode === "review-mode" || ["passed", "needs_bugfix", "blocked", "insufficient_evidence"].includes(norm2(data.review_status));
+  const reviewRun = exists3("output/review-report.md") || mode === "review-mode" || ["passed", "needs_bugfix", "needs_recheck", "blocked", "insufficient_evidence"].includes(norm2(data.review_status));
   if (mode === "input-sync-mode" && !exists3("tracking/input-sync-report.md")) {
     fail("ARTIFACT_INPUT_SYNC_REPORT_MISSING", "FE input-sync ph\u1EA3i t\u1EA1o/c\u1EADp nh\u1EADt tracking/input-sync-report.md.");
   }
@@ -24315,7 +24327,7 @@ function evaluateWorkflowGates({ data, body, exists: exists3, read: read3, scope
     else warnings.push(`${message} B\u1EA3ng issue thi\u1EBFu c\u1ED9t ID/Severity/Tr\u1EA1ng th\xE1i n\xEAn ch\u1EC9 c\u1EA3nh b\xE1o.`);
   }
   const openCriticalHigh = computedIssues.confident ? [...computedIssues.openIds.critical, ...computedIssues.openIds.high] : [];
-  if (openCriticalHigh.length && ["none", "closed", "resolved", "fixed", "waived"].includes(norm2(data.review_bug_status))) {
+  if (openCriticalHigh.length && ["none", "not_required", "closed", "resolved", "fixed", "waived"].includes(norm2(data.review_bug_status))) {
     fail(
       "REVIEW_BUG_STATUS_MISMATCH",
       `review_bug_status=${norm2(data.review_bug_status)} nh\u01B0ng c\xF2n issue Critical/High \u0111ang m\u1EDF: ${openCriticalHigh.join(", ")}.`

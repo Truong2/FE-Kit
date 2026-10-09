@@ -297,7 +297,7 @@ export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   const reviewRun =
     exists('output/review-report.md') ||
     mode === 'review-mode' ||
-    ['passed', 'needs_bugfix', 'blocked', 'insufficient_evidence'].includes(norm(data.review_status));
+    ['passed', 'needs_bugfix', 'needs_recheck', 'blocked', 'insufficient_evidence'].includes(norm(data.review_status));
 
   if (mode === 'input-sync-mode' && !exists('tracking/input-sync-report.md')) {
     fail('ARTIFACT_INPUT_SYNC_REPORT_MISSING', 'FE input-sync phải tạo/cập nhật tracking/input-sync-report.md.');
@@ -399,7 +399,7 @@ export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
     else warnings.push(`${message} Bảng issue thiếu cột ID/Severity/Trạng thái nên chỉ cảnh báo.`);
   }
   const openCriticalHigh = computedIssues.confident ? [...computedIssues.openIds.critical, ...computedIssues.openIds.high] : [];
-  if (openCriticalHigh.length && ['none', 'closed', 'resolved', 'fixed', 'waived'].includes(norm(data.review_bug_status))) {
+  if (openCriticalHigh.length && ['none', 'not_required', 'closed', 'resolved', 'fixed', 'waived'].includes(norm(data.review_bug_status))) {
     fail(
       'REVIEW_BUG_STATUS_MISMATCH',
       `review_bug_status=${norm(data.review_bug_status)} nhưng còn issue Critical/High đang mở: ${openCriticalHigh.join(', ')}.`

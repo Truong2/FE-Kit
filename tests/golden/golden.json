@@ -3033,24 +3033,24 @@
    "workflow": {
     "ok": false,
     "errors": [
-     "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+     "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
     ],
     "issues": [
      {
       "code": "STATUS_SCHEMA_INVALID",
-      "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      }
     ]
    },
    "pr": {
     "ok": false,
     "errors": [
-     "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+     "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
     ],
     "issues": [
      {
       "code": "STATUS_SCHEMA_INVALID",
-      "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      }
     ],
     "warnings": []
@@ -3180,12 +3180,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+       "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
       }
      ],
      "errors": [
       "current_mode trong workflow-status.md phải là planning-mode (đang là \"implementation-mode\").",
-      "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      ]
     },
     "cook": {
@@ -3198,12 +3198,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+       "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
       }
      ],
      "errors": [
       "FE cook đang bị gate chặn (Task cần Figma nhưng figma_gate_status=\"pending\".) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: FE figma docs/frontend-tasks/FE-G13",
-      "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      ]
     },
     "review": {
@@ -3220,13 +3220,13 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+       "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
       }
      ],
      "errors": [
       "current_mode trong workflow-status.md phải là review-mode (đang là \"implementation-mode\").",
       "Thiếu artifact bắt buộc của FE review: output/review-report.md",
-      "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      ]
     },
     "pr": {
@@ -3239,12 +3239,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+       "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
       }
      ],
      "errors": [
       "FE pr đang bị gate chặn (review_status=\"not_started\" — cần review passed trước PR.) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: FE review docs/frontend-tasks/FE-G13",
-      "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      ]
     }
    }
@@ -5413,24 +5413,24 @@
    "workflow": {
     "ok": false,
     "errors": [
-     "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+     "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
     ],
     "issues": [
      {
       "code": "STATUS_SCHEMA_INVALID",
-      "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      }
     ]
    },
    "pr": {
     "ok": false,
     "errors": [
-     "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+     "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
     ],
     "issues": [
      {
       "code": "STATUS_SCHEMA_INVALID",
-      "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      }
     ],
     "warnings": []
@@ -5556,12 +5556,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+       "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
       }
      ],
      "errors": [
       "current_mode trong workflow-status.md phải là planning-mode (đang là \"deploy-mode\").",
-      "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      ]
     },
     "cook": {
@@ -5574,12 +5574,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+       "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
       }
      ],
      "errors": [
       "current_mode trong workflow-status.md phải là implementation-mode (đang là \"deploy-mode\").",
-      "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      ]
     },
     "review": {
@@ -5596,13 +5596,13 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+       "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
       }
      ],
      "errors": [
       "current_mode trong workflow-status.md phải là review-mode (đang là \"deploy-mode\").",
       "Thiếu artifact bắt buộc của FE review: output/review-report.md",
-      "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      ]
     },
     "pr": {
@@ -5615,12 +5615,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+       "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
       }
      ],
      "errors": [
       "FE pr đang bị gate chặn (review_status=\"not_started\" — cần review passed trước PR.) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: FE review docs/frontend-tasks/FE-G22",
-      "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      ]
     }
    }
@@ -9221,24 +9221,24 @@
    "workflow": {
     "ok": false,
     "errors": [
-     "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+     "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
     ],
     "issues": [
      {
       "code": "STATUS_SCHEMA_INVALID",
-      "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      }
     ]
    },
    "pr": {
     "ok": false,
     "errors": [
-     "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+     "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
     ],
     "issues": [
      {
       "code": "STATUS_SCHEMA_INVALID",
-      "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      }
     ],
     "warnings": []
@@ -9396,11 +9396,11 @@
      "issues": [
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+       "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
       }
      ],
      "errors": [
-      "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      ]
     },
     "cook": {
@@ -9413,12 +9413,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+       "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
       }
      ],
      "errors": [
       "FE cook đang bị gate chặn (Còn 1 câu hỏi blocking đang mở trong planning/questions.md. build_ready chưa true: plan chưa sẵn sàng để cook. Task cần Figma nhưng figma_gate_status=\"pending\".) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: FE input-sync docs/frontend-tasks/FE-G36 <answer-or-cr>",
-      "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      ]
     },
     "review": {
@@ -9431,12 +9431,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+       "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
       }
      ],
      "errors": [
       "FE review đang bị gate chặn (Còn 1 câu hỏi blocking đang mở trong planning/questions.md.) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: FE input-sync docs/frontend-tasks/FE-G36 <answer-or-cr>",
-      "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      ]
     },
     "pr": {
@@ -9449,12 +9449,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+       "message": "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
       }
      ],
      "errors": [
       "FE pr đang bị gate chặn (Còn 1 câu hỏi blocking đang mở trong planning/questions.md. review_status=\"not_started\" — cần review passed trước PR.) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: FE input-sync docs/frontend-tasks/FE-G36 <answer-or-cr>",
-      "workflow-status.md frontmatter — figma_gate_status: Invalid option: expected one of \"not_started\"|\"in_progress\"|\"documented\"|\"completed\"|\"passed\"|\"failed\"|\"blocked\"|\"not_required\"|\"unknown\"|\"partial\"|\"manual_review\"|\"waived\"|\"substituted\""
+      "workflow-status.md frontmatter — figma_gate_status = \"pending\" không hợp lệ. Giá trị hợp lệ: not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted."
      ]
     }
    }
@@ -11446,24 +11446,24 @@
    "workflow": {
     "ok": false,
     "errors": [
-     "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+     "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
     ],
     "issues": [
      {
       "code": "STATUS_SCHEMA_INVALID",
-      "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      }
     ]
    },
    "pr": {
     "ok": false,
     "errors": [
-     "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+     "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
     ],
     "issues": [
      {
       "code": "STATUS_SCHEMA_INVALID",
-      "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      }
     ],
     "warnings": []
@@ -11623,12 +11623,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+       "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
       }
      ],
      "errors": [
       "current_mode trong workflow-status.md phải là planning-mode (đang là \"deploy-mode\").",
-      "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      ]
     },
     "cook": {
@@ -11641,12 +11641,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+       "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
       }
      ],
      "errors": [
       "FE cook đang bị gate chặn (Còn 1 câu hỏi blocking đang mở trong planning/questions.md. build_ready chưa true: plan chưa sẵn sàng để cook.) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: FE input-sync docs/frontend-tasks/FE-G45 <answer-or-cr>",
-      "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      ]
     },
     "review": {
@@ -11659,12 +11659,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+       "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
       }
      ],
      "errors": [
       "FE review đang bị gate chặn (Còn 1 câu hỏi blocking đang mở trong planning/questions.md.) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: FE input-sync docs/frontend-tasks/FE-G45 <answer-or-cr>",
-      "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      ]
     },
     "pr": {
@@ -11677,12 +11677,12 @@
       },
       {
        "code": "STATUS_SCHEMA_INVALID",
-       "message": "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+       "message": "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
       }
      ],
      "errors": [
       "FE pr đang bị gate chặn (Còn 1 câu hỏi blocking đang mở trong planning/questions.md. review_status=\"not_started\" — cần review passed trước PR.) nên không cần artifact của mode. Giữ nguyên current_mode; chỉ sửa workflow-status.md cho hợp lệ và route sang: FE input-sync docs/frontend-tasks/FE-G45 <answer-or-cr>",
-      "workflow-status.md frontmatter — current_mode: Invalid option: expected one of \"planning-mode\"|\"quick-mode\"|\"input-sync-mode\"|\"figma-extraction-mode\"|\"implementation-mode\"|\"bugfix-mode\"|\"review-mode\"|\"testing-mode\"|\"figma-review-mode\"|\"pr-ready-mode\""
+      "workflow-status.md frontmatter — current_mode = \"deploy-mode\" không hợp lệ. Giá trị hợp lệ: planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode."
      ]
     }
    }

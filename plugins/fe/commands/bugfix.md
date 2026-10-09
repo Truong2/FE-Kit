@@ -22,7 +22,7 @@ Output bắt buộc: `tracking/review-bugs.md` (trạng thái từng bug, file �
 
 Nếu bug làm thay đổi requirement, API, state/store/hook, flow hoặc Figma assumption, chạy `FE input-sync` trước.
 
-Sau bugfix, next thường là `FE review <task-folder>` để kiểm tra lại.
+Sau bugfix, đặt `review_status: needs_recheck` (đã sửa, chờ review lại) và `review_bug_status: fixed`, rồi next là `FE review <task-folder>` để kiểm tra lại. Chỉ review mới đổi `review_status` sang `passed`.
 
 ## Rule và ngôn ngữ output
 

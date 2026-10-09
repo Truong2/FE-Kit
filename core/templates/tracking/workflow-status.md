@@ -2,7 +2,7 @@
 task_id: <TASK_ID>
 status: created
 layout: standard
-current_mode: planning-mode
+current_mode: planning-mode  # planning-mode | quick-mode | input-sync-mode | figma-extraction-mode | implementation-mode | bugfix-mode | review-mode | testing-mode | figma-review-mode | pr-ready-mode
 step_status: not_started
 blocker: false
 next_mode: plan
@@ -17,10 +17,14 @@ input_inventory_status: not_started
 plan_input_ledger_status: not_started
 missing_input_count: 0
 
+# Trường *_status dạng gate (input_inventory, plan_input_ledger, srs_trace_matrix, questions_resolution_gate, token_budget,
+# required_files_read, scope_diff, command_evidence, test_command_log, playwright_screenshot_diff, figma_gate, ui_match_review) nhận:
+# not_started | in_progress | documented | completed | passed | failed | blocked | not_required | unknown | partial | manual_review | waived | substituted
+
 # Core gates
 srs_required: unknown
 srs_trace_matrix_status: not_started
-questions_status: none
+questions_status: none  # none | open | blocked | resolved | not_required
 blocking_questions_open: 0
 questions_resolution_gate_status: not_started
 input_sync_required: false
@@ -38,17 +42,17 @@ playwright_screenshot_diff_status: not_required
 figma_required: unknown
 figma_gate_status: unknown
 ui_match_review_status: not_started
-ui_match_severity_status: unknown
+ui_match_severity_status: unknown  # unknown | none | not_required | low | medium | high | critical
 
 # Mode output status
-review_status: not_started
-review_bug_status: none
+review_status: not_started  #not_started | passed | needs_bugfix | needs_recheck | blocked | insufficient_evidence | not_required
+review_bug_status: none  # none | not_required | open | blocked | closed | resolved | fixed | waived
 critical_issues_open: 0
 high_issues_open: 0
 medium_issues_open: 0
 low_issues_open: 0
 bugfix_required: false
-pr_status: not_started
+pr_status: not_started  # not_started | ready | opened | merged | blocked
 build_ready: false
 
 # Deprecated từ v2.3.0: không gate nào đọc, không cần cập nhật (giữ để tương thích)

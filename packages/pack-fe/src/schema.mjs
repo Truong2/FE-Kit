@@ -141,7 +141,7 @@ export const WorkflowStatusSchema = z
     figma_node_matrix_status: SelfReported,
     figma_component_binding_status: SelfReported,
     ui_match_review_status: GateStatus,
-    ui_match_severity_status: z.enum(['unknown', 'none', 'low', 'medium', 'high', 'critical']),
+    ui_match_severity_status: z.enum(['unknown', 'none', 'not_required', 'low', 'medium', 'high', 'critical']),
 
     // --- Mode output status (suy ra được từ file tồn tại → optional) ---
     input_sync_report_status: SelfReported,
@@ -151,13 +151,15 @@ export const WorkflowStatusSchema = z
       'not_started',
       'passed',
       'needs_bugfix',
+      // Bugfix đã sửa xong, chờ review lại (thêm ở v2.6.0).
+      'needs_recheck',
       'blocked',
       'insufficient_evidence',
       'not_required',
     ]),
     review_report_status: SelfReported,
     // 'resolved', 'fixed', 'waived' có trong template/standard từ v1.x nhưng schema thiếu.
-    review_bug_status: z.enum(['none', 'open', 'blocked', 'closed', 'resolved', 'fixed', 'waived']),
+    review_bug_status: z.enum(['none', 'not_required', 'open', 'blocked', 'closed', 'resolved', 'fixed', 'waived']),
     critical_issues_open: z.number().int().min(0),
     high_issues_open: z.number().int().min(0),
     // Medium/Low tự đếm được từ bảng issue (`countOpenIssuesBySeverity`).
