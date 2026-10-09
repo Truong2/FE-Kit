@@ -360,8 +360,16 @@ export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
     }
   }
 
+  // Review/test phát hiện file ngoài plan, ghi thành bug và route sang bugfix/input-sync: đó là việc đúng
+  // của mode chỉ đọc (nó không được sửa source), nên không chặn kết thúc mode. Gate PR vẫn chặn.
+  const scopeFailureRouted =
+    ['review-mode', 'testing-mode'].includes(mode) &&
+    (norm(data.review_status) === 'needs_bugfix' || bool(data.bugfix_required)) &&
+    ['bugfix', 'input-sync'].includes(norm(data.next_mode));
+  const routedNote = `đã ghi thành bug và route sang ${norm(data.next_mode)}; gate PR vẫn chặn tới khi xử lý xong`;
   if (['failed', 'blocked'].includes(scopeDiff)) {
-    fail('SCOPE_DIFF_DECLARED_FAILED', 'scope_diff_status=failed/blocked. Cần update plan/input-sync hoặc sửa diff.');
+    if (scopeFailureRouted) warnings.push(`scope_diff_status=${scopeDiff}: ${routedNote}.`);
+    else fail('SCOPE_DIFF_DECLARED_FAILED', 'scope_diff_status=failed/blocked. Cần update plan/input-sync hoặc sửa diff.');
   }
   if (['failed', 'blocked'].includes(commandEvidence)) {
     fail('COMMAND_EVIDENCE_DECLARED_FAILED', 'command_evidence_status=failed/blocked. Không được claim pass khi thiếu evidence.');
@@ -373,10 +381,9 @@ export function evaluateWorkflowGates({ data, body, exists, read, scope }) {
   // --- Sự thật tính được thắng field tự khai ---
   // Plan chưa khai bảng file (task tạo từ v1.x) thì không có gì để đối chiếu: bỏ qua.
   if (scope && !scope.plannedEmpty && scope.outOfPlan?.length) {
-    fail(
-      'SCOPE_OUT_OF_PLAN',
-      `Scope diff: có file sửa ngoài bảng "File sẽ tạo / cập nhật" của plan: ${scope.outOfPlan.join(', ')}. Cập nhật plan/input-sync hoặc hoàn tác.`
-    );
+    const message = `Scope diff: có file sửa ngoài bảng "File sẽ tạo / cập nhật" của plan: ${scope.outOfPlan.join(', ')}. Cập nhật plan/input-sync hoặc hoàn tác.`;
+    if (scopeFailureRouted) warnings.push(`${message} (${routedNote})`);
+    else fail('SCOPE_OUT_OF_PLAN', message);
   }
   if (
     ['passed', 'completed'].includes(commandEvidence) &&

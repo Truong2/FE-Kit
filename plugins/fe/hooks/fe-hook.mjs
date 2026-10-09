@@ -3649,10 +3649,16 @@ function listChangedFiles({ cwd, base = "" }) {
     return { ok: false, reason: "Kh\xF4ng ph\u1EA3i git repo ho\u1EB7c kh\xF4ng c\xF3 l\u1EC7nh git." };
   }
   const files = /* @__PURE__ */ new Set();
+  let onBase = false;
   if (base) {
     const committed = git(cwd, ["diff", "--name-only", "--relative", `${base}...HEAD`]);
     if (!committed) return { ok: false, reason: `Kh\xF4ng diff \u0111\u01B0\u1EE3c v\u1EDBi base ref "${base}".` };
     committed.forEach((f) => files.add(f));
+    if (!committed.length) {
+      const head = git(cwd, ["rev-parse", "HEAD"]);
+      const mergeBase = git(cwd, ["merge-base", base, "HEAD"]);
+      onBase = Boolean(head?.[0] && head[0] === mergeBase?.[0]);
+    }
   }
   for (const args of [
     ["diff", "--name-only", "--relative", "HEAD"],
@@ -3660,7 +3666,10 @@ function listChangedFiles({ cwd, base = "" }) {
   ]) {
     (git(cwd, args) || []).forEach((f) => files.add(f));
   }
-  return { ok: true, files: [...files].map(toPosix), base };
+  return { ok: true, files: [...files].map(toPosix), base, onBase };
+}
+function onBaseWarning(base) {
+  return `HEAD ch\u01B0a c\xF3 commit n\xE0o so v\u1EDBi base (${base}), c\xF3 th\u1EC3 \u0111ang l\xE0m th\u1EB3ng tr\xEAn nh\xE1nh base: scope diff ch\u1EC9 th\u1EA5y thay \u0111\u1ED5i ch\u01B0a commit. N\xEAn l\xE0m tr\xEAn nh\xE1nh t\xEDnh n\u0103ng.`;
 }
 var SNAPSHOT_MAX_FILES = 2e3;
 var SNAPSHOT_MAX_BYTES = 5 * 1024 * 1024;
@@ -23349,6 +23358,17 @@ function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
   function shellGuardEnabled() {
     return String(env("BASH_GUARD") || "").trim().toLowerCase() !== "off";
   }
+  function onlyTouchesKitFiles(command, workspace) {
+    const text = command.replace(/\\/g, "/");
+    if (!pack.writablePrefixes.some((p) => text.includes(p.replace(/\/$/, "")))) return false;
+    let sourcePaths = [];
+    try {
+      sourcePaths = pack.loadProjectConfig(workspace).config.source_paths || [];
+    } catch {
+      return false;
+    }
+    return !sourcePaths.some((p) => new RegExp(`(^|[\\s'"=/(])${escapeRe(p.replace(/\/$/, ""))}(/|\\b)`).test(text));
+  }
   function onShell(payload) {
     if (!shellGuardEnabled()) return;
     const agent = kitAgentName(payload.agent_type);
@@ -23356,6 +23376,7 @@ function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
     const command = String(payload.tool_input?.command || "");
     if (!SHELL_WRITE.test(command)) return;
     const marker = readMarker(payload.session_id);
+    if (onlyTouchesKitFiles(command, marker?.workspace || payload.cwd || process.cwd())) return;
     if (marker?.status === "pending") {
       logEvent(payload, marker.task, "edit_warned", { mode: marker.command, agent, codes: ["SHELL_WRITE_SUSPECTED"] });
     }
@@ -24680,8 +24701,11 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
       fail("BUILD_READY_FIGMA_GATE_OPEN", "build_ready=true y\xEAu c\u1EA7u Figma gate passed/waived/not_required/substituted.");
     }
   }
+  const scopeFailureRouted = ["review-mode", "testing-mode"].includes(mode) && (norm2(data.review_status) === "needs_bugfix" || bool2(data.bugfix_required)) && ["bugfix", "input-sync"].includes(norm2(data.next_mode));
+  const routedNote = `\u0111\xE3 ghi th\xE0nh bug v\xE0 route sang ${norm2(data.next_mode)}; gate PR v\u1EABn ch\u1EB7n t\u1EDBi khi x\u1EED l\xFD xong`;
   if (["failed", "blocked"].includes(scopeDiff)) {
-    fail("SCOPE_DIFF_DECLARED_FAILED", "scope_diff_status=failed/blocked. C\u1EA7n update plan/input-sync ho\u1EB7c s\u1EEDa diff.");
+    if (scopeFailureRouted) warnings.push(`scope_diff_status=${scopeDiff}: ${routedNote}.`);
+    else fail("SCOPE_DIFF_DECLARED_FAILED", "scope_diff_status=failed/blocked. C\u1EA7n update plan/input-sync ho\u1EB7c s\u1EEDa diff.");
   }
   if (["failed", "blocked"].includes(commandEvidence)) {
     fail("COMMAND_EVIDENCE_DECLARED_FAILED", "command_evidence_status=failed/blocked. Kh\xF4ng \u0111\u01B0\u1EE3c claim pass khi thi\u1EBFu evidence.");
@@ -24690,10 +24714,9 @@ function evaluateWorkflowGates({ data, body, exists, read, scope }) {
     fail("PLAYWRIGHT_DIFF_FAILED", "playwright_screenshot_diff_status=failed/blocked cho task Figma/UI.");
   }
   if (scope && !scope.plannedEmpty && scope.outOfPlan?.length) {
-    fail(
-      "SCOPE_OUT_OF_PLAN",
-      `Scope diff: c\xF3 file s\u1EEDa ngo\xE0i b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" c\u1EE7a plan: ${scope.outOfPlan.join(", ")}. C\u1EADp nh\u1EADt plan/input-sync ho\u1EB7c ho\xE0n t\xE1c.`
-    );
+    const message = `Scope diff: c\xF3 file s\u1EEDa ngo\xE0i b\u1EA3ng "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt" c\u1EE7a plan: ${scope.outOfPlan.join(", ")}. C\u1EADp nh\u1EADt plan/input-sync ho\u1EB7c ho\xE0n t\xE1c.`;
+    if (scopeFailureRouted) warnings.push(`${message} (${routedNote})`);
+    else fail("SCOPE_OUT_OF_PLAN", message);
   }
   if (["passed", "completed"].includes(commandEvidence) && exists("output/test-summary.md") && !hasCommandEvidence(read("output/test-summary.md"))) {
     fail("COMMAND_EVIDENCE_UNPROVEN", "command_evidence_status=passed/completed nh\u01B0ng output/test-summary.md ch\u01B0a c\xF3 d\xF2ng command \u0111\xE3 ch\u1EA1y th\u1EADt.");
@@ -24771,10 +24794,12 @@ function loadWorkflow(taskDir) {
 }
 function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   let files = changedFiles;
+  let onBase = false;
   if (!files) {
     const changed = listChangedFiles({ cwd: repoRoot, base });
     if (!changed.ok) return null;
     files = changed.files;
+    onBase = changed.onBase;
   }
   const { read } = taskIo(taskDir);
   const plannedFiles = parsePlannedFiles2(read("planning/implementation-plan.md"));
@@ -24786,7 +24811,7 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
     result.otherTasks = others.inScope;
     result.ok = result.outOfPlan.length === 0;
   }
-  return { ...result, plannedFiles };
+  return { ...result, plannedFiles, base, onBase };
 }
 function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
   if (!fs9.existsSync(tasksRoot)) return [];
@@ -24827,6 +24852,7 @@ function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
       scope = diff;
       scopeSource = "git";
     }
+    if (diff?.onBase) warnings.push(onBaseWarning(usedBase));
   }
   const res = evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...taskIo(taskDir), scope });
   return { ...res, warnings: [...res.warnings, ...warnings], scopeSource, base: usedBase };

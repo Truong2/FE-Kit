@@ -11,6 +11,7 @@ import {
   parseFrontMatterLoose,
   scopeDiffForTask,
   detectBaseRef,
+  onBaseWarning,
   resolveTaskDir,
   scaffoldTask,
   REQUIRED_TASK_FILES,
@@ -745,6 +746,7 @@ function validatePrLean() {
   // bằng parser regex và từ chối `command_evidence_status: passed` mà script kia chấp nhận.
   const scope = scopeForTask(taskDir, target);
   if (!scope) console.warn('Cảnh báo: không tính được scope diff từ git; dùng scope_diff_status tự khai.');
+  else if (scope.onBase) console.warn('Cảnh báo: ' + onBaseWarning(scope.base));
   const result = validatePr(taskDir, { scope });
   printWarnings(result);
   logValidate(taskDir, 'validate-pr', result.ok, codesOf(result));

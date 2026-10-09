@@ -9,6 +9,7 @@ export {
   computeScopeDiff,
   detectBaseRef,
   listChangedFiles,
+  onBaseWarning,
   fingerprintFile,
   snapshotFiles,
   filesTouchedSince,

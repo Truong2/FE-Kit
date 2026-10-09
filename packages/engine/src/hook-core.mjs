@@ -385,6 +385,22 @@ export function createHookHandlers(pack, { version = 'dev' } = {}) {
   }
 
   /** Agent của pack không phải agent sửa source chạy lệnh shell trông như ghi file: chỉ cảnh báo. */
+  /**
+   * Lệnh chỉ nhắm vào artifact của kit (thư mục ghi được của pack) và không nhắc tới
+   * đường dẫn source nào: không cần cảnh báo, vì agent nào cũng được ghi artifact.
+   */
+  function onlyTouchesKitFiles(command, workspace) {
+    const text = command.replace(/\\/g, '/');
+    if (!pack.writablePrefixes.some((p) => text.includes(p.replace(/\/$/, '')))) return false;
+    let sourcePaths = [];
+    try {
+      sourcePaths = pack.loadProjectConfig(workspace).config.source_paths || [];
+    } catch {
+      return false;
+    }
+    return !sourcePaths.some((p) => new RegExp(`(^|[\\s'"=/(])${escapeRe(p.replace(/\/$/, ''))}(/|\\b)`).test(text));
+  }
+
   function onShell(payload) {
     if (!shellGuardEnabled()) return;
     const agent = kitAgentName(payload.agent_type);
@@ -392,6 +408,7 @@ export function createHookHandlers(pack, { version = 'dev' } = {}) {
     const command = String(payload.tool_input?.command || '');
     if (!SHELL_WRITE.test(command)) return;
     const marker = readMarker(payload.session_id);
+    if (onlyTouchesKitFiles(command, marker?.workspace || payload.cwd || process.cwd())) return;
     if (marker?.status === 'pending') {
       logEvent(payload, marker.task, 'edit_warned', { mode: marker.command, agent, codes: ['SHELL_WRITE_SUSPECTED'] });
     }

@@ -9,7 +9,7 @@ import {
 } from '@frontend-delivery-kit/engine';
 import manifest from './manifest.gen.mjs';
 
-export { detectBaseRef, listChangedFiles, fingerprintFile, snapshotFiles, filesTouchedSince } from '@frontend-delivery-kit/engine';
+export { detectBaseRef, listChangedFiles, onBaseWarning, fingerprintFile, snapshotFiles, filesTouchedSince } from '@frontend-delivery-kit/engine';
 
 /** Thay đổi ở các path này không tính là "sửa ngoài plan". */
 export const DEFAULT_SCOPE_IGNORE = [...manifest.scope_ignore, ...LOCKFILE_IGNORE];

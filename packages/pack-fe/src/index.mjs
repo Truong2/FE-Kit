@@ -11,7 +11,7 @@ export {
   hasCommandEvidence,
   summarizeCommandEvidence,
 } from './gates.mjs';
-export { computeScopeDiff, parsePlannedFiles, listChangedFiles, detectBaseRef } from './scope.mjs';
+export { computeScopeDiff, parsePlannedFiles, listChangedFiles, detectBaseRef, onBaseWarning } from './scope.mjs';
 export { WorkflowStatusSchema, GateStatus, CoreMode, DEPRECATED_FIELDS } from './schema.mjs';
 export {
   scopeDiffForTask,

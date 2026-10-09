@@ -124,17 +124,26 @@ export function detectBaseRef(cwd, env = process.env) {
  * Liệt kê file đã thay đổi. Có `base` thì gồm cả commit từ merge-base; luôn
  * gồm thay đổi chưa commit và file untracked.
  *
- * @returns {{ ok: true, files: string[], base: string } | { ok: false, reason: string }}
+ * `onBase`: HEAD không có commit nào so với base (vd đang làm thẳng trên nhánh base), nên
+ * chỉ thấy được thay đổi chưa commit; thay đổi đã commit lọt khỏi kiểm tra scope.
+ *
+ * @returns {{ ok: true, files: string[], base: string, onBase: boolean } | { ok: false, reason: string }}
  */
 export function listChangedFiles({ cwd, base = '' }) {
   if (!git(cwd, ['rev-parse', '--is-inside-work-tree'])) {
     return { ok: false, reason: 'Không phải git repo hoặc không có lệnh git.' };
   }
   const files = new Set();
+  let onBase = false;
   if (base) {
     const committed = git(cwd, ['diff', '--name-only', '--relative', `${base}...HEAD`]);
     if (!committed) return { ok: false, reason: `Không diff được với base ref "${base}".` };
     committed.forEach((f) => files.add(f));
+    if (!committed.length) {
+      const head = git(cwd, ['rev-parse', 'HEAD']);
+      const mergeBase = git(cwd, ['merge-base', base, 'HEAD']);
+      onBase = Boolean(head?.[0] && head[0] === mergeBase?.[0]);
+    }
   }
   // `--relative` để path cùng gốc `cwd` với `ls-files`, kể cả khi workspace là thư mục con của repo.
   for (const args of [
@@ -143,7 +152,12 @@ export function listChangedFiles({ cwd, base = '' }) {
   ]) {
     (git(cwd, args) || []).forEach((f) => files.add(f));
   }
-  return { ok: true, files: [...files].map(toPosix), base };
+  return { ok: true, files: [...files].map(toPosix), base, onBase };
+}
+
+/** Cảnh báo khi `listChangedFiles` trả `onBase`. */
+export function onBaseWarning(base) {
+  return `HEAD chưa có commit nào so với base (${base}), có thể đang làm thẳng trên nhánh base: scope diff chỉ thấy thay đổi chưa commit. Nên làm trên nhánh tính năng.`;
 }
 
 const SNAPSHOT_MAX_FILES = 2000;

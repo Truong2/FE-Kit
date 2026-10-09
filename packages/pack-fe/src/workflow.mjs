@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { parseWorkflowStatus } from './parse.mjs';
 import { evaluateWorkflowGates, evaluatePrGates } from './gates.mjs';
-import { computeScopeDiff, parsePlannedFiles, listChangedFiles, detectBaseRef } from './scope.mjs';
+import { computeScopeDiff, parsePlannedFiles, listChangedFiles, detectBaseRef, onBaseWarning } from './scope.mjs';
 import { TASKS_ROOT } from './resolve.mjs';
 import { PROJECT_CONFIG_DEFAULTS } from './project-config.mjs';
 
@@ -39,10 +39,12 @@ function loadWorkflow(taskDir) {
  */
 export function scopeDiffForTask(taskDir, { repoRoot, base = '', changedFiles } = {}) {
   let files = changedFiles;
+  let onBase = false;
   if (!files) {
     const changed = listChangedFiles({ cwd: repoRoot, base });
     if (!changed.ok) return null;
     files = changed.files;
+    onBase = changed.onBase;
   }
   const { read } = taskIo(taskDir);
   const plannedFiles = parsePlannedFiles(read('planning/implementation-plan.md'));
@@ -56,7 +58,7 @@ export function scopeDiffForTask(taskDir, { repoRoot, base = '', changedFiles } 
     result.otherTasks = others.inScope;
     result.ok = result.outOfPlan.length === 0;
   }
-  return { ...result, plannedFiles };
+  return { ...result, plannedFiles, base, onBase };
 }
 
 /**
@@ -144,6 +146,7 @@ export function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
       scope = diff;
       scopeSource = 'git';
     }
+    if (diff?.onBase) warnings.push(onBaseWarning(usedBase));
   }
 
   const res = evaluateWorkflowGates({ data: parsed.data, body: parsed.body, ...taskIo(taskDir), scope });

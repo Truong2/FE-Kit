@@ -571,6 +571,18 @@ describe('mode chỉ đọc không được đổi source (kể cả qua shell)'
     expect(shell('echo x > src/app.ts', 'Explore')).toBeNull();
     expect(shell('echo x > src/app.ts', 'fe:frontend-reviewer', { env: { FE_KIT_BASH_GUARD: 'off' } })).toBeNull();
   });
+
+  it('lệnh shell chỉ ghi artifact của kit thì không cảnh báo; nhắc tới source thì vẫn cảnh báo', () => {
+    const task = gitWorkspace();
+    begin(`/fe:review ${task}`);
+    const shell = (command) =>
+      runHook({ hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command }, agent_type: 'fe:frontend-reviewer' });
+
+    expect(shell(`cat notes.md > ${task}/output/review-report.md`)).toBeNull();
+    expect(shell(`cd ${task}/tracking && sed -i 's/a/b/' workflow-status.md`)).toBeNull();
+    expect(shell(`sed -i 's/a/b/' src/app.ts ${task}/tracking/workflow-status.md`).systemMessage).toMatch(/có thể ghi file/);
+    expect(shell(`cp src/app.ts ${task}/output/app-copy.ts`).systemMessage).toMatch(/có thể ghi file/);
+  });
 });
 
 describe('duyệt đề xuất retro và rule của team', () => {

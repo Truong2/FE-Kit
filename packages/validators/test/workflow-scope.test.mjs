@@ -57,6 +57,54 @@ describe('validateWorkflowAtGate', () => {
     expect(scopeErrors(r)).toEqual([]);
   });
 
+  describe('đang làm thẳng trên nhánh base', () => {
+    const branch = () => git('rev-parse', '--abbrev-ref', 'HEAD').stdout.trim();
+    const onBaseWarnings = (r) => r.warnings.filter((w) => /chưa có commit nào so với base/.test(w));
+
+    it('HEAD trùng base: cảnh báo scope diff chỉ thấy thay đổi chưa commit', () => {
+      setMode('review-mode');
+      const base = branch();
+      const r = validateWorkflowAtGate(taskDir, { repoRoot: repo, base });
+      expect(onBaseWarnings(r)).toEqual([expect.stringContaining(`(${base})`)]);
+    });
+
+    it('nhánh tính năng đã có commit: không cảnh báo', () => {
+      setMode('review-mode');
+      const base = branch();
+      git('checkout', '-q', '-b', 'feat/x');
+      write('src/features/order/CancelButton.tsx');
+      git('add', '-A');
+      git('-c', 'user.email=a@b', '-c', 'user.name=a', 'commit', '-qm', 'feat');
+      const r = validateWorkflowAtGate(taskDir, { repoRoot: repo, base });
+      expect(onBaseWarnings(r)).toEqual([]);
+    });
+  });
+
+  describe('review phát hiện file ngoài plan', () => {
+    function setStatus(values) {
+      const file = path.join(taskDir, 'tracking', 'workflow-status.md');
+      let text = fs.readFileSync(file, 'utf8');
+      for (const [k, v] of Object.entries(values)) text = text.replace(new RegExp(`^${k}:.*$`, 'm'), () => `${k}: ${v}`);
+      fs.writeFileSync(file, text);
+    }
+    const scopeCodes = (r) => r.issues.map((i) => i.code).filter((c) => c.startsWith('SCOPE_'));
+
+    it('đã ghi thành bug và route sang bugfix: không chặn kết thúc review, chỉ cảnh báo', () => {
+      setStatus({ current_mode: 'review-mode', scope_diff_status: 'failed', review_status: 'needs_bugfix', bugfix_required: 'true', next_mode: 'bugfix' });
+      write('src/store/global.ts');
+      const r = validateWorkflowAtGate(taskDir, { repoRoot: repo, base: '' });
+      expect(scopeCodes(r)).toEqual([]);
+      expect(r.warnings.join('\n')).toMatch(/src\/store\/global\.ts.*route sang bugfix/);
+    });
+
+    it('ghi scope failed nhưng vẫn route sang pr: bị chặn như cũ', () => {
+      setStatus({ current_mode: 'review-mode', scope_diff_status: 'failed', review_status: 'needs_bugfix', bugfix_required: 'true', next_mode: 'pr' });
+      write('src/store/global.ts');
+      const r = validateWorkflowAtGate(taskDir, { repoRoot: repo, base: '' });
+      expect(scopeCodes(r)).toEqual(expect.arrayContaining(['SCOPE_DIFF_DECLARED_FAILED', 'SCOPE_OUT_OF_PLAN']));
+    });
+  });
+
   it('ở planning-mode không tính scope, tránh chặn nhầm thay đổi không liên quan', () => {
     setMode('planning-mode');
     write('src/store/global.ts');

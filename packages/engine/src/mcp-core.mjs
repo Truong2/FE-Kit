@@ -7,7 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { relativePosix, toPosix } from './paths.mjs';
-import { detectBaseRef } from './scope.mjs';
+import { detectBaseRef, onBaseWarning } from './scope.mjs';
 import { appendRunLog, codesOf } from './runlog.mjs';
 import { createModeBriefing } from './briefing.mjs';
 
@@ -266,6 +266,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
         `File khai trong plan: ${scope.plannedFiles.length}`,
         `Trong plan: ${scope.inScope.length}; ngoài plan: ${scope.outOfPlan.length}; bỏ qua (artifact/lockfile): ${scope.ignored.length}`,
       ];
+      if (scope.onBase) lines.push('', `Cảnh báo: ${onBaseWarning(base)}`);
       if (scope.plannedEmpty) lines.push('', m.plannedFilesMissing);
       if (scope.outOfPlan.length) {
         lines.push('', 'File sửa NGOÀI plan:', ...scope.outOfPlan.map((f) => '- ' + f));
