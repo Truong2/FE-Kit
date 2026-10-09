@@ -66,6 +66,20 @@ describe('evaluatePrGates', () => {
     expect(evaluatePrGates({ data: READY, ...io(ALL_FILES) })).toMatchObject({ ok: true, errors: [] });
   });
 
+  it('task xong bằng quick (tự review, test evidence, scope passed) đi thẳng tới PR', () => {
+    const data = { ...READY, current_mode: 'quick-mode', command_evidence_status: 'passed', test_command_log_status: 'passed' };
+    expect(evaluatePrGates({ data, ...io(ALL_FILES) })).toMatchObject({ ok: true, errors: [] });
+  });
+
+  it('quick chưa ghi test evidence thì PR vẫn bị chặn', () => {
+    const data = { ...READY, current_mode: 'quick-mode', review_status: 'passed' };
+    const files = { ...ALL_FILES };
+    delete files['output/test-summary.md'];
+    const r = evaluatePrGates({ data, ...io(files) });
+    expect(r.ok).toBe(false);
+    expect(r.errors.join('\n')).toMatch(/test-summary/);
+  });
+
   it('chấp nhận `passed` cho command evidence (CLI cũ từng từ chối)', () => {
     const data = { ...READY, command_evidence_status: 'passed', test_command_log_status: 'passed' };
     expect(evaluatePrGates({ data, ...io(ALL_FILES) }).ok).toBe(true);

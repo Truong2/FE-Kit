@@ -23599,12 +23599,15 @@ var manifest_gen_default = {
       "state": "quick-mode",
       "agent": null,
       "artifacts": [
+        "planning/implementation-plan.md",
+        "output/review-report.md",
+        "output/test-summary.md",
         "tracking/workflow-status.md"
       ],
       "next": [
+        "pr",
         "review",
         "test",
-        "pr",
         "plan",
         "input-sync"
       ]

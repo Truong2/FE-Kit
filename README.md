@@ -183,7 +183,7 @@ docs/frontend-retro/<YYYY-MM-DD>/
 - `FE test <task-folder>`
 - `FE figma-review <task-folder>`
 - `FE pr <task-folder>`
-- `FE quick <task-folder>`
+- `FE quick <task-folder>`: task nhỏ, rủi ro thấp. Một lượt gồm plan ngắn, code, tự review và test evidence, đạt thì đi thẳng `FE pr`. Review ở đây là tự review, không phải review độc lập.
 
 Mọi mode phải cập nhật artifact bắt buộc và `tracking/workflow-status.md`.
 

@@ -4,6 +4,7 @@
 
 | Nhóm | Kết quả | Ghi chú |
 |---|---|---|
+| Loại review | Độc lập / Quick — tự review |  |
 | SRS/API | Passed / Needs fix / Not required |  |
 | UI/Figma | Passed / Needs fix / Not required |  |
 | Clean code | Passed / Needs fix |  |

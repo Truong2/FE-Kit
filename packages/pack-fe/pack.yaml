@@ -63,8 +63,9 @@ modes:
   quick:
     state: quick-mode
     agent: null
-    artifacts: [tracking/workflow-status.md]
-    next: [review, test, pr, plan, input-sync]
+    # Quick tự review và ghi test evidence trong cùng lượt để đi thẳng tới PR (v2.6.0).
+    artifacts: [planning/implementation-plan.md, output/review-report.md, output/test-summary.md, tracking/workflow-status.md]
+    next: [pr, review, test, plan, input-sync]
   input-sync:
     state: input-sync-mode
     agent: frontend-planner

@@ -47,6 +47,19 @@ describe('evaluateModeCompletion', () => {
       expect(evaluateModeCompletion({ taskDir: task, taskRef: 'FE-1', command: 'plan' }).ok).toBe(true);
     });
 
+    it('quick phải có tự review và test evidence khi kết thúc', () => {
+      setStatus({ current_mode: 'quick-mode' });
+      const missing = evaluateModeCompletion({ taskDir: task, taskRef: 'FE-1', command: 'quick' });
+      expect(codes(missing)).toContain('END_ARTIFACT_MISSING');
+      expect(missing.errors.join('\n')).toMatch(/output\/review-report\.md/);
+      expect(missing.errors.join('\n')).toMatch(/output\/test-summary\.md/);
+
+      fs.mkdirSync(path.join(task, 'output'), { recursive: true });
+      fs.writeFileSync(path.join(task, 'output', 'review-report.md'), '# Báo cáo review\n');
+      fs.writeFileSync(path.join(task, 'output', 'test-summary.md'), '# Tóm tắt test\n');
+      expect(codes(evaluateModeCompletion({ taskDir: task, taskRef: 'FE-1', command: 'quick' }))).not.toContain('END_ARTIFACT_MISSING');
+    });
+
     it('lỗi riêng của caller xếp trước lỗi validator', () => {
       setStatus({ current_mode: 'planning-mode', next_mode: 'test', critical_issues_open: 1 });
       const r = evaluateModeCompletion({

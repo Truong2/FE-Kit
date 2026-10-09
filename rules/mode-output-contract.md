@@ -3,7 +3,7 @@
 | Mode | Artifact bắt buộc | Ghi chú |
 |---|---|---|
 | `FE plan` | `task.md`, `planning/implementation-plan.md`, `planning/build-checklist.md`, `planning/questions.md`, `tracking/workflow-status.md` | Không code; phải điền Input ledger. Nếu có blocking question thì next phải là `FE input-sync`, không được `FE cook`. |
-| `FE quick` | `tracking/workflow-status.md`, checklist nếu có task folder | Chỉ task nhỏ/rủi ro thấp. |
+| `FE quick` | `planning/implementation-plan.md` (bảng file), `output/review-report.md` (tự review), `output/test-summary.md`, `tracking/workflow-status.md` | Chỉ task nhỏ/rủi ro thấp. Đạt thì next là `FE pr`. |
 | `FE input-sync` | `tracking/input-sync-report.md`, `planning/questions.md`, `tracking/workflow-status.md` | Luôn tạo report; nếu nhận câu trả lời blocking thì cập nhật questions/plan/checklist trước khi cho cook. |
 | `FE figma` | `output/figma-extraction-summary.md`, `tracking/workflow-status.md` | UI/Figma contract. |
 | `FE cook` | code changes, `planning/build-checklist.md`, `tracking/workflow-status.md` | Không chạy nếu còn blocking question/open hoặc input-sync required. |

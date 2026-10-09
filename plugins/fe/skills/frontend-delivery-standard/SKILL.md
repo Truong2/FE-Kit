@@ -57,7 +57,7 @@ Không tạo `frontend-rule-context.md` trong `docs/frontend-context/`.
 | Mode | Artifact bắt buộc |
 |---|---|
 | `FE plan` | `task.md`, `planning/implementation-plan.md`, `planning/build-checklist.md`, `planning/questions.md`, `tracking/workflow-status.md` |
-| `FE quick` | `tracking/workflow-status.md`, checklist nếu có task folder |
+| `FE quick` | `planning/implementation-plan.md` (bảng file), `output/review-report.md` (tự review), `output/test-summary.md`, `tracking/workflow-status.md` |
 | `FE input-sync` | `tracking/input-sync-report.md`, `planning/questions.md`, `tracking/workflow-status.md` |
 | `FE figma` | `output/figma-extraction-summary.md`, `tracking/workflow-status.md` |
 | `FE cook` | code changes, `planning/build-checklist.md`, `tracking/workflow-status.md` |
