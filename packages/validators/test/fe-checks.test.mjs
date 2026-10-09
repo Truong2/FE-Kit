@@ -38,6 +38,13 @@ describe('validateSrsReference', () => {
     expect(validateSrsReference(task)).toEqual({ ok: true, errors: [] });
   });
 
+  it('đạt với task/plan/checklist tạo từ template hiện tại', () => {
+    fromTemplate('task.md');
+    fromTemplate('planning/implementation-plan.md');
+    fromTemplate('planning/build-checklist.md');
+    expect(validateSrsReference(task)).toEqual({ ok: true, errors: [] });
+  });
+
   it('không đạt khi thiếu task.md hoặc thiếu bản đồ', () => {
     expect(validateSrsReference(task).errors).toEqual(['Thiếu task.md']);
     write('task.md', '# Task\n');
@@ -67,7 +74,20 @@ describe('validatePlanArchitecture', () => {
     'Luồng người dùng', 'Luồng API', 'Luồng lỗi', 'Kế hoạch test', 'Bản đồ lỗi API từ SRS/source', 'Quyết định kênh hiển thị lỗi', 'Quyết định component lỗi / toast',
   ];
 
-  it('đạt khi plan có đủ các mục kiến trúc', () => {
+  it('plan tạo từ template hiện tại đạt', () => {
+    fromTemplate('planning/implementation-plan.md');
+    expect(validatePlanArchitecture(task)).toEqual({ ok: true, errors: [] });
+  });
+
+  it('plan theo template hiện tại thiếu mục kiến trúc thì không đạt', () => {
+    write(
+      'planning/implementation-plan.md',
+      fs.readFileSync(path.join(TEMPLATES, 'planning/implementation-plan.md'), 'utf8').replace('### Ba câu hỏi kiến trúc', '### Ghi chú')
+    );
+    expect(validatePlanArchitecture(task).errors).toEqual(['implementation-plan.md thiếu: Ba câu hỏi kiến trúc']);
+  });
+
+  it('plan theo template cũ đủ mục vẫn đạt (tương thích repo dự án cũ)', () => {
     write('planning/implementation-plan.md', PHRASES.map((p) => `## ${p}`).join('\n'));
     expect(validatePlanArchitecture(task)).toEqual({ ok: true, errors: [] });
   });
@@ -86,6 +106,20 @@ describe('validatePlanChecklistSync', () => {
     write('planning/implementation-plan.md', plan);
     write('planning/build-checklist.md', '| IMP-01 | `src/features/order/Cancel.tsx` | Chưa làm |\n');
     expect(validatePlanChecklistSync(task).ok).toBe(true);
+  });
+
+  it('file được verify qua mã ở cột "Checklist ref" cũng tính là đã verify', () => {
+    write('planning/implementation-plan.md', '## 7. File sẽ tạo / cập nhật\n\n| File | Hành động | Lý do | Checklist ref |\n|---|---|---|---|\n| `src/a.test.tsx` | Tạo | Test | TEST-01 |\n');
+    write('planning/build-checklist.md', '| TEST-01 | Test phủ BR-01 | Đã làm |\n');
+    expect(validatePlanChecklistSync(task).ok).toBe(true);
+    write('planning/build-checklist.md', '| TEST-09 | khác | Đã làm |\n');
+    expect(validatePlanChecklistSync(task).errors).toEqual(['build-checklist.md chưa verify planned item: src/a.test.tsx']);
+  });
+
+  it('dòng có điều kiện hoặc "không sửa" không bắt checklist verify', () => {
+    write('planning/implementation-plan.md', plan + '| `src/api/client.ts` | Chỉ cập nhật nếu Q-02 chọn (a) |\n| `src/App.tsx` | Không sửa |\n');
+    write('planning/build-checklist.md', '| IMP-01 | `src/features/order/Cancel.tsx` | Chưa làm |\n');
+    expect(validatePlanChecklistSync(task)).toEqual({ ok: true, errors: [] });
   });
 
   it('không đạt khi checklist bỏ sót file của plan', () => {

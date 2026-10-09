@@ -34815,14 +34815,14 @@ function templateChoiceCell(v) {
 function commandEvidenceRows(testSummaryMarkdown) {
   const text = String(testSummaryMarkdown || "");
   const section = text.match(
-    /^##\s+(?:\d+\.\s*)?Command evidence log[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
+    /^##\s+(?:\d+\.\s*)?(?:Command evidence log|Nhật ký lệnh|Bằng chứng lệnh)[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
   );
   if (!section) return [];
   const rows = [];
   for (const line of section[1].split(/\r?\n/)) {
     if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
     const cells = line.split("|").slice(1, -1).map((c) => c.trim().replace(/^`|`$/g, ""));
-    if (/^command$/i.test(cells[0] || "")) continue;
+    if (/^(command|lệnh|câu lệnh)$/i.test(cells[0] || "")) continue;
     if (!realCell(cells[0])) continue;
     rows.push({ command: cells[0], ran: cells[1] || "", result: cells[2] || "", time: cells[3] || "" });
   }

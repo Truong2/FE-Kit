@@ -13,6 +13,21 @@ const table = (...rows) =>
   ].join('\n');
 
 describe('summarizeCommandEvidence', () => {
+  it('bảng viết tiếng Việt (tiêu đề mục "Nhật ký lệnh", cột "Lệnh") được đọc như template', () => {
+    const md = [
+      '## 1. Nhật ký lệnh',
+      '',
+      '| Lệnh | Đã chạy thật? | Kết quả | Thời điểm | Ghi chú |',
+      '|---|---|---|---|---|',
+      '| `npm test` | Có | Passed | 2026-10-09 14:21 |  |',
+      '| `npm run lint` |  |  |  |  |',
+    ].join('\n');
+    const s = summarizeCommandEvidence(md);
+    expect(s.ran).toEqual(['npm test']);
+    // Dòng tiêu đề "Lệnh" không bị tính là một lệnh thiếu dữ liệu; dòng thiếu kết quả thật vẫn bị bắt.
+    expect(s.incomplete).toEqual(['npm run lint']);
+  });
+
   it('phản ví dụ của memo: ô "Đã chạy thật?" và "Kết quả" trống không phải bằng chứng', () => {
     const md = table('| `npm test` |  |  |  |  |');
     expect(hasCommandEvidence(md)).toBe(false);

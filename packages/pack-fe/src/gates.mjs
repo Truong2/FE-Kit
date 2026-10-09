@@ -75,7 +75,7 @@ function templateChoiceCell(v) {
 function commandEvidenceRows(testSummaryMarkdown) {
   const text = String(testSummaryMarkdown || '');
   const section = text.match(
-    /^##\s+(?:\d+\.\s*)?Command evidence log[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
+    /^##\s+(?:\d+\.\s*)?(?:Command evidence log|Nhật ký lệnh|Bằng chứng lệnh)[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
   );
   if (!section) return [];
 
@@ -86,7 +86,8 @@ function commandEvidenceRows(testSummaryMarkdown) {
       .split('|')
       .slice(1, -1)
       .map((c) => c.trim().replace(/^`|`$/g, ''));
-    if (/^command$/i.test(cells[0] || '')) continue;
+    // Dòng tiêu đề: template dùng `Command`; agent viết tiếng Việt hay đổi thành `Lệnh`.
+    if (/^(command|lệnh|câu lệnh)$/i.test(cells[0] || '')) continue;
     if (!realQuestionCell(cells[0])) continue;
     rows.push({ command: cells[0], ran: cells[1] || '', result: cells[2] || '', time: cells[3] || '' });
   }

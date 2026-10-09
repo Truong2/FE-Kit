@@ -17531,7 +17531,7 @@
   },
   "check-srs-reference C-ready": {
    "status": 1,
-   "out": "task.md thiếu Bản đồ tham chiếu SRS\ntask.md thiếu Bản đồ sử dụng API contract\ntask.md thiếu Bản đồ lỗi API và cách hiển thị FE\nimplementation-plan.md thiếu Section SRS liên quan\nbuild-checklist.md thiếu SRS/API Contract checklist\n"
+   "out": "task.md thiếu Bản đồ tham chiếu SRS\ntask.md thiếu Bản đồ sử dụng API contract\ntask.md thiếu Bản đồ lỗi API và cách hiển thị FE\nimplementation-plan.md thiếu Ma trận trace SRS → FE logic → UI → Test\nbuild-checklist.md thiếu mục SRS coverage (hoặc SRS/API Contract)\n"
   },
   "check-questions-routing C-ready": {
    "status": 1,
@@ -17539,7 +17539,7 @@
   },
   "check-plan-architecture C-ready": {
    "status": 1,
-   "out": "implementation-plan.md thiếu: Ma trận trace SRS → FE logic → UI → Test\nimplementation-plan.md thiếu: Quyết định kiến trúc logic frontend\nimplementation-plan.md thiếu: File sẽ tạo / cập nhật\nimplementation-plan.md thiếu: Quyết định hook / store\nimplementation-plan.md thiếu: Quyết định vị trí state\nimplementation-plan.md thiếu: Quyết định global state\nimplementation-plan.md thiếu: Quyết định lỗi API và hiển thị lỗi FE\nimplementation-plan.md thiếu: UI Implementation Contract từ Figma\nimplementation-plan.md thiếu: Luồng người dùng\nimplementation-plan.md thiếu: Luồng API\nimplementation-plan.md thiếu: Luồng lỗi\nimplementation-plan.md thiếu: Kế hoạch test\nimplementation-plan.md thiếu subsection lỗi API/FE display: Bản đồ lỗi API từ SRS/source\nimplementation-plan.md thiếu subsection lỗi API/FE display: Quyết định kênh hiển thị lỗi\nimplementation-plan.md thiếu subsection lỗi API/FE display: Quyết định component lỗi / toast\n"
+   "out": "implementation-plan.md thiếu: Ma trận trace SRS → FE logic → UI → Test\nimplementation-plan.md thiếu: Code shape contract\nimplementation-plan.md thiếu: Khung thiết kế trước triển khai\nimplementation-plan.md thiếu: Ba câu hỏi kiến trúc\nimplementation-plan.md thiếu: Quyết định UI/Figma\nimplementation-plan.md thiếu: File sẽ tạo / cập nhật\nimplementation-plan.md thiếu: Scope diff guard\nimplementation-plan.md thiếu: Rủi ro / blocker\n"
   },
   "check-plan-checklist-sync C-ready": {
    "status": 0,
@@ -17595,7 +17595,7 @@
   },
   "check-srs-reference C-blocked": {
    "status": 1,
-   "out": "task.md thiếu Bản đồ tham chiếu SRS\ntask.md thiếu Bản đồ sử dụng API contract\ntask.md thiếu Bản đồ lỗi API và cách hiển thị FE\nimplementation-plan.md thiếu Section SRS liên quan\nbuild-checklist.md thiếu SRS/API Contract checklist\n"
+   "out": "task.md thiếu Bản đồ tham chiếu SRS\ntask.md thiếu Bản đồ sử dụng API contract\ntask.md thiếu Bản đồ lỗi API và cách hiển thị FE\nimplementation-plan.md thiếu Ma trận trace SRS → FE logic → UI → Test\nbuild-checklist.md thiếu mục SRS coverage (hoặc SRS/API Contract)\n"
   },
   "check-questions-routing C-blocked": {
    "status": 1,
@@ -17603,7 +17603,7 @@
   },
   "check-plan-architecture C-blocked": {
    "status": 1,
-   "out": "implementation-plan.md thiếu: Ma trận trace SRS → FE logic → UI → Test\nimplementation-plan.md thiếu: Quyết định kiến trúc logic frontend\nimplementation-plan.md thiếu: File sẽ tạo / cập nhật\nimplementation-plan.md thiếu: Quyết định hook / store\nimplementation-plan.md thiếu: Quyết định vị trí state\nimplementation-plan.md thiếu: Quyết định global state\nimplementation-plan.md thiếu: Quyết định lỗi API và hiển thị lỗi FE\nimplementation-plan.md thiếu: UI Implementation Contract từ Figma\nimplementation-plan.md thiếu: Luồng người dùng\nimplementation-plan.md thiếu: Luồng API\nimplementation-plan.md thiếu: Luồng lỗi\nimplementation-plan.md thiếu: Kế hoạch test\nimplementation-plan.md thiếu subsection lỗi API/FE display: Bản đồ lỗi API từ SRS/source\nimplementation-plan.md thiếu subsection lỗi API/FE display: Quyết định kênh hiển thị lỗi\nimplementation-plan.md thiếu subsection lỗi API/FE display: Quyết định component lỗi / toast\n"
+   "out": "implementation-plan.md thiếu: Ma trận trace SRS → FE logic → UI → Test\nimplementation-plan.md thiếu: Code shape contract\nimplementation-plan.md thiếu: Khung thiết kế trước triển khai\nimplementation-plan.md thiếu: Ba câu hỏi kiến trúc\nimplementation-plan.md thiếu: Quyết định UI/Figma\nimplementation-plan.md thiếu: File sẽ tạo / cập nhật\nimplementation-plan.md thiếu: Scope diff guard\nimplementation-plan.md thiếu: Rủi ro / blocker\n"
   },
   "check-plan-checklist-sync C-blocked": {
    "status": 0,

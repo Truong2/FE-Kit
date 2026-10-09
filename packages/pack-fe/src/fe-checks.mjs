@@ -80,20 +80,27 @@ function hasHeading(text, heading) {
   const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return new RegExp('^#{1,4}\\s+' + escaped + '\\s*$', 'im').test(text);
 }
-function tableItems(text, headerPhrase) {
+/** Dòng của bảng ngay sau `headerPhrase`: item ở cột đầu kèm các ô của dòng. */
+function sectionTableRows(text, headerPhrase) {
   const idx = text.toLowerCase().indexOf(headerPhrase.toLowerCase());
   if (idx < 0) return [];
   const part = text.slice(idx, idx + 4000);
   const rows = part.split(/\r?\n/).filter(l => /^\|/.test(l) && !/---/.test(l));
-  const items = [];
+  const out = [];
   for (const row of rows.slice(1)) {
-    const first = row.split('|').map(x => x.trim()).filter(Boolean)[0] || '';
+    const cells = row.split('|').map(x => x.trim()).filter(Boolean);
+    const first = cells[0] || '';
     if (!first || /^<|planned file|name|state \/ data|file$/i.test(first)) continue;
     const ticks = first.match(/`([^`]+)`/g);
-    if (ticks) items.push(...ticks.map(t => t.replace(/`/g, '')));
-    else if (/^(src|app|components|features|pages|hooks|stores|lib|services)\//.test(first) || /^use[A-Z]/.test(first) || /(Store|Context|Query|Mutation)$/.test(first)) items.push(first);
+    let items = [];
+    if (ticks) items = ticks.map(t => t.replace(/`/g, ''));
+    else if (/^(src|app|components|features|pages|hooks|stores|lib|services)\//.test(first) || /^use[A-Z]/.test(first) || /(Store|Context|Query|Mutation)$/.test(first)) items = [first];
+    if (items.length) out.push({ items, cells });
   }
-  return items;
+  return out;
+}
+function tableItems(text, headerPhrase) {
+  return sectionTableRows(text, headerPhrase).flatMap(r => r.items);
 }
 export function validateFigmaEvidence(taskDir) {
   const workflowPath = path.join(taskDir, 'tracking', 'workflow-status.md');
@@ -206,8 +213,9 @@ export function validateSrsReference(taskDir) {
   if (task && !/Bản đồ tham chiếu SRS/i.test(task)) errors.push('task.md thiếu Bản đồ tham chiếu SRS');
   if (task && !/Bản đồ sử dụng API contract/i.test(task)) errors.push('task.md thiếu Bản đồ sử dụng API contract');
   if (task && !/Bản đồ lỗi API và cách hiển thị FE/i.test(task)) errors.push('task.md thiếu Bản đồ lỗi API và cách hiển thị FE');
-  if (plan && !/Section SRS liên quan/i.test(plan)) errors.push('implementation-plan.md thiếu Section SRS liên quan');
-  if (checklist && !/SRS\s*\/\s*API Contract|SRS\s*\/\s*API/i.test(checklist)) errors.push('build-checklist.md thiếu SRS/API Contract checklist');
+  // Template hiện tại trace SRS bằng "Ma trận trace SRS → …"; template cũ có mục "Section SRS liên quan".
+  if (plan && !/Ma trận trace SRS|Section SRS liên quan/i.test(plan)) errors.push('implementation-plan.md thiếu Ma trận trace SRS → FE logic → UI → Test');
+  if (checklist && !/SRS\s*\/\s*API|SRS coverage/i.test(checklist)) errors.push('build-checklist.md thiếu mục SRS coverage (hoặc SRS/API Contract)');
   return { ok: errors.length === 0, errors };
 }
 export function validateQuestionsRouting(taskDir) {
@@ -229,22 +237,39 @@ export function validatePlanArchitecture(taskDir) {
   const planPath = path.join(taskDir, 'planning', 'implementation-plan.md');
   const plan = read(planPath);
   if (!plan) return { ok: false, errors: ['Thiếu planning/implementation-plan.md'] };
-  for (const phrase of ['Ma trận trace SRS → FE logic → UI → Test','Quyết định kiến trúc logic frontend','File sẽ tạo / cập nhật','Quyết định hook / store','Quyết định vị trí state','Quyết định global state','Quyết định lỗi API và hiển thị lỗi FE','UI Implementation Contract từ Figma','Luồng người dùng','Luồng API','Luồng lỗi','Kế hoạch test']) {
-    if (!plan.toLowerCase().includes(phrase.toLowerCase())) errors.push(`implementation-plan.md thiếu: ${phrase}`);
+  const has = (phrase) => plan.toLowerCase().includes(phrase.toLowerCase());
+  // Plan viết theo template cũ (có "Quyết định kiến trúc logic frontend") vẫn được kiểm như trước.
+  if (has('Quyết định kiến trúc logic frontend')) {
+    for (const phrase of LEGACY_PLAN_ARCHITECTURE) if (!has(phrase)) errors.push(`implementation-plan.md thiếu: ${phrase}`);
+    for (const phrase of LEGACY_PLAN_ERROR_DISPLAY) if (!has(phrase)) errors.push(`implementation-plan.md thiếu subsection lỗi API/FE display: ${phrase}`);
+    return { ok: errors.length === 0, errors };
   }
-  for (const phrase of ['Bản đồ lỗi API từ SRS/source','Quyết định kênh hiển thị lỗi','Quyết định component lỗi / toast']) {
-    if (!plan.toLowerCase().includes(phrase.toLowerCase())) errors.push(`implementation-plan.md thiếu subsection lỗi API/FE display: ${phrase}`);
-  }
+  for (const phrase of PLAN_ARCHITECTURE) if (!has(phrase)) errors.push(`implementation-plan.md thiếu: ${phrase}`);
   return { ok: errors.length === 0, errors };
 }
+
+/** Mục kiến trúc của template `planning/implementation-plan.md` hiện tại. */
+const PLAN_ARCHITECTURE = ['Ma trận trace SRS → FE logic → UI → Test', 'Code shape contract', 'Khung thiết kế trước triển khai', 'Ba câu hỏi kiến trúc', 'Quyết định UI/Figma', 'File sẽ tạo / cập nhật', 'Scope diff guard', 'Rủi ro / blocker'];
+
+/** Mục của template plan cũ: repo dự án có thể còn plan viết theo mẫu này. */
+const LEGACY_PLAN_ARCHITECTURE = ['Ma trận trace SRS → FE logic → UI → Test','Quyết định kiến trúc logic frontend','File sẽ tạo / cập nhật','Quyết định hook / store','Quyết định vị trí state','Quyết định global state','Quyết định lỗi API và hiển thị lỗi FE','UI Implementation Contract từ Figma','Luồng người dùng','Luồng API','Luồng lỗi','Kế hoạch test'];
+const LEGACY_PLAN_ERROR_DISPLAY = ['Bản đồ lỗi API từ SRS/source','Quyết định kênh hiển thị lỗi','Quyết định component lỗi / toast'];
 export function validatePlanChecklistSync(taskDir) {
   const errors = [];
   const plan = read(path.join(taskDir, 'planning', 'implementation-plan.md'));
   const checklist = read(path.join(taskDir, 'planning', 'build-checklist.md'));
   if (!plan || !checklist) return { ok: false, errors: ['Thiếu plan hoặc checklist để sync'] };
-  const plannedFiles = tableItems(plan, 'File sẽ tạo / cập nhật').filter(x => /[/.]/.test(x));
+  // Một file trong bảng plan coi là đã verify khi checklist nhắc tới đường dẫn, hoặc nhắc tới
+  // mã ở cột "Checklist ref" của dòng đó (vd TEST-01). Dòng có điều kiện hoặc "không sửa" thì bỏ qua.
+  for (const { items, cells } of sectionTableRows(plan, 'File sẽ tạo / cập nhật')) {
+    if (/\bnếu\b|\bif\b|không sửa|giữ nguyên|no change/i.test(cells[1] || '')) continue;
+    const refs = (cells.slice(1).join(' ').match(/\b[A-Z][A-Z0-9]*-\d+\b/g) || []).filter(r => checklist.includes(r));
+    for (const item of items.filter(x => /[/.]/.test(x))) {
+      if (item.length > 2 && !checklist.includes(item) && !refs.length) errors.push(`build-checklist.md chưa verify planned item: ${item}`);
+    }
+  }
   const plannedHooks = tableItems(plan, 'Quyết định hook / store').filter(x => /use[A-Z]|Store|Context|Query|Mutation/i.test(x));
-  for (const item of [...plannedFiles, ...plannedHooks]) {
+  for (const item of plannedHooks) {
     if (item.length > 2 && !checklist.includes(item)) errors.push(`build-checklist.md chưa verify planned item: ${item}`);
   }
   if (/Quyết định global state/i.test(plan) && !/global store|Zustand|global state|store\/context/i.test(checklist)) errors.push('build-checklist.md thiếu verification cho Quyết định global state');

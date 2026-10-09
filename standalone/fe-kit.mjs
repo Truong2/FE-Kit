@@ -24095,14 +24095,14 @@ function templateChoiceCell(v) {
 function commandEvidenceRows(testSummaryMarkdown) {
   const text = String(testSummaryMarkdown || "");
   const section2 = text.match(
-    /^##\s+(?:\d+\.\s*)?Command evidence log[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
+    /^##\s+(?:\d+\.\s*)?(?:Command evidence log|Nhật ký lệnh|Bằng chứng lệnh)[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/im
   );
   if (!section2) return [];
   const rows = [];
   for (const line of section2[1].split(/\r?\n/)) {
     if (!/^\s*\|/.test(line) || /^\s*\|\s*:?-+/.test(line)) continue;
     const cells = line.split("|").slice(1, -1).map((c) => c.trim().replace(/^`|`$/g, ""));
-    if (/^command$/i.test(cells[0] || "")) continue;
+    if (/^(command|lệnh|câu lệnh)$/i.test(cells[0] || "")) continue;
     if (!realCell(cells[0])) continue;
     rows.push({ command: cells[0], ran: cells[1] || "", result: cells[2] || "", time: cells[3] || "" });
   }
@@ -24850,20 +24850,26 @@ function hasHeading(text, heading) {
   const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp("^#{1,4}\\s+" + escaped + "\\s*$", "im").test(text);
 }
-function tableItems(text, headerPhrase) {
+function sectionTableRows(text, headerPhrase) {
   const idx = text.toLowerCase().indexOf(headerPhrase.toLowerCase());
   if (idx < 0) return [];
   const part = text.slice(idx, idx + 4e3);
   const rows = part.split(/\r?\n/).filter((l) => /^\|/.test(l) && !/---/.test(l));
-  const items = [];
+  const out = [];
   for (const row of rows.slice(1)) {
-    const first = row.split("|").map((x) => x.trim()).filter(Boolean)[0] || "";
+    const cells = row.split("|").map((x) => x.trim()).filter(Boolean);
+    const first = cells[0] || "";
     if (!first || /^<|planned file|name|state \/ data|file$/i.test(first)) continue;
     const ticks = first.match(/`([^`]+)`/g);
-    if (ticks) items.push(...ticks.map((t) => t.replace(/`/g, "")));
-    else if (/^(src|app|components|features|pages|hooks|stores|lib|services)\//.test(first) || /^use[A-Z]/.test(first) || /(Store|Context|Query|Mutation)$/.test(first)) items.push(first);
+    let items = [];
+    if (ticks) items = ticks.map((t) => t.replace(/`/g, ""));
+    else if (/^(src|app|components|features|pages|hooks|stores|lib|services)\//.test(first) || /^use[A-Z]/.test(first) || /(Store|Context|Query|Mutation)$/.test(first)) items = [first];
+    if (items.length) out.push({ items, cells });
   }
-  return items;
+  return out;
+}
+function tableItems(text, headerPhrase) {
+  return sectionTableRows(text, headerPhrase).flatMap((r) => r.items);
 }
 function validateFigmaEvidence(taskDir) {
   const workflowPath = path11.join(taskDir, "tracking", "workflow-status.md");
@@ -24976,8 +24982,8 @@ function validateSrsReference(taskDir) {
   if (task && !/Bản đồ tham chiếu SRS/i.test(task)) errors.push("task.md thi\u1EBFu B\u1EA3n \u0111\u1ED3 tham chi\u1EBFu SRS");
   if (task && !/Bản đồ sử dụng API contract/i.test(task)) errors.push("task.md thi\u1EBFu B\u1EA3n \u0111\u1ED3 s\u1EED d\u1EE5ng API contract");
   if (task && !/Bản đồ lỗi API và cách hiển thị FE/i.test(task)) errors.push("task.md thi\u1EBFu B\u1EA3n \u0111\u1ED3 l\u1ED7i API v\xE0 c\xE1ch hi\u1EC3n th\u1ECB FE");
-  if (plan && !/Section SRS liên quan/i.test(plan)) errors.push("implementation-plan.md thi\u1EBFu Section SRS li\xEAn quan");
-  if (checklist && !/SRS\s*\/\s*API Contract|SRS\s*\/\s*API/i.test(checklist)) errors.push("build-checklist.md thi\u1EBFu SRS/API Contract checklist");
+  if (plan && !/Ma trận trace SRS|Section SRS liên quan/i.test(plan)) errors.push("implementation-plan.md thi\u1EBFu Ma tr\u1EADn trace SRS \u2192 FE logic \u2192 UI \u2192 Test");
+  if (checklist && !/SRS\s*\/\s*API|SRS coverage/i.test(checklist)) errors.push("build-checklist.md thi\u1EBFu m\u1EE5c SRS coverage (ho\u1EB7c SRS/API Contract)");
   return { ok: errors.length === 0, errors };
 }
 function validateQuestionsRouting(taskDir) {
@@ -24999,22 +25005,32 @@ function validatePlanArchitecture(taskDir) {
   const planPath = path11.join(taskDir, "planning", "implementation-plan.md");
   const plan = read(planPath);
   if (!plan) return { ok: false, errors: ["Thi\u1EBFu planning/implementation-plan.md"] };
-  for (const phrase of ["Ma tr\u1EADn trace SRS \u2192 FE logic \u2192 UI \u2192 Test", "Quy\u1EBFt \u0111\u1ECBnh ki\u1EBFn tr\xFAc logic frontend", "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt", "Quy\u1EBFt \u0111\u1ECBnh hook / store", "Quy\u1EBFt \u0111\u1ECBnh v\u1ECB tr\xED state", "Quy\u1EBFt \u0111\u1ECBnh global state", "Quy\u1EBFt \u0111\u1ECBnh l\u1ED7i API v\xE0 hi\u1EC3n th\u1ECB l\u1ED7i FE", "UI Implementation Contract t\u1EEB Figma", "Lu\u1ED3ng ng\u01B0\u1EDDi d\xF9ng", "Lu\u1ED3ng API", "Lu\u1ED3ng l\u1ED7i", "K\u1EBF ho\u1EA1ch test"]) {
-    if (!plan.toLowerCase().includes(phrase.toLowerCase())) errors.push(`implementation-plan.md thi\u1EBFu: ${phrase}`);
+  const has = (phrase) => plan.toLowerCase().includes(phrase.toLowerCase());
+  if (has("Quy\u1EBFt \u0111\u1ECBnh ki\u1EBFn tr\xFAc logic frontend")) {
+    for (const phrase of LEGACY_PLAN_ARCHITECTURE) if (!has(phrase)) errors.push(`implementation-plan.md thi\u1EBFu: ${phrase}`);
+    for (const phrase of LEGACY_PLAN_ERROR_DISPLAY) if (!has(phrase)) errors.push(`implementation-plan.md thi\u1EBFu subsection l\u1ED7i API/FE display: ${phrase}`);
+    return { ok: errors.length === 0, errors };
   }
-  for (const phrase of ["B\u1EA3n \u0111\u1ED3 l\u1ED7i API t\u1EEB SRS/source", "Quy\u1EBFt \u0111\u1ECBnh k\xEAnh hi\u1EC3n th\u1ECB l\u1ED7i", "Quy\u1EBFt \u0111\u1ECBnh component l\u1ED7i / toast"]) {
-    if (!plan.toLowerCase().includes(phrase.toLowerCase())) errors.push(`implementation-plan.md thi\u1EBFu subsection l\u1ED7i API/FE display: ${phrase}`);
-  }
+  for (const phrase of PLAN_ARCHITECTURE) if (!has(phrase)) errors.push(`implementation-plan.md thi\u1EBFu: ${phrase}`);
   return { ok: errors.length === 0, errors };
 }
+var PLAN_ARCHITECTURE = ["Ma tr\u1EADn trace SRS \u2192 FE logic \u2192 UI \u2192 Test", "Code shape contract", "Khung thi\u1EBFt k\u1EBF tr\u01B0\u1EDBc tri\u1EC3n khai", "Ba c\xE2u h\u1ECFi ki\u1EBFn tr\xFAc", "Quy\u1EBFt \u0111\u1ECBnh UI/Figma", "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt", "Scope diff guard", "R\u1EE7i ro / blocker"];
+var LEGACY_PLAN_ARCHITECTURE = ["Ma tr\u1EADn trace SRS \u2192 FE logic \u2192 UI \u2192 Test", "Quy\u1EBFt \u0111\u1ECBnh ki\u1EBFn tr\xFAc logic frontend", "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt", "Quy\u1EBFt \u0111\u1ECBnh hook / store", "Quy\u1EBFt \u0111\u1ECBnh v\u1ECB tr\xED state", "Quy\u1EBFt \u0111\u1ECBnh global state", "Quy\u1EBFt \u0111\u1ECBnh l\u1ED7i API v\xE0 hi\u1EC3n th\u1ECB l\u1ED7i FE", "UI Implementation Contract t\u1EEB Figma", "Lu\u1ED3ng ng\u01B0\u1EDDi d\xF9ng", "Lu\u1ED3ng API", "Lu\u1ED3ng l\u1ED7i", "K\u1EBF ho\u1EA1ch test"];
+var LEGACY_PLAN_ERROR_DISPLAY = ["B\u1EA3n \u0111\u1ED3 l\u1ED7i API t\u1EEB SRS/source", "Quy\u1EBFt \u0111\u1ECBnh k\xEAnh hi\u1EC3n th\u1ECB l\u1ED7i", "Quy\u1EBFt \u0111\u1ECBnh component l\u1ED7i / toast"];
 function validatePlanChecklistSync(taskDir) {
   const errors = [];
   const plan = read(path11.join(taskDir, "planning", "implementation-plan.md"));
   const checklist = read(path11.join(taskDir, "planning", "build-checklist.md"));
   if (!plan || !checklist) return { ok: false, errors: ["Thi\u1EBFu plan ho\u1EB7c checklist \u0111\u1EC3 sync"] };
-  const plannedFiles = tableItems(plan, "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt").filter((x) => /[/.]/.test(x));
+  for (const { items, cells } of sectionTableRows(plan, "File s\u1EBD t\u1EA1o / c\u1EADp nh\u1EADt")) {
+    if (/\bnếu\b|\bif\b|không sửa|giữ nguyên|no change/i.test(cells[1] || "")) continue;
+    const refs = (cells.slice(1).join(" ").match(/\b[A-Z][A-Z0-9]*-\d+\b/g) || []).filter((r) => checklist.includes(r));
+    for (const item of items.filter((x) => /[/.]/.test(x))) {
+      if (item.length > 2 && !checklist.includes(item) && !refs.length) errors.push(`build-checklist.md ch\u01B0a verify planned item: ${item}`);
+    }
+  }
   const plannedHooks = tableItems(plan, "Quy\u1EBFt \u0111\u1ECBnh hook / store").filter((x) => /use[A-Z]|Store|Context|Query|Mutation/i.test(x));
-  for (const item of [...plannedFiles, ...plannedHooks]) {
+  for (const item of plannedHooks) {
     if (item.length > 2 && !checklist.includes(item)) errors.push(`build-checklist.md ch\u01B0a verify planned item: ${item}`);
   }
   if (/Quyết định global state/i.test(plan) && !/global store|Zustand|global state|store\/context/i.test(checklist)) errors.push("build-checklist.md thi\u1EBFu verification cho Quy\u1EBFt \u0111\u1ECBnh global state");
