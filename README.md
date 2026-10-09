@@ -4,7 +4,7 @@ Bộ chuẩn frontend delivery tiếng Việt cho ChatGPT Skill, Claude Code, Co
 
 Một task đi theo luồng plan → (input-sync khi còn câu hỏi) → cook → review → bugfix → test → pr. Mỗi bước có gate kiểm bằng code, ghi run-log và để lại artifact trong `docs/frontend-tasks/<task>/`. Định kỳ, `/fe:retro` tổng hợp run-log và bug thành đề xuất cải tiến rule để team duyệt.
 
-Version: 2.5.0
+Version: 2.6.0
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 

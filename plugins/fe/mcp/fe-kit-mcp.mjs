@@ -35461,7 +35461,7 @@ fePack.evaluateModeCompletion = evaluateModeCompletion;
 var modeBriefing = createModeBriefing(fePack);
 
 // core/mcp/server.mjs
-var KIT_VERSION = true ? "2.5.0" : "dev";
+var KIT_VERSION = true ? "2.6.0" : "dev";
 function pluginRoot() {
   if (process.env.CLAUDE_PLUGIN_ROOT) return path11.resolve(process.env.CLAUDE_PLUGIN_ROOT);
   return path11.resolve(path11.dirname(fileURLToPath(import.meta.url)), "..");
