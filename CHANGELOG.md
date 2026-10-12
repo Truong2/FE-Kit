@@ -23,6 +23,7 @@ Sửa các vấn đề tìm ra khi chạy thử kit 2.5.0 như một team trên 
 - Bảng Command evidence log nhận tiêu đề tiếng Việt (`Lệnh`, mục `Nhật ký lệnh`); trước đây dòng tiêu đề bị đọc thành một lệnh thiếu dữ liệu.
 - `check-plan-architecture`, `check-srs-reference` kiểm theo tiêu đề của template hiện tại (plan theo template cũ vẫn qua). `check-plan-checklist-sync` tính file đã verify qua mã ở cột "Checklist ref" và bỏ qua dòng có điều kiện hoặc "không sửa".
 - Shell guard không cảnh báo lệnh chỉ ghi artifact của kit.
+- Scope diff bỏ qua file do `fe-kit init` cài hoặc cập nhật (`bin/fe-kit.mjs`, `.codex/`, `.claude/rules/`, `.cursor/rules/`, `.github/instructions/`, `CLAUDE.md`, `AGENTS.md`…). Trước đây nâng kit trên nhánh tính năng làm các file này bị tính là sửa ngoài plan (phát hiện khi chạy lại thử với 2.6.0).
 - Scope diff cảnh báo khi HEAD chưa có commit nào so với base (làm thẳng trên nhánh base thì thay đổi đã commit không lộ ra).
 - `fe-kit doctor` gợi ý `permissions.allow` còn thiếu cho `npm test`/`typecheck`/`build`/`lint`, cả `Bash` lẫn `PowerShell`; không tự ghi, không làm `--strict` fail.
 - `fe-kit report` liệt kê phiên bản kit trong run-log và cảnh báo khi có phiên chạy bằng plugin cũ hơn CLI.

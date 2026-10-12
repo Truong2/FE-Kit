@@ -87,6 +87,26 @@ describe('computeScopeDiff', () => {
     expect(r.ignored).toHaveLength(3);
   });
 
+  it('nâng kit trên nhánh tính năng: file do fe-kit init cài không tính là sửa ngoài plan', () => {
+    const kitFiles = [
+      'bin/fe-kit.mjs',
+      'docs/frontend-delivery-quickstart.md',
+      '.codex/prompts/quick.md',
+      '.claude/rules/frontend-delivery.md',
+      '.frontend-delivery/templates/tracking/workflow-status.md',
+      'CLAUDE.md',
+      'AGENTS.md',
+    ];
+    const r = computeScopeDiff({ plannedFiles, changedFiles: [...kitFiles, 'src/features/login/LoginForm.tsx'] });
+    expect(r.ok).toBe(true);
+    expect(r.ignored).toEqual(kitFiles);
+    // File source cùng tên ở chỗ khác vẫn bị tính: chỉ đúng đường dẫn do kit cài mới được bỏ qua.
+    expect(computeScopeDiff({ plannedFiles, changedFiles: ['src/bin/fe-kit.mjs.ts', 'tools/bin/run.mjs'] }).outOfPlan).toEqual([
+      'src/bin/fe-kit.mjs.ts',
+      'tools/bin/run.mjs',
+    ]);
+  });
+
   it('chuẩn hoá path Windows và ./', () => {
     const r = computeScopeDiff({ plannedFiles, changedFiles: ['src\\features\\login\\LoginForm.tsx', './src/i18n/vi.json'] });
     expect(r.ok).toBe(true);

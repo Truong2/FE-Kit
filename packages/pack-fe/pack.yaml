@@ -28,6 +28,20 @@ scope_ignore:
   - docs/frontend-context/
   - docs/frontend-retro/
   - .frontend-delivery/
+  # File do `fe-kit init` cài hoặc cập nhật (nâng kit trên nhánh tính năng không tính là sửa ngoài plan).
+  - bin/fe-kit.mjs
+  - docs/frontend-delivery-quickstart.md
+  - .gitattributes
+  - AGENTS.md
+  - CLAUDE.md
+  - .codex/
+  - .claude/rules/
+  - .claude/settings.json
+  - .cursor/rules/
+  - .github/instructions/
+  - .github/copilot-instructions.md
+  - .github/pull_request_template.md
+  - .github/workflows/frontend-delivery-standard.yml
 # Tên mục chứa bảng file trong planning/implementation-plan.md (regex).
 planned_files_heading: 'File sẽ tạo\s*\/\s*cập nhật'
 task_name_hint: FE-<id>-<slug>
