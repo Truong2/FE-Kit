@@ -26,7 +26,7 @@ Các bước, trong cùng một lượt:
 4. Tự review theo checklist (SRS/yêu cầu, clean code, scope) rồi ghi `output/review-report.md` theo template, chọn `Loại review: Quick — tự review`. Có bug thì ghi vào `tracking/review-bugs.md`.
 5. Chạy thật typecheck/test/build của dự án rồi ghi `output/test-summary.md` theo template, bảng Command evidence log có kết quả và thời điểm. Chạy từng lệnh một tại thư mục gốc dự án (vd `npm test`), không ghép `cd …;` hay `&&`, để khớp quyền đã cấp. Sửa nhiều chỗ trong một file thì viết lại file một lần.
 6. Gọi `fe_scope_diff`.
-7. Cập nhật `tracking/workflow-status.md`: `current_mode: quick-mode`, `review_status`, `review_bug_status`, `scope_diff_status`, `command_evidence_status`, `test_command_log_status`. Chỉ để `Prompt bước tiếp theo` trong file này.
+7. Cập nhật `tracking/workflow-status.md`: `current_mode: quick-mode`, `review_status`, `review_bug_status`, `scope_diff_status`, `command_evidence_status`, `test_command_log_status`. Đọc file rồi viết lại một lần bằng tool ghi file, không dùng `sed` hay chuỗi Edit nhỏ. Chỉ để `Prompt bước tiếp theo` trong file này.
    - Tự review đạt, không có bug Critical/High, scope và test đều passed: next là `FE pr <task-folder>`.
    - Có bug Critical/High, rủi ro vượt dự kiến, hoặc người dùng muốn review độc lập: next là `FE review <task-folder>`.
 8. Gọi `fe_validate_workflow` và sửa cho tới khi `PASSED`.
