@@ -2,6 +2,7 @@
 
 | Prompt | Mode | Mục đích |
 |---|---|---|
+| `FE task <yêu cầu tự nhiên>` | (router, không phải mode) | Phân loại loại task/độ phức tạp/rủi ro, tạo task folder, route sang `FE quick` hoặc `FE plan`. |
 | `FE plan <task>` | planning-mode | Lập kế hoạch từ SRS/source/Figma. |
 | `FE quick <task>` | quick-mode | Task nhỏ, rủi ro thấp; làm nhanh nếu không cần re-plan/input-sync/Figma. |
 | `FE input-sync <task> <answer-or-cr>` | input-sync-mode | Đồng bộ file trả lời, CR, clarification, SRS/Figma update. |

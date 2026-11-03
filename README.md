@@ -4,7 +4,7 @@ Bộ chuẩn frontend delivery tiếng Việt cho ChatGPT Skill, Claude Code, Co
 
 Một task đi theo luồng plan → (input-sync khi còn câu hỏi) → cook → review → bugfix → test → pr. Mỗi bước có gate kiểm bằng code, ghi run-log và để lại artifact trong `docs/frontend-tasks/<task>/`. Định kỳ, `/fe:retro` tổng hợp run-log và bug thành đề xuất cải tiến rule để team duyệt.
 
-Version: 2.6.0
+Version: 2.7.0
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 
@@ -26,7 +26,7 @@ Máy dùng kit cần Git, Node.js từ `18.17` trở lên để chạy CLI/MCP/h
 
 ### Cách 1 — Claude Code plugin (khuyến nghị cho team dùng Claude Code)
 
-Cài plugin để có skill `frontend-delivery-standard`, 12 slash command, 7 subagent, MCP server validator và hook kiểm tra gate lúc chạy. Hook mặc định chỉ cảnh báo. Cơ chế chi tiết: [ARCHITECTURE.md](ARCHITECTURE.md).
+Cài plugin để có skill `frontend-delivery-standard`, 13 slash command, 7 subagent, MCP server validator và hook kiểm tra gate lúc chạy. Hook mặc định chỉ cảnh báo. Cơ chế chi tiết: [ARCHITECTURE.md](ARCHITECTURE.md).
 
 **Dùng cho tất cả dự án trên máy bạn** — chạy trong terminal (scope `user`):
 
@@ -56,7 +56,13 @@ Hai lệnh ghi `extraKnownMarketplaces` và `enabledPlugins` vào `.claude/setti
 
 Chi tiết cả 3 scope: [INSTALL.md](INSTALL.md).
 
-Cài xong gõ command với namespace `fe`:
+Cài xong, cách dùng đơn giản nhất là giao yêu cầu bằng ngôn ngữ tự nhiên cho router:
+
+```text
+/fe:task Thêm nút export CSV vào bảng đơn hàng, API đã có sẵn
+```
+
+Router phân loại loại task, độ phức tạp và rủi ro, tạo task folder rồi tự chạy tiếp `FE quick` (việc nhỏ, một lượt tới PR) hoặc `FE plan` (luồng đầy đủ); bảng phân loại luôn được in ra và bạn có thể override. Vẫn có thể gọi từng mode trực tiếp khi đã biết mình cần gì:
 
 ```text
 /fe:new-task FE-123-abc
@@ -64,7 +70,7 @@ Cài xong gõ command với namespace `fe`:
 /fe:cook docs/frontend-tasks/FE-123-abc
 ```
 
-Các mode chuyên biệt được giao cho subagent `fe:frontend-*`; `new-task` và `quick` chạy trực tiếp trong phiên chính. Hook mặc định ở mức `warn`; đặt `FE_KIT_HOOKS=enforce` để bật cưỡng chế, `off` để tắt.
+Các mode chuyên biệt được giao cho subagent `fe:frontend-*`; `task`, `new-task` và `quick` chạy trực tiếp trong phiên chính. Hook mặc định ở mức `warn`; đặt `FE_KIT_HOOKS=enforce` để bật cưỡng chế, `off` để tắt.
 
 Cập nhật (nhớ `--scope` đúng với lúc cài, mặc định là `user`):
 
@@ -173,6 +179,7 @@ docs/frontend-retro/<YYYY-MM-DD>/
 
 ## Mode chính
 
+- `FE task <yêu cầu tự nhiên>`: **điểm vào mặc định.** Router phân loại loại task (`task_type`: feature/bugfix/refactor/debug/ui/api/perf/security/testing/migration/setup/ci-cd/docs/chore), đếm tín hiệu phức tạp/rủi ro, tạo task folder và route sang `FE quick` (0 tín hiệu) hoặc `FE plan` (≥ 1). Task cần Figma hoặc `risk_level: high` bị gate chặn `FE quick`.
 - `FE new-task <task-id>`
 - `FE plan <task-folder>`
 - `FE input-sync <task-folder> <answer-or-cr>`

@@ -23769,6 +23769,24 @@ var CoreMode = external_exports.enum([
   "pr-ready-mode"
 ]);
 var TriState = external_exports.union([external_exports.boolean(), external_exports.literal("unknown")]);
+var TaskType = external_exports.enum([
+  "feature",
+  "bugfix",
+  "refactor",
+  "debug",
+  "ui",
+  "api",
+  "perf",
+  "security",
+  "testing",
+  "migration",
+  "setup",
+  "ci-cd",
+  "docs",
+  "chore",
+  "unknown"
+]);
+var RiskLevel = external_exports.enum(["low", "medium", "high", "unknown"]);
 var SelfReported = GateStatus.optional();
 var REF_REASON = 'M\u1EE5c "Input ledger" trong body c\u1EE7a workflow-status.md m\u1EDBi l\xE0 danh s\xE1ch input; kh\xF4ng gate n\xE0o \u0111\u1ECDc field n\xE0y.';
 var UNREAD = "Kh\xF4ng gate n\xE0o \u0111\u1ECDc field n\xE0y.";
@@ -23807,6 +23825,9 @@ var WorkflowStatusSchema = external_exports.object({
   updated_at: external_exports.string(),
   human_override: external_exports.boolean().default(false),
   vietnamese_diacritics_cache_marker: external_exports.string().min(1),
+  // --- Phân loại task (v2.7.0, optional để tương thích task cũ) ---
+  task_type: TaskType.optional(),
+  risk_level: RiskLevel.optional(),
   // --- Plan input ledger gates ---
   input_inventory_status: GateStatus,
   plan_input_ledger_status: GateStatus,
@@ -23848,7 +23869,8 @@ var WorkflowStatusSchema = external_exports.object({
   figma_node_matrix_status: SelfReported,
   figma_component_binding_status: SelfReported,
   ui_match_review_status: GateStatus,
-  ui_match_severity_status: external_exports.enum(["unknown", "none", "not_required", "low", "medium", "high", "critical"]),
+  // 'blocked' có trong gate PR (PR_UI_MISMATCH_OPEN) từ v2.0.0 nhưng schema thiếu (ROADMAP ghi nhận sau chạy thử 2.5.0).
+  ui_match_severity_status: external_exports.enum(["unknown", "none", "not_required", "low", "medium", "high", "critical", "blocked"]),
   // --- Mode output status (suy ra được từ file tồn tại → optional) ---
   input_sync_report_status: SelfReported,
   figma_summary_status: SelfReported,
@@ -24226,6 +24248,8 @@ var manifest_gen_default = {
     "status_fields": [
       "current_mode",
       "next_mode",
+      "task_type",
+      "risk_level",
       "build_ready",
       "questions_resolution_gate_status",
       "blocking_questions_open",
@@ -24269,6 +24293,22 @@ function feEntryRules({ command, data, taskRef, alwaysAllowed, bool: bool3, norm
       reason: blocking > 0 ? `C\xF2n ${blocking} c\xE2u h\u1ECFi blocking \u0111ang m\u1EDF trong planning/questions.md.` : "workflow-status.md \u0111ang y\xEAu c\u1EA7u input-sync (questions/input_sync_required/plan_recheck ch\u01B0a \u0111\xF3ng).",
       redirect: `FE input-sync ${taskRef} <answer-or-cr>`
     });
+  }
+  if (command === "quick") {
+    if (bool3(data.figma_required)) {
+      rules.push({
+        code: "ENTRY_QUICK_FIGMA_REQUIRED",
+        reason: "Task c\u1EA7n Figma/visual gate n\xEAn kh\xF4ng ch\u1EA1y quick; d\xF9ng lu\u1ED3ng \u0111\u1EA7y \u0111\u1EE7.",
+        redirect: `FE plan ${taskRef}`
+      });
+    }
+    if (norm3(data.risk_level) === "high") {
+      rules.push({
+        code: "ENTRY_QUICK_HIGH_RISK",
+        reason: "risk_level=high: task r\u1EE7i ro cao ph\u1EA3i qua plan v\xE0 review \u0111\u1ED9c l\u1EADp, kh\xF4ng ch\u1EA1y quick.",
+        redirect: `FE plan ${taskRef}`
+      });
+    }
   }
   if (command === "cook") {
     if (!bool3(data.build_ready)) {
@@ -25108,7 +25148,7 @@ fePack.evaluateModeCompletion = evaluateModeCompletion;
 var modeBriefing = createModeBriefing(fePack);
 
 // core/hooks/fe-hook.mjs
-var KIT_VERSION = true ? "2.6.0" : "dev";
+var KIT_VERSION = true ? "2.7.0" : "dev";
 runHook(fePack, { version: KIT_VERSION });
 /*! Bundled license information:
 

@@ -23,7 +23,7 @@ describe('comment giá trị hợp lệ trong template workflow-status.md', () =
 
   it('có comment cho các trường enum agent hay ghi', () => {
     expect(inline.map((x) => x.field).sort()).toEqual(
-      ['current_mode', 'pr_status', 'questions_status', 'review_bug_status', 'review_status', 'ui_match_severity_status'].sort()
+      ['current_mode', 'pr_status', 'questions_status', 'review_bug_status', 'review_status', 'risk_level', 'task_type', 'ui_match_severity_status'].sort()
     );
   });
 
@@ -46,6 +46,19 @@ describe('thông báo lỗi schema', () => {
     expect(parseWorkflowStatus(withValue('review_status', 'needs_recheck')).ok).toBe(true);
     expect(parseWorkflowStatus(withValue('review_bug_status', 'not_required')).ok).toBe(true);
     expect(parseWorkflowStatus(withValue('ui_match_severity_status', 'not_required')).ok).toBe(true);
+  });
+
+  it('task_type/risk_level (v2.7.0) là optional: task cũ không có vẫn hợp lệ, có thì phải đúng enum', () => {
+    // fixture chưa có hai field này — vẫn parse được.
+    expect(parseWorkflowStatus(fixtureStatus).ok).toBe(true);
+    const withNew = fixtureStatus.replace(/^(task_id:.*)$/m, '$1\ntask_type: refactor\nrisk_level: low');
+    expect(parseWorkflowStatus(withNew).ok).toBe(true);
+    const bad = fixtureStatus.replace(/^(task_id:.*)$/m, '$1\ntask_type: deploy');
+    expect(parseWorkflowStatus(bad).ok).toBe(false);
+  });
+
+  it('ui_match_severity_status nhận blocked (giá trị gate PR dùng từ v2.0.0, schema thiếu tới v2.7.0)', () => {
+    expect(parseWorkflowStatus(withValue('ui_match_severity_status', 'blocked')).ok).toBe(true);
   });
 
   it('giá trị lạ: nêu tên trường, giá trị đang ghi và danh sách hợp lệ', () => {

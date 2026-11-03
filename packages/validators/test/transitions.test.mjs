@@ -52,6 +52,26 @@ describe('evaluateModeEntry', () => {
     expect(r.redirect).toBe('FE figma T');
   });
 
+  it('quick chạy được với task thường, kể cả task cũ không có risk_level/figma_required=unknown', () => {
+    expect(evaluateModeEntry({ requested: 'quick', data: ready }).allowed).toBe(true);
+    expect(evaluateModeEntry({ requested: 'quick', data: { ...ready, figma_required: 'unknown' } }).allowed).toBe(true);
+    expect(evaluateModeEntry({ requested: 'quick', data: { ...ready, risk_level: 'medium' } }).allowed).toBe(true);
+  });
+
+  it('chặn quick khi task cần Figma và gợi ý FE plan', () => {
+    const r = evaluateModeEntry({ requested: 'quick', data: { ...ready, figma_required: true }, taskRef: 'T' });
+    expect(r.allowed).toBe(false);
+    expect(r.reasonCodes).toContain('ENTRY_QUICK_FIGMA_REQUIRED');
+    expect(r.redirect).toBe('FE plan T');
+  });
+
+  it('chặn quick khi risk_level=high', () => {
+    const r = evaluateModeEntry({ requested: 'quick', data: { ...ready, risk_level: 'high' }, taskRef: 'T' });
+    expect(r.allowed).toBe(false);
+    expect(r.reasonCodes).toContain('ENTRY_QUICK_HIGH_RISK');
+    expect(r.redirect).toBe('FE plan T');
+  });
+
   it('chặn pr khi còn bug High hoặc review chưa passed', () => {
     expect(evaluateModeEntry({ requested: 'pr', data: { review_status: 'passed', high_issues_open: 1 } }).allowed).toBe(false);
     expect(evaluateModeEntry({ requested: 'pr', data: { review_status: 'not_started' } }).allowed).toBe(false);

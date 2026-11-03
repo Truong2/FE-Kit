@@ -48,6 +48,30 @@ const CoreMode = z.enum([
 
 const TriState = z.union([z.boolean(), z.literal('unknown')]);
 
+/**
+ * Phân loại task (v2.7.0, ghi bởi `FE task` hoặc FE plan). Optional: task tạo
+ * trước v2.7.0 không có hai field này và vẫn hợp lệ.
+ */
+const TaskType = z.enum([
+  'feature',
+  'bugfix',
+  'refactor',
+  'debug',
+  'ui',
+  'api',
+  'perf',
+  'security',
+  'testing',
+  'migration',
+  'setup',
+  'ci-cd',
+  'docs',
+  'chore',
+  'unknown',
+]);
+
+const RiskLevel = z.enum(['low', 'medium', 'high', 'unknown']);
+
 /** Field tự khai: giữ để tương thích, không còn bắt buộc. */
 const SelfReported = GateStatus.optional();
 
@@ -97,6 +121,10 @@ export const WorkflowStatusSchema = z
     human_override: z.boolean().default(false),
     vietnamese_diacritics_cache_marker: z.string().min(1),
 
+    // --- Phân loại task (v2.7.0, optional để tương thích task cũ) ---
+    task_type: TaskType.optional(),
+    risk_level: RiskLevel.optional(),
+
     // --- Plan input ledger gates ---
     input_inventory_status: GateStatus,
     plan_input_ledger_status: GateStatus,
@@ -141,7 +169,8 @@ export const WorkflowStatusSchema = z
     figma_node_matrix_status: SelfReported,
     figma_component_binding_status: SelfReported,
     ui_match_review_status: GateStatus,
-    ui_match_severity_status: z.enum(['unknown', 'none', 'not_required', 'low', 'medium', 'high', 'critical']),
+    // 'blocked' có trong gate PR (PR_UI_MISMATCH_OPEN) từ v2.0.0 nhưng schema thiếu (ROADMAP ghi nhận sau chạy thử 2.5.0).
+    ui_match_severity_status: z.enum(['unknown', 'none', 'not_required', 'low', 'medium', 'high', 'critical', 'blocked']),
 
     // --- Mode output status (suy ra được từ file tồn tại → optional) ---
     input_sync_report_status: SelfReported,

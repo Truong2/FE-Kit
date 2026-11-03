@@ -40,6 +40,7 @@ Mặc định đổi được khi review từng phase:
 | 3 | 2.4.0 | Tách `packages/engine` + `packages/pack-fe` theo kiểu strangler, có golden test; pack mẫu thứ hai chỉ dùng trong test | Xong (xem bên dưới) |
 | 4 | 2.5.0 | `retro`: tổng hợp run-log + bug thành đề xuất sửa rule, có người duyệt | Code xong; eval `retro-proposes-not-applies` chờ chạy thật; cần vài tuần run-log thật để retro có ý nghĩa |
 | 5 | — | Pack thật thứ hai (BE hoặc QA), mỗi pack một plugin | Không làm: kit chỉ dùng cho FE |
+| 6 | 2.7.0 | Task-first: router `FE task` (phân loại `task_type`/`risk_level`, route quick/plan), gate cứng cho quick (`ENTRY_QUICK_FIGMA_REQUIRED`, `ENTRY_QUICK_HIGH_RISK`), sửa enum `ui_match_severity_status` | Code xong; eval hành vi cho router (route đúng quick/plan) chưa viết — thêm case khi chạy bộ eval thật |
 
 ### Luật bật `enforce` mặc định
 
@@ -115,7 +116,7 @@ Kit 2.5.0 được dùng trên dự án mẫu React + TypeScript (`shop-web`):
 **Để lại theo dõi:**
 - Hook ghi run-log sau khi mode kết thúc nên working tree luôn có `run-log.jsonl` chưa commit. Hiện chỉ hướng dẫn commit cùng artifact.
 - Artifact dài: khoảng 480 dòng cho một tính năng nhỏ sau bước plan. Theo dõi qua retro trước khi cắt template.
-- `gates.mjs` kiểm `ui_match_severity_status === 'blocked'`, nhưng enum không có giá trị này. Gate đó không bao giờ chạy; sửa riêng.
+- ~~`gates.mjs` kiểm `ui_match_severity_status === 'blocked'`, nhưng enum không có giá trị này.~~ Sửa ở 2.7.0: thêm `blocked` vào enum của schema và template (nhánh `critical`/`high` của gate vẫn chạy như cũ từ trước).
 
 ## Lệch đã biết, đã chấp nhận
 

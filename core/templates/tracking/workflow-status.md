@@ -12,6 +12,11 @@ updated_at: ""
 human_override: false
 vietnamese_diacritics_cache_marker: vi-diacritics-rules-folder-v1.0.0
 
+# Phân loại task (ghi bởi FE task hoặc FE plan; task tạo trước v2.7.0 không có hai field này vẫn hợp lệ)
+task_type: unknown  # feature | bugfix | refactor | debug | ui | api | perf | security | testing | migration | setup | ci-cd | docs | chore | unknown
+# risk_level: high thì không được chạy FE quick (ENTRY_QUICK_HIGH_RISK)
+risk_level: unknown  # low | medium | high | unknown
+
 # Plan input ledger gates
 input_inventory_status: not_started
 plan_input_ledger_status: not_started
@@ -42,7 +47,7 @@ playwright_screenshot_diff_status: not_required
 figma_required: unknown
 figma_gate_status: unknown
 ui_match_review_status: not_started
-ui_match_severity_status: unknown  # unknown | none | not_required | low | medium | high | critical
+ui_match_severity_status: unknown  # unknown | none | not_required | low | medium | high | critical | blocked
 
 # Mode output status
 review_status: not_started  # not_started | passed | needs_bugfix | needs_recheck | blocked | insufficient_evidence | not_required

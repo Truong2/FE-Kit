@@ -3066,15 +3066,19 @@
      "redirect": ""
     },
     "quick": {
-     "allowed": true,
+     "allowed": false,
      "command": "quick",
      "mode": "quick-mode",
-     "reasons": [],
-     "reasonCodes": [],
+     "reasons": [
+      "Task cần Figma/visual gate nên không chạy quick; dùng luồng đầy đủ."
+     ],
+     "reasonCodes": [
+      "ENTRY_QUICK_FIGMA_REQUIRED"
+     ],
      "warnings": [
       "workflow-status.md ghi bước kế tiếp là \"review\" nhưng đang chạy \"quick\"."
      ],
-     "redirect": ""
+     "redirect": "FE plan docs/frontend-tasks/FE-G13"
     },
     "input-sync": {
      "allowed": true,
@@ -3322,15 +3326,19 @@
      "redirect": ""
     },
     "quick": {
-     "allowed": true,
+     "allowed": false,
      "command": "quick",
      "mode": "quick-mode",
-     "reasons": [],
-     "reasonCodes": [],
+     "reasons": [
+      "Task cần Figma/visual gate nên không chạy quick; dùng luồng đầy đủ."
+     ],
+     "reasonCodes": [
+      "ENTRY_QUICK_FIGMA_REQUIRED"
+     ],
      "warnings": [
       "workflow-status.md ghi bước kế tiếp là \"review\" nhưng đang chạy \"quick\"."
      ],
-     "redirect": ""
+     "redirect": "FE plan docs/frontend-tasks/FE-G14"
     },
     "input-sync": {
      "allowed": true,
@@ -9258,10 +9266,12 @@
      "command": "quick",
      "mode": "quick-mode",
      "reasons": [
-      "Còn 1 câu hỏi blocking đang mở trong planning/questions.md."
+      "Còn 1 câu hỏi blocking đang mở trong planning/questions.md.",
+      "Task cần Figma/visual gate nên không chạy quick; dùng luồng đầy đủ."
      ],
      "reasonCodes": [
-      "ENTRY_QUESTIONS_BLOCKING"
+      "ENTRY_QUESTIONS_BLOCKING",
+      "ENTRY_QUICK_FIGMA_REQUIRED"
      ],
      "warnings": [
       "workflow-status.md ghi bước kế tiếp là \"input-sync\" nhưng đang chạy \"quick\"."
@@ -9546,10 +9556,12 @@
      "command": "quick",
      "mode": "quick-mode",
      "reasons": [
-      "Còn 1 câu hỏi blocking đang mở trong planning/questions.md."
+      "Còn 1 câu hỏi blocking đang mở trong planning/questions.md.",
+      "Task cần Figma/visual gate nên không chạy quick; dùng luồng đầy đủ."
      ],
      "reasonCodes": [
-      "ENTRY_QUESTIONS_BLOCKING"
+      "ENTRY_QUESTIONS_BLOCKING",
+      "ENTRY_QUICK_FIGMA_REQUIRED"
      ],
      "warnings": [
       "workflow-status.md ghi bước kế tiếp là \"input-sync\" nhưng đang chạy \"quick\"."

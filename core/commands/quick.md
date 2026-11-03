@@ -18,6 +18,8 @@ Dùng khi task frontend nhỏ, rõ scope, rủi ro thấp. Mode này chạy inli
 
 Nếu bất kỳ điều kiện nào fail, dừng và chuyển sang `FE plan` hoặc `FE input-sync`.
 
+Hai điều kiện được gate chặn cứng từ v2.7.0 (`fe_begin_mode` từ chối, không chỉ là hướng dẫn): `figma_required: true` (ENTRY_QUICK_FIGMA_REQUIRED) và `risk_level: high` (ENTRY_QUICK_HIGH_RISK) trong `tracking/workflow-status.md`.
+
 Các bước, trong cùng một lượt:
 
 1. Gọi MCP tool `fe_begin_mode` với mode `quick` trước khi sửa. Đọc `task.md`, `tracking/workflow-status.md`, source liên quan.

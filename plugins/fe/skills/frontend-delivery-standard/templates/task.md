@@ -7,8 +7,16 @@
 | Task ID |  |
 | Tên task |  |
 | Owner |  |
+| Loại task | unknown |
+| Mức rủi ro | unknown |
 | Trạng thái | Created |
 | Plan version | v1 |
+
+### Yêu cầu gốc
+
+> Ghi nguyên văn (hoặc tóm tắt trung thực) yêu cầu của người dùng khi tạo task, để các mode sau đối chiếu mà không cần lịch sử chat.
+
+-
 
 ## 2. Phạm vi
 

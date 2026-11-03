@@ -50,6 +50,26 @@ function feEntryRules({ command, data, taskRef, alwaysAllowed, bool, norm, openB
     });
   }
 
+  if (command === 'quick') {
+    // Điều kiện đủ của quick trước v2.7.0 chỉ nằm trong prompt; hai tín hiệu
+    // đọc được từ workflow-status.md thì chặn cứng. Task cũ không có
+    // risk_level/figma_required=unknown không bị ảnh hưởng.
+    if (bool(data.figma_required)) {
+      rules.push({
+        code: 'ENTRY_QUICK_FIGMA_REQUIRED',
+        reason: 'Task cần Figma/visual gate nên không chạy quick; dùng luồng đầy đủ.',
+        redirect: `FE plan ${taskRef}`,
+      });
+    }
+    if (norm(data.risk_level) === 'high') {
+      rules.push({
+        code: 'ENTRY_QUICK_HIGH_RISK',
+        reason: 'risk_level=high: task rủi ro cao phải qua plan và review độc lập, không chạy quick.',
+        redirect: `FE plan ${taskRef}`,
+      });
+    }
+  }
+
   if (command === 'cook') {
     if (!bool(data.build_ready)) {
       rules.push({ code: 'ENTRY_NOT_BUILD_READY', reason: 'build_ready chưa true: plan chưa sẵn sàng để cook.', redirect: `FE plan ${taskRef}` });

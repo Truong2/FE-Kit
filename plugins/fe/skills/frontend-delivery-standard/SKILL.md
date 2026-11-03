@@ -1,6 +1,6 @@
 ---
 name: frontend-delivery-standard
-description: dùng cho task frontend cần FE plan, FE quick, FE input-sync, FE figma, FE figma-review, FE cook, FE review, FE bugfix, FE test, FE pr. Bắt buộc tiếng Việt có dấu, rules folder chung, output tối thiểu theo mode, SRS/Figma gates, token budget, scope diff, command evidence và blocking question input-sync gate. Chặn route sang cook khi còn câu hỏi blocking/open.
+description: dùng cho mọi yêu cầu frontend — yêu cầu mới bằng ngôn ngữ tự nhiên thì bắt đầu bằng FE task (router phân loại và chọn FE quick/FE plan); task đã có thì dùng FE plan, FE quick, FE input-sync, FE figma, FE figma-review, FE cook, FE review, FE bugfix, FE test, FE pr. Bắt buộc tiếng Việt có dấu, rules folder chung, output tối thiểu theo mode, SRS/Figma gates, token budget, scope diff, command evidence và blocking question input-sync gate. Chặn route sang cook khi còn câu hỏi blocking/open.
 ---
 
 # Frontend Delivery Standard
@@ -17,6 +17,10 @@ Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 - Nếu `planning/questions.md` còn câu hỏi blocking/open, `workflow-status.md` phải route sang `FE input-sync`; không được route sang `FE cook` cho tới khi input-sync cập nhật câu trả lời, plan/checklist và đóng gate.
 - Không copy rule dài vào output; chỉ ghi rule ID/path và quyết định liên quan trực tiếp tới task.
 - `docs/frontend-context/feature-source-context.md` chỉ mô tả feature mẫu/cách code feature mẫu nếu source base có mẫu đáng tin.
+
+## Bắt đầu một yêu cầu mới (Task-first)
+
+Yêu cầu frontend mới bằng ngôn ngữ tự nhiên, chưa có task folder: dùng `FE task <yêu cầu>`. Lệnh này phân loại loại task (`task_type`), mức rủi ro (`risk_level`), tạo task folder và route sang `FE quick` (0 tín hiệu phức tạp) hoặc `FE plan` (≥ 1 tín hiệu); luôn in bảng phân loại và cho người dùng override. Task cần Figma hoặc `risk_level: high` bị gate chặn `FE quick` (ENTRY_QUICK_FIGMA_REQUIRED, ENTRY_QUICK_HIGH_RISK). Phân loại route nhẹ bị vượt scope thì chuyển `FE plan`/`FE input-sync` trên cùng task folder, không tạo task mới.
 
 ## Bắt đầu và kết thúc một mode
 

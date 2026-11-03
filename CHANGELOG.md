@@ -5,6 +5,24 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.7.0] — chưa phát hành
+
+Task-first: developer giao yêu cầu frontend bằng ngôn ngữ tự nhiên, kit tự phân loại và chọn mức quy trình. Thiết kế dựa trên khảo sát Spec Kit, OpenSpec, BMAD và các router trong hệ sinh thái Claude Code: mặc định nhẹ, nâng cấp khi có tín hiệu, phân loại giải thích được và luôn cho người dùng override; hệ quả của phân loại được gate cứng enforce.
+
+### Thêm
+
+- Lệnh `FE task <yêu cầu tự nhiên>` (`/fe:task`, cũng là prompt Codex): router chạy inline ở main thread. Nhận diện yêu cầu thuộc task đang mở (đi tiếp theo `next_prompt`, không tạo trùng); với yêu cầu mới thì phân loại `task_type` (14 loại: feature, bugfix, refactor, debug, ui, api, perf, security, testing, migration, setup, ci-cd, docs, chore), đếm 7 tín hiệu phức tạp/rủi ro, tạo task folder và chạy tiếp `FE quick` (0 tín hiệu) hoặc delegate `FE plan` (≥ 1 tín hiệu). Bảng phân loại luôn được in ra kèm cách override. Router không phải mode: không state riêng, không artifact riêng, hook theo dõi qua `fe_begin_mode` như khi model tự vào mode.
+- Field optional `task_type`, `risk_level` trong `workflow-status.md` (task tạo trước 2.7.0 không có vẫn hợp lệ) và hai dòng Loại task/Mức rủi ro + mục "Yêu cầu gốc" trong template `task.md`. `fe_task_status` báo thêm hai field này khi có. `FE plan` điền hai field nếu task tạo không qua router.
+- Gate cứng lúc vào `quick` (trước đây điều kiện đủ của quick chỉ nằm trong prompt): `ENTRY_QUICK_FIGMA_REQUIRED` khi `figma_required: true`, `ENTRY_QUICK_HIGH_RISK` khi `risk_level: high`; cả hai redirect sang `FE plan`. Task cũ (`figma_required: unknown`, không có `risk_level`) không bị ảnh hưởng.
+
+### Sửa
+
+- `ui_match_severity_status` nhận giá trị `blocked`: gate PR `PR_UI_MISMATCH_OPEN` kiểm giá trị này từ v2.0.0 nhưng schema và template thiếu nên không task hợp lệ nào khai được (ghi nhận ở ROADMAP sau chạy thử 2.5.0). Không xoá giá trị nào.
+
+### Golden chụp lại có chủ đích
+
+- `evaluateModeEntry` cho `quick` (hai entry rule mới), `tools/list` và `fe_task_status` (hai status field mới), nội dung template nhúng trong `begin_mode`/`mode begin` (frontmatter và task.md mới).
+
 ## [2.6.0] — 2026-10-09
 
 Sửa các vấn đề tìm ra khi chạy thử kit 2.5.0 như một team trên dự án mẫu React + TypeScript: 20 phiên Claude Code thật, 3 task (đủ vòng đời, quick, CR giữa chừng và sửa ngoài scope), luồng Codex, report và retro. Quy trình, gate và phân vai đã chạy đúng; các thay đổi dưới đây bỏ những chỗ báo lỗi nhầm và tốn vòng.

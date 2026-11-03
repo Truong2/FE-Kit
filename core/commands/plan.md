@@ -14,6 +14,8 @@ Input tối thiểu:
 
 Output phải cập nhật `task.md`, `planning/implementation-plan.md`, `planning/build-checklist.md`, `planning/questions.md`, và `tracking/workflow-status.md`.
 
+Nếu `task_type`/`risk_level` trong `tracking/workflow-status.md` còn `unknown` hoặc chưa có (task tạo không qua `FE task`), plan phải điền hai field này theo bảng phân loại của lệnh `FE task`; `risk_level: high` thì task không được chạy `FE quick`.
+
 ## Input ledger bắt buộc
 
 Sau khi chạy `FE plan`, phải cập nhật `tracking/workflow-status.md` mục `Input ledger bắt buộc cho FE plan` với đầy đủ input: task/request, SRS/API/Figma, context project/feature/design, rules và source cần inspect. Các mode sau có thể chỉ mở `workflow-status.md` trước nên không được để input chỉ nằm trong chat.

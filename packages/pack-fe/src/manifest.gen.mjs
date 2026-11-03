@@ -314,6 +314,8 @@ export default {
     "status_fields": [
       "current_mode",
       "next_mode",
+      "task_type",
+      "risk_level",
       "build_ready",
       "questions_resolution_gate_status",
       "blocking_questions_open",

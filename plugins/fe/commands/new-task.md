@@ -7,6 +7,8 @@ Tạo cấu trúc task chuẩn cho task frontend mới: $ARGUMENTS
 
 Argument là tên task dạng `FE-<id>-<slug>` (ví dụ `FE-123-login-form`). Lệnh này chạy inline, không delegate.
 
+> Chưa có tên task, chỉ có yêu cầu bằng ngôn ngữ tự nhiên? Dùng `FE task <yêu cầu>`: lệnh đó tự phân loại, tự tạo task folder và route sang `FE quick` hoặc `FE plan`.
+
 Các bước bắt buộc:
 
 1. Gọi MCP tool `fe_new_task` với `workspace_root` và `task_name`. Tool tạo `docs/frontend-tasks/<tên-task>/` từ template (ưu tiên `.frontend-delivery/templates/` của repo, nếu không có thì dùng bản trong plugin), điền placeholder và không ghi đè file đã có.

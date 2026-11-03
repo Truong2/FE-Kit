@@ -26,7 +26,18 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
            Hook: UserPromptExpansion / PreToolUse / SubagentStop / Stop
 ```
 
-`/fe:quick` và `/fe:new-task` chạy inline ở main thread.
+`/fe:task` (router), `/fe:quick` và `/fe:new-task` chạy inline ở main thread.
+
+## Smart Task Router (`/fe:task`, từ v2.7.0)
+
+Điểm vào task-first: developer đưa yêu cầu bằng ngôn ngữ tự nhiên, không cần biết mode. Router là **command, không phải mode** (không có state, không artifact riêng), chạy inline ở main thread:
+
+1. Kiểm tra yêu cầu có thuộc task đang mở không (`fe_list_tasks`); có thì đi tiếp theo `next_prompt`, không tạo task mới.
+2. Phân loại `task_type` (14 loại) và đếm 7 tín hiệu phức tạp/rủi ro (≥ 3 file, kiến trúc mới, cross-module, requirement mờ, Figma, khó revert, security) — bảng trong `core/commands/task.md`. Luôn in phân loại và cho người dùng override.
+3. Tạo task folder (`fe_new_task`), ghi `task_type`/`risk_level` vào `workflow-status.md` (field optional, task cũ không cần) và Yêu cầu gốc vào `task.md`.
+4. Route: 0 tín hiệu → chạy tiếp `quick` inline; ≥ 1 → delegate `frontend-planner` như `/fe:plan`. Hook vẫn theo dõi vì marker được ghi ở `PostToolUse` `fe_begin_mode`.
+
+Phân loại là việc của model (prompt, mềm); **hệ quả** của phân loại được enforce cứng: `evaluateModeEntry` chặn `quick` khi `figma_required=true` (`ENTRY_QUICK_FIGMA_REQUIRED`) hoặc `risk_level=high` (`ENTRY_QUICK_HIGH_RISK`), redirect sang `FE plan`. Phân loại nhẹ bị sai không đắt: quick vượt scope thì chuyển `FE plan`/`FE input-sync` trên cùng task folder (escalation hai chiều, không cần phân loại đúng 100% từ đầu).
 
 ## Engine và domain pack
 
@@ -212,6 +223,9 @@ Quyết định đổi mặc định hook sang `enforce` dựa trên pass rate v
 ## Luồng chuẩn một task
 
 ```
+task (router) ──► [0 tín hiệu phức tạp?] ──► quick ──► pr
+   │ ≥ 1 tín hiệu (hoặc tạo tay bằng new-task)
+   ▼
 new-task ──► planner ──► [blocking question?] ──► input-sync ──► planner (re-check)
                 │ build_ready=true
                 ▼

@@ -1,6 +1,6 @@
 # Quickstart
 
-Version: 2.6.0
+Version: 2.7.0
 
 ## Cài Claude Code plugin
 
@@ -21,7 +21,13 @@ claude plugin marketplace add your-org/frontend-delivery-agent-kit --scope proje
 claude plugin install fe@frontend-delivery --scope project
 ```
 
-Cài xong là có 12 command namespace `fe`:
+Cài xong là có 13 command namespace `fe`. Cách dùng đơn giản nhất — giao yêu cầu bằng ngôn ngữ tự nhiên, router tự phân loại, tạo task và chạy tiếp:
+
+```text
+/fe:task Thêm nút export CSV vào bảng đơn hàng, API đã có sẵn
+```
+
+Hoặc gọi từng mode trực tiếp:
 
 ```text
 /fe:new-task FE-123-task-name
