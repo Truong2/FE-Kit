@@ -11,7 +11,7 @@
       "name": "fe",
       "source": "./plugins/fe",
       "description": "Skill + 14 slash command /fe:* (task/next tự điều phối tới PR; new-task/plan/quick/input-sync/figma/cook/review/bugfix/test/figma-review/pr/retro) + team 9 agent có model theo vai cho quy trình frontend delivery chuẩn, output tiếng Việt có dấu.",
-      "version": "2.8.0",
+      "version": "2.8.1",
       "author": {
         "name": "Frontend Platform Team"
       },

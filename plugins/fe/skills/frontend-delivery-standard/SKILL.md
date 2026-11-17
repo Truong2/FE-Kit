@@ -1,6 +1,6 @@
 ---
 name: frontend-delivery-standard
-description: dùng cho mọi yêu cầu frontend — yêu cầu mới bằng ngôn ngữ tự nhiên thì bắt đầu bằng FE task (router phân loại và chọn FE quick/FE plan); task đã có thì dùng FE plan, FE quick, FE input-sync, FE figma, FE figma-review, FE cook, FE review, FE bugfix, FE test, FE pr. Bắt buộc tiếng Việt có dấu, rules folder chung, output tối thiểu theo mode, SRS/Figma gates, token budget, scope diff, command evidence và blocking question input-sync gate. Chặn route sang cook khi còn câu hỏi blocking/open.
+description: "Chuẩn quy trình Frontend Delivery Kit (FE task, FE next, FE plan, FE quick, FE input-sync, FE figma, FE figma-review, FE cook, FE review, FE bugfix, FE test, FE pr, FE retro): tiếng Việt có dấu, output theo mode, SRS/Figma gate, scope diff, command evidence, chặn cook khi còn câu hỏi blocking. Chỉ dùng khi người dùng gọi lệnh /fe:* (hoặc prompt `FE <mode>`) hoặc khi lệnh đó giao việc; không tự dùng cho yêu cầu frontend thông thường."
 ---
 
 # Frontend Delivery Standard

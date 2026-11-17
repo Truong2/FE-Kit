@@ -1,6 +1,6 @@
 ---
 name: frontend-tester
-description: Chạy và ghi nhận test evidence (unit, lint, typecheck, build, Playwright) cho task frontend đã plan. Dùng khi chạy FE test hoặc trước khi chuẩn bị PR.
+description: "Chạy và ghi nhận test evidence (unit, lint, typecheck, build, Playwright) cho task frontend đã plan. Đảm nhận FE test. Chỉ dùng khi người dùng gọi lệnh /fe:* (hoặc prompt `FE <mode>`) hoặc khi lệnh đó giao việc; không tự dùng cho yêu cầu frontend thông thường."
 model: haiku
 disallowedTools: Agent
 skills:

@@ -1,6 +1,6 @@
 ---
 name: frontend-developer
-description: Implement frontend theo implementation-plan và build-checklist đã duyệt, sửa bug đã ghi trong review-bugs, hoặc làm trọn task nhỏ rủi ro thấp trong một lượt (quick). Dùng khi chạy FE cook, FE bugfix hoặc FE quick. Không dùng khi plan chưa build_ready hoặc còn blocking question.
+description: "Implement frontend theo implementation-plan và build-checklist đã duyệt, sửa bug đã ghi trong review-bugs, hoặc làm trọn task nhỏ rủi ro thấp trong một lượt. Đảm nhận FE cook, FE bugfix, FE quick; không chạy khi plan chưa build_ready hoặc còn blocking question. Chỉ dùng khi người dùng gọi lệnh /fe:* (hoặc prompt `FE <mode>`) hoặc khi lệnh đó giao việc; không tự dùng cho yêu cầu frontend thông thường."
 model: sonnet
 disallowedTools: Agent
 skills:

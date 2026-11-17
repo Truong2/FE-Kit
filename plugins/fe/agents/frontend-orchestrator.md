@@ -1,6 +1,6 @@
 ---
 name: frontend-orchestrator
-description: Điều phối task frontend ở main thread — nhận yêu cầu, route qua /fe:task rồi tự chạy tiếp qua các agent của team tới khi task sẵn sàng PR, chỉ dừng khi có blocker cần người xác nhận. Chạy bằng `claude --agent fe:frontend-orchestrator` (hoặc key `agent` trong .claude/settings.json); không dùng làm subagent.
+description: "Điều phối task frontend ở main thread — nhận yêu cầu, route qua /fe:task rồi tự chạy tiếp qua các agent của team tới khi task sẵn sàng PR, chỉ dừng khi có blocker cần người xác nhận. Chỉ chạy khi người dùng mở phiên bằng `claude --agent fe:frontend-orchestrator` (hoặc key `agent` trong .claude/settings.json); không dùng làm subagent."
 model: opus
 ---
 

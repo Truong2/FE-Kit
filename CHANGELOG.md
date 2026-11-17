@@ -5,6 +5,15 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.8.1] — 2026-11-17
+
+Kit chỉ chạy khi người dùng gọi: skill và agent không còn tự kích hoạt với yêu cầu frontend thông thường.
+
+### Thay đổi
+
+- Kit chỉ chạy khi người dùng gọi `/fe:*` (hoặc prompt `FE <mode>`). Description của skill `frontend-delivery-standard` trước là "dùng cho mọi yêu cầu frontend", nên Claude tự nạp skill với mọi câu hỏi frontend; agent `frontend-planner` có "use proactively", nên Claude tự giao việc cho nó. Giờ description của skill và mọi subagent ghi rõ chỉ dùng khi người dùng gọi lệnh của kit. Không dùng `disable-model-invocation` vì cờ này chặn luôn việc preload skill vào subagent.
+- `CLAUDE.md` do `init` ghi nói rõ yêu cầu không có `/fe:*` thì làm như bình thường. README thêm mục "Plugin chỉ chạy khi bạn gọi" và cách tắt/bật hẳn plugin (`claude plugin disable|enable fe@frontend-delivery`).
+
 ## [2.8.0] — 2026-11-17
 
 Team agent theo vai và tự điều phối: giao task một lần, kit tự chạy qua các agent (mỗi agent một model) tới khi task sẵn sàng PR, chỉ dừng khi có blocker cần người xác nhận. Kèm các thay đổi giảm token: agent đặt trạng thái bằng tool thay vì viết lại file, command và skill nạp vào context gọn hơn, template rút gọn cho task rủi ro thấp.

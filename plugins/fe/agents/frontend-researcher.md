@@ -1,6 +1,6 @@
 ---
 name: frontend-researcher
-description: Thu thập ngữ cảnh cho task frontend (codebase hiện có, SRS/API, tài liệu thư viện) và ghi research brief có bằng chứng để planner/developer dùng. Dùng trước FE plan khi task cần dò codebase rộng (debug, perf, migration, refactor nhiều module) hoặc chưa rõ source liên quan. Không lập plan, không sửa code, không chạy mode.
+description: "Thu thập ngữ cảnh cho task frontend (codebase hiện có, SRS/API, tài liệu thư viện) và ghi research brief có bằng chứng cho planner/developer. Được FE task gọi trước FE plan khi cần dò codebase rộng; không lập plan, không sửa code. Chỉ dùng khi người dùng gọi lệnh /fe:* (hoặc prompt `FE <mode>`) hoặc khi lệnh đó giao việc; không tự dùng cho yêu cầu frontend thông thường."
 model: haiku
 disallowedTools: Bash, PowerShell, Agent, NotebookEdit
 skills:

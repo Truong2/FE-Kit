@@ -85,4 +85,17 @@ describe('team agent của plugin fe', () => {
     expect(body).toContain('CẦN BẠN XỬ LÝ');
     expect(body).not.toMatch(/Không tự chuyển sang mode kế tiếp khi chưa được yêu cầu/);
   });
+
+  const GUARD = 'Chỉ dùng khi người dùng gọi lệnh /fe:*';
+
+  it('kit chỉ chạy khi người dùng gọi: skill và subagent không tự kích hoạt', () => {
+    const skill = matter(fs.readFileSync(path.join(ROOT, 'plugins', 'fe', 'skills', 'frontend-delivery-standard', 'SKILL.md'), 'utf8')).data;
+    // disable-model-invocation chặn cả preload vào subagent, nên giới hạn bằng description.
+    expect(skill['disable-model-invocation']).toBeUndefined();
+    expect(skill.description).toContain(GUARD);
+    for (const [name, parsed] of Object.entries(agents)) {
+      expect(parsed.data.description, name).not.toMatch(/proactively|chủ động/i);
+      if (name !== 'frontend-orchestrator') expect(parsed.data.description, name).toContain(GUARD);
+    }
+  });
 });

@@ -35739,7 +35739,7 @@ var modeBriefing = createModeBriefing(fePack);
 var updateStatus = createStatusUpdater(fePack);
 
 // core/mcp/server.mjs
-var KIT_VERSION = true ? "2.8.0" : "dev";
+var KIT_VERSION = true ? "2.8.1" : "dev";
 function pluginRoot() {
   if (process.env.CLAUDE_PLUGIN_ROOT) return path12.resolve(process.env.CLAUDE_PLUGIN_ROOT);
   return path12.resolve(path12.dirname(fileURLToPath(import.meta.url)), "..");

@@ -4,7 +4,7 @@ Bộ quy trình để AI làm task frontend theo chuẩn của team, artifact vi
 
 **Ý tưởng chính:** bạn giao task một lần, kit tự chia việc cho một team agent (lập plan → code → review → test → chuẩn bị PR). Mỗi bước đều có gate kiểm bằng code. Kit chỉ dừng lại khi có việc **cần bạn quyết định**, và nói rõ bạn cần làm gì.
 
-Version: 2.8.0
+Version: 2.8.1
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 
@@ -136,6 +136,24 @@ Cài xong, mở phiên Claude Code mới (hoặc gõ `/reload-plugins` trong phi
 claude plugin marketplace update frontend-delivery
 claude plugin update fe@frontend-delivery --scope user
 ```
+
+**Plugin chỉ chạy khi bạn gọi.** Cài xong, Claude vẫn làm việc bình thường với yêu cầu không có `/fe:*`. Kit không tự lập plan, không tự tạo task, không tự giao việc cho agent `fe:frontend-*`.
+
+| Thành phần | Khi không gọi `/fe:*` |
+|---|---|
+| Lệnh `/fe:*`, agent `fe:frontend-*` | Không chạy. Skill và agent đều ghi "chỉ dùng khi người dùng gọi lệnh /fe:*" |
+| Agent điều phối | Chỉ chạy khi mở `claude --agent fe:frontend-orchestrator`. Lưu ý: `init --orchestrator` bật nó cho **mọi** phiên trong repo; muốn chủ động thì đừng dùng cờ này |
+| Hook | Vẫn được Claude Code gọi nhưng không làm gì: chỉ hoạt động khi có lệnh `/fe:*` hoặc mode đang chạy |
+| MCP server `frontend-delivery` | Khởi động cùng phiên nhưng chỉ chạy khi agent gọi tool `fe_*` |
+
+Muốn tắt hẳn (không nạp cả hook và MCP) khi không làm task frontend, rồi bật lại khi cần:
+
+```bash
+claude plugin disable fe@frontend-delivery     # tắt
+claude plugin enable fe@frontend-delivery      # bật lại, rồi mở phiên mới
+```
+
+Hoặc chỉ cài plugin ở scope `project` cho những repo frontend cần dùng.
 
 ### B. `fe-kit init` (tuỳ chọn)
 

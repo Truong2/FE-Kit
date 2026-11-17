@@ -1,6 +1,6 @@
 ---
 name: frontend-retro-analyst
-description: Phân tích số liệu retro (run-log, bug theo nhóm và nguyên nhân gốc) của các task frontend và viết đề xuất sửa rule/template ở trạng thái Proposed. Dùng khi chạy FE retro. Không dùng để sửa rule, template hay source; không tự duyệt đề xuất.
+description: "Phân tích số liệu retro (run-log, bug theo nhóm và nguyên nhân gốc) của các task frontend và viết đề xuất sửa rule/template ở trạng thái Proposed. Đảm nhận FE retro; không sửa rule, template hay source, không tự duyệt đề xuất. Chỉ dùng khi người dùng gọi lệnh /fe:* (hoặc prompt `FE <mode>`) hoặc khi lệnh đó giao việc; không tự dùng cho yêu cầu frontend thông thường."
 model: opus
 disallowedTools: Bash, PowerShell, Agent, NotebookEdit
 skills:

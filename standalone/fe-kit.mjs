@@ -25417,7 +25417,7 @@ function chosenCell(markdown, label, choices) {
 // bin/fe-kit.mjs
 var __filename = fileURLToPath(import.meta.url);
 var kitRoot = path13.resolve(path13.dirname(__filename), "..");
-var BUNDLED_VERSION = true ? "2.8.0" : "";
+var BUNDLED_VERSION = true ? "2.8.1" : "";
 var PLUGIN_ID = "fe@frontend-delivery";
 var MARKETPLACE_NAME = "frontend-delivery";
 var ORCHESTRATOR_AGENT = "fe:frontend-orchestrator";

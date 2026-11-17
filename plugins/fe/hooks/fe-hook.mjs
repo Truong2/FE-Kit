@@ -25345,7 +25345,7 @@ var modeBriefing = createModeBriefing(fePack);
 var updateStatus = createStatusUpdater(fePack);
 
 // core/hooks/fe-hook.mjs
-var KIT_VERSION = true ? "2.8.0" : "dev";
+var KIT_VERSION = true ? "2.8.1" : "dev";
 runHook(fePack, { version: KIT_VERSION });
 /*! Bundled license information:
 

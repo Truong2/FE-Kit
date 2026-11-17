@@ -1,6 +1,6 @@
 ---
 name: frontend-release-manager
-description: "Tổng hợp PR readiness: pr-summary, kiểm tra mọi gate đã pass, scope diff và evidence trước khi mở PR. Dùng khi chạy FE pr hoặc khi task sẵn sàng release."
+description: "Tổng hợp PR readiness: pr-summary, kiểm tra mọi gate đã pass, scope diff và evidence trước khi mở PR. Đảm nhận FE pr. Chỉ dùng khi người dùng gọi lệnh /fe:* (hoặc prompt `FE <mode>`) hoặc khi lệnh đó giao việc; không tự dùng cho yêu cầu frontend thông thường."
 model: haiku
 disallowedTools: Agent
 skills:

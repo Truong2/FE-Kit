@@ -1,6 +1,6 @@
 ---
 name: frontend-planner
-description: Lập FE implementation plan bám SRS/API/Figma, build checklist và câu hỏi blocking; đồng bộ câu trả lời/CR vào plan. Dùng chủ động (use proactively) khi task frontend mới cần plan, khi chạy FE plan hoặc FE input-sync, hoặc khi plan cần re-check sau input-sync/CR.
+description: "Lập FE implementation plan bám SRS/API/Figma, build checklist và câu hỏi blocking; đồng bộ câu trả lời/CR vào plan. Đảm nhận FE plan và FE input-sync. Chỉ dùng khi người dùng gọi lệnh /fe:* (hoặc prompt `FE <mode>`) hoặc khi lệnh đó giao việc; không tự dùng cho yêu cầu frontend thông thường."
 model: opus
 disallowedTools: Bash, PowerShell, Agent, NotebookEdit
 skills:
