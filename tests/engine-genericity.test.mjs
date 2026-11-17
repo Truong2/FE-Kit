@@ -191,7 +191,7 @@ describe('MCP', () => {
     expect(begin.content[0].text).toMatch(/nguồn: plugin\) — không cần đọc lại file rule ===\n\n--- style\.md ---/);
     expect(callTool('docs_next_step', { workspace_root: ws, task_folder: TASK }).content[0].text).toBe(`DOC draft ${TASK}`);
     expect(callTool('docs_task_status', { workspace_root: ws, task_folder: TASK }).content[0].text).toBe('current_mode: drafting\nnext_mode: draft\napproved: false');
-    expect(callTool('docs_list_tasks', { workspace_root: ws }).content[0].text).toBe('- DOC-1-intro (drafting)');
+    expect(callTool('docs_list_tasks', { workspace_root: ws }).content[0].text).toBe('- DOC-1-intro (drafting, next: draft)');
     expect(callTool('fe_begin_mode', {}).content[0].text).toBe('Tool không tồn tại: fe_begin_mode');
     fs.rmSync(pluginRoot, { recursive: true, force: true });
   });

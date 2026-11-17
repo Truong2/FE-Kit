@@ -12,11 +12,16 @@ export { isValidTaskName } from '@frontend-delivery-kit/engine';
 /** Template copy vào task mới: đúng các artifact Markdown bắt buộc. */
 export const TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
 
+/** Bản template thay thế theo mức rủi ro (`task_files.variants` trong pack.yaml). */
+export const TASK_VARIANTS = manifest.task_files.variants;
+
 /**
- * @param {{ workspaceRoot: string, name: string, templatesDir: string }} params
+ * @param {{ workspaceRoot: string, name: string, templatesDir: string, variant?: string }} params
+ *   `variant`: giá trị của `TASK_VARIANTS.param` (vd `low`); không có trong `dirs` thì dùng template đầy đủ
  */
-export function scaffoldTask({ workspaceRoot, name, templatesDir }) {
+export function scaffoldTask({ workspaceRoot, name, templatesDir, variant }) {
   return scaffoldTaskIn({
+    variantDir: TASK_VARIANTS?.dirs?.[variant],
     workspaceRoot,
     name,
     templatesDir,

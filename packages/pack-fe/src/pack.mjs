@@ -2,7 +2,7 @@
  * Domain pack FE: dữ liệu và hàm mà engine cần để chạy state machine, gate kết
  * thúc mode, nội dung mở mode, hook và MCP cho frontend.
  */
-import { createModeCompletion, createModeBriefing } from '@frontend-delivery-kit/engine';
+import { createModeCompletion, createModeBriefing, createStatusUpdater } from '@frontend-delivery-kit/engine';
 import { parseWorkflowStatus } from './parse.mjs';
 import { countOpenBlockingQuestions, effectiveOpenIssues } from './gates.mjs';
 import { countOpenIssuesInTask } from './review-bugs.mjs';
@@ -18,7 +18,7 @@ import {
 import { validateWorkflow, validateWorkflowAtGate, scopeDiffForTask } from './workflow.mjs';
 import { TASKS_ROOT, resolveTaskDir } from './resolve.mjs';
 import { loadProjectConfig } from './project-config.mjs';
-import { scaffoldTask } from './scaffold.mjs';
+import { scaffoldTask, TASK_VARIANTS } from './scaffold.mjs';
 import manifest from './manifest.gen.mjs';
 import { RUNLOG_FILE } from './runlog.mjs';
 import {
@@ -53,6 +53,8 @@ export const fePack = {
   commandToMode: COMMAND_TO_MODE,
   sourceEditCommands: SOURCE_EDIT_COMMANDS,
   sourceEditAgent: SOURCE_EDIT_AGENT,
+  /** Agent điều phối chạy làm main thread; hook coi nó như main thread. */
+  mainThreadAgent: m.main_thread_agent,
   requiredArtifacts: MODE_REQUIRED_ARTIFACTS,
   agentFor: AGENT_FOR_COMMAND,
   label: (command) => `${m.prompt_prefix} ${command}`,
@@ -72,6 +74,8 @@ export const fePack = {
   scopeDiffForTask,
   loadProjectConfig,
   scaffoldTask,
+  /** Tham số chọn bản template thay thế khi tạo task (MCP new_task). */
+  taskVariants: TASK_VARIANTS,
   requiredTaskFiles: REQUIRED_TASK_FILES,
   validateWorkflow,
   validateWorkflowAtGate,
@@ -124,7 +128,15 @@ export const fePack = {
       taskStatus: m.mcp.descriptions.task_status,
       retroData: m.mcp.descriptions.retro_data,
       validateRetro: m.mcp.descriptions.validate_retro,
+      updateStatus: m.mcp.descriptions.update_status,
     },
+  },
+  /** Cập nhật field của workflow-status.md (MCP `fe_update_status`, CLI `fe-kit status set`). */
+  statusUpdate: {
+    protectedFields: m.mcp.update_status.protected_fields,
+    timestampField: m.mcp.update_status.timestamp_field,
+    nextPromptField: m.mcp.update_status.next_prompt_field,
+    nextPromptHeading: m.mcp.next_prompt_heading,
   },
 };
 
@@ -137,3 +149,6 @@ fePack.evaluateModeCompletion = evaluateModeCompletion;
 
 /** Nội dung của MCP `fe_begin_mode` và CLI `fe-kit mode begin`. Xem `createModeBriefing` trong engine. */
 export const modeBriefing = createModeBriefing(fePack);
+
+/** Đặt field của workflow-status.md mà không viết lại cả file. Xem `createStatusUpdater` trong engine. */
+export const updateStatus = createStatusUpdater(fePack);

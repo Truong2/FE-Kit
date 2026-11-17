@@ -7,6 +7,8 @@ description: dùng cho mọi yêu cầu frontend — yêu cầu mới bằng ng�
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 
+Trong Claude Code: mở mode bằng `fe_begin_mode` (trả verdict gate, artifact bắt buộc và nguyên văn rule), đặt field trạng thái bằng `fe_update_status`, kết thúc bằng `fe_validate_workflow`.
+
 ## Luôn áp dụng
 
 - Mọi câu trả lời và artifact `.md` phải viết bằng tiếng Việt có dấu đầy đủ.
@@ -25,8 +27,8 @@ Yêu cầu frontend mới bằng ngôn ngữ tự nhiên, chưa có task folder:
 ## Bắt đầu và kết thúc một mode
 
 1. **Bắt đầu:** gọi MCP tool `fe_begin_mode` (`workspace_root`, `task_folder`, `mode`). Kết quả cho biết mode có được chạy không, prompt phải chạy thay thế nếu bị chặn, artifact bắt buộc và nguyên văn các rule áp dụng cho mode (không cần mở file rule riêng).
-2. **Bị chặn:** không làm việc của mode và không sửa source; chỉ cập nhật `next_mode`/`next_prompt` trong `tracking/workflow-status.md` theo prompt được trả về.
-3. **Kết thúc:** cập nhật `tracking/workflow-status.md`, gọi `fe_validate_workflow` và sửa tới khi `PASSED`.
+2. **Bị chặn:** không làm việc của mode và không sửa source; chỉ đặt `next_mode`/`next_prompt` theo prompt được trả về (MCP `fe_update_status`).
+3. **Kết thúc:** đặt field của `tracking/workflow-status.md` và `next_prompt` bằng `fe_update_status` (không viết lại cả file), gọi `fe_validate_workflow` và sửa tới khi `PASSED`.
 
 Môi trường không có MCP tool của kit (ChatGPT, Codex, Cursor, Copilot): tự đọc `tracking/workflow-status.md` + `planning/questions.md`, áp dụng `rules/question-resolution-contract.md`, và dùng script trong `scripts/` nếu có (`node scripts/validate-workflow.mjs <task-folder>`).
 
@@ -37,7 +39,7 @@ Môi trường không có MCP tool của kit (ChatGPT, Codex, Cursor, Copilot): 
 
 ## Rule loading theo mode
 
-- Luôn: `rules/core.md`, `rules/mode-output-contract.md`, `rules/plan-input-ledger-contract.md`, `rules/question-resolution-contract.md`, `rules/vietnamese-output.md`, `rules/efficiency-budget-contract.md`
+- Luôn: `rules/core.md`, `rules/mode-output-contract.md`, `rules/plan-input-ledger-contract.md`, `rules/question-resolution-contract.md`, `rules/vietnamese-output.md`, `rules/efficiency-budget-contract.md`, `rules/untrusted-input-contract.md`
 - SRS/API: `rules/srs-api-contract.md`
 - UI/Figma: `rules/figma-ui-contract.md`
 - Cook/review/quick/bugfix: `rules/clean-code-contract.md`
@@ -92,5 +94,6 @@ Chỉ `FE cook`, `FE bugfix` và `FE quick` được sửa source code của d�
 | Kiểm tra gate workflow | `fe_validate_workflow` | `node scripts/validate-workflow.mjs <task-folder>` (task ở review/test/pr tự đối chiếu scope với git) |
 | Đối chiếu scope với plan | `fe_scope_diff` | `node bin/fe-kit.mjs validate-pr <task-folder> --base <nhánh-đích>` |
 | Bước tiếp theo | `fe_next_step` | mục `Prompt bước tiếp theo` trong `workflow-status.md` |
+| Đặt field trạng thái | `fe_update_status` | `node bin/fe-kit.mjs status set <task-folder> key=value… --next-prompt "…"` (không có CLI thì sửa đúng dòng field, giữ comment) |
 
 Ngoài Claude Code (plugin `fe`), kit không có MCP hay hook chặn sai gate lúc agent chạy. Gate chỉ được kiểm khi chạy các lệnh ở cột "Môi trường khác". Chưa chạy, hoặc lệnh báo lỗi, thì không ghi gate là passed trong `workflow-status.md`; ghi lại lệnh đã chạy và kết quả.

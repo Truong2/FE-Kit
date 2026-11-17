@@ -1,6 +1,7 @@
 ---
 name: frontend-figma-specialist
 description: "Trích xuất Figma evidence (screenshot, node matrix, states, tokens, asset decision) và đối chiếu UI đã build với Figma. Dùng khi chạy FE figma hoặc FE figma-review cho task có UI/Figma requirement."
+model: sonnet
 disallowedTools: Bash, PowerShell, Agent, NotebookEdit
 skills:
   - frontend-delivery-standard

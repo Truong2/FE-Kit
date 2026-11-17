@@ -244,12 +244,18 @@ export function validatePlanArchitecture(taskDir) {
     for (const phrase of LEGACY_PLAN_ERROR_DISPLAY) if (!has(phrase)) errors.push(`implementation-plan.md thiếu subsection lỗi API/FE display: ${phrase}`);
     return { ok: errors.length === 0, errors };
   }
-  for (const phrase of PLAN_ARCHITECTURE) if (!has(phrase)) errors.push(`implementation-plan.md thiếu: ${phrase}`);
+  // Task risk_level: low dùng plan rút gọn (templates/lite): chỉ bắt buộc trace, bảng file và rủi ro.
+  const risk = parseFrontMatterLoose(read(path.join(taskDir, 'tracking', 'workflow-status.md'))).data.risk_level;
+  const required = risk === 'low' ? PLAN_ARCHITECTURE_LITE : PLAN_ARCHITECTURE;
+  for (const phrase of required) if (!has(phrase)) errors.push(`implementation-plan.md thiếu: ${phrase}`);
   return { ok: errors.length === 0, errors };
 }
 
 /** Mục kiến trúc của template `planning/implementation-plan.md` hiện tại. */
 const PLAN_ARCHITECTURE = ['Ma trận trace SRS → FE logic → UI → Test', 'Code shape contract', 'Khung thiết kế trước triển khai', 'Ba câu hỏi kiến trúc', 'Quyết định UI/Figma', 'File sẽ tạo / cập nhật', 'Scope diff guard', 'Rủi ro / blocker'];
+
+/** Mục bắt buộc của plan rút gọn (task `risk_level: low`). */
+const PLAN_ARCHITECTURE_LITE = ['Ma trận trace SRS → FE logic → UI → Test', 'File sẽ tạo / cập nhật', 'Rủi ro / blocker'];
 
 /** Mục của template plan cũ: repo dự án có thể còn plan viết theo mẫu này. */
 const LEGACY_PLAN_ARCHITECTURE = ['Ma trận trace SRS → FE logic → UI → Test','Quyết định kiến trúc logic frontend','File sẽ tạo / cập nhật','Quyết định hook / store','Quyết định vị trí state','Quyết định global state','Quyết định lỗi API và hiển thị lỗi FE','UI Implementation Contract từ Figma','Luồng người dùng','Luồng API','Luồng lỗi','Kế hoạch test'];

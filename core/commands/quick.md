@@ -5,7 +5,7 @@ argument-hint: <task-folder> <việc cần làm>
 
 Dùng skill `frontend-delivery-standard` trong `quick-mode` cho: $ARGUMENTS
 
-Dùng khi task frontend nhỏ, rõ scope, rủi ro thấp. Mode này chạy inline, không delegate. Đánh đổi: review là tự review của chính lượt này, không phải review độc lập; task có rủi ro thì dùng luồng đầy đủ.
+Dùng khi task frontend nhỏ, rõ scope, rủi ro thấp. Trong Claude Code, mode này do subagent `frontend-developer` làm trọn một lượt; môi trường khác chạy trực tiếp theo các bước dưới. Đánh đổi: review là tự review của chính lượt này, không phải review độc lập; task có rủi ro thì dùng luồng đầy đủ.
 
 Điều kiện bắt buộc trước khi sửa code:
 
@@ -28,7 +28,7 @@ Các bước, trong cùng một lượt:
 4. Tự review theo checklist (SRS/yêu cầu, clean code, scope) rồi ghi `output/review-report.md` theo template, chọn `Loại review: Quick — tự review`. Có bug thì ghi vào `tracking/review-bugs.md`.
 5. Chạy thật typecheck/test/build của dự án rồi ghi `output/test-summary.md` theo template, bảng Command evidence log có kết quả và thời điểm. Chạy từng lệnh một tại thư mục gốc dự án (vd `npm test`), không ghép `cd …;` hay `&&`, để khớp quyền đã cấp. Sửa nhiều chỗ trong một file thì viết lại file một lần.
 6. Gọi `fe_scope_diff`.
-7. Cập nhật `tracking/workflow-status.md`: `current_mode: quick-mode`, `review_status`, `review_bug_status`, `scope_diff_status`, `command_evidence_status`, `test_command_log_status`. Đọc file rồi viết lại một lần bằng tool ghi file, không dùng `sed` hay chuỗi Edit nhỏ. Chỉ để `Prompt bước tiếp theo` trong file này.
+7. Đặt field của `tracking/workflow-status.md` trong một lần (MCP `fe_update_status`, hoặc `node bin/fe-kit.mjs status set <task-folder> key=value… --next-prompt "…"` khi không có MCP): `current_mode: quick-mode`, `review_status`, `review_bug_status`, `scope_diff_status`, `command_evidence_status`, `test_command_log_status`, `next_mode` và prompt bước tiếp theo. Không viết lại cả file.
    - Tự review đạt, không có bug Critical/High, scope và test đều passed: next là `FE pr <task-folder>`.
    - Có bug Critical/High, rủi ro vượt dự kiến, hoặc người dùng muốn review độc lập: next là `FE review <task-folder>`.
 8. Gọi `fe_validate_workflow` và sửa cho tới khi `PASSED`.

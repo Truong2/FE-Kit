@@ -62,7 +62,7 @@ export function createModeBriefing(pack) {
     } else {
       lines.push(`GATE: BỊ CHẶN — không được chạy ${pack.label(command)} cho ${taskRef}.`);
       for (const r of entry.reasons) lines.push(`- ${r}`);
-      lines.push(`Việc phải làm: cập nhật ${pack.statusFile} (next_mode, next_prompt) và dừng. Prompt đúng: ${entry.redirect}`);
+      lines.push(`Việc phải làm: đặt next_mode, next_prompt trong ${pack.statusFile} (dùng tool cập nhật trạng thái nếu có) và dừng. Prompt đúng: ${entry.redirect}`);
       lines.push('Không sửa source code trong lượt này.');
     }
     for (const w of entry.warnings) lines.push(`Cảnh báo: ${w}`);

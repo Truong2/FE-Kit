@@ -22,9 +22,11 @@ export function isValidTaskName(name) {
  * @param {string[]} params.templateFiles file copy từ template (path tương đối task folder)
  * @param {string[]} [params.emptyFiles] file rỗng cần tạo (vd `.gitkeep`)
  * @param {string} params.nameHint dạng tên gợi ý trong thông báo lỗi
- * @returns {{ ok: true, taskDir: string, taskRef: string, created: string[], skipped: string[] } | { ok: false, error: string }}
+ * @param {string} [params.variantDir] thư mục con của templatesDir chứa bản template thay thế
+ *   (vd bản rút gọn); file nào có bản thay thế thì dùng bản đó, còn lại dùng bản gốc
+ * @returns {{ ok: true, taskDir: string, taskRef: string, created: string[], skipped: string[], fromVariant: string[] } | { ok: false, error: string }}
  */
-export function scaffoldTask({ workspaceRoot, name, templatesDir, tasksRoot, templateFiles, emptyFiles = [], nameHint }) {
+export function scaffoldTask({ workspaceRoot, name, templatesDir, tasksRoot, templateFiles, emptyFiles = [], nameHint, variantDir }) {
   if (!isValidTaskName(name)) {
     return { ok: false, error: `Tên task không hợp lệ: "${name}". Dùng dạng ${nameHint}, chỉ gồm chữ, số, dấu chấm, gạch dưới, gạch ngang.` };
   }
@@ -40,13 +42,17 @@ export function scaffoldTask({ workspaceRoot, name, templatesDir, tasksRoot, tem
 
   const created = [];
   const skipped = [];
+  const fromVariant = [];
   for (const rel of templateFiles) {
     const dest = path.join(taskDir, rel);
     if (fs.existsSync(dest)) {
       skipped.push(rel);
       continue;
     }
-    const src = path.join(templatesDir, rel);
+    const variantSrc = variantDir ? path.join(templatesDir, variantDir, rel) : '';
+    const useVariant = Boolean(variantSrc) && fs.existsSync(variantSrc);
+    if (useVariant) fromVariant.push(rel);
+    const src = useVariant ? variantSrc : path.join(templatesDir, rel);
     const template = fs.existsSync(src) ? fs.readFileSync(src, 'utf8') : '';
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.writeFileSync(dest, fill(template));
@@ -60,5 +66,5 @@ export function scaffoldTask({ workspaceRoot, name, templatesDir, tasksRoot, tem
     fs.writeFileSync(file, '');
     created.push(rel);
   }
-  return { ok: true, taskDir, taskRef, created, skipped };
+  return { ok: true, taskDir, taskRef, created, skipped, fromVariant };
 }

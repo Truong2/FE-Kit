@@ -1,6 +1,7 @@
 ---
 name: frontend-reviewer
 description: Review code frontend đối chiếu SRS, plan, checklist, questions và Figma evidence; xuất review-report và danh sách bug theo severity. Dùng khi chạy FE review hoặc sau khi cook/bugfix xong.
+model: opus
 disallowedTools: Agent
 skills:
   - frontend-delivery-standard

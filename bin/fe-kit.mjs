@@ -40,6 +40,7 @@ import {
   validateRetroFolder,
   exportUpstreamProposals,
   RETRO_ROOT,
+  updateStatus,
 } from '@frontend-delivery-kit/validators';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -51,6 +52,8 @@ const kitRoot = path.resolve(path.dirname(__filename), '..');
 const BUNDLED_VERSION = typeof __FE_KIT_VERSION__ !== 'undefined' ? __FE_KIT_VERSION__ : '';
 const PLUGIN_ID = 'fe@frontend-delivery';
 const MARKETPLACE_NAME = 'frontend-delivery';
+/** Agent điều phối chạy làm main thread; trùng `main_thread_agent` trong pack.yaml. */
+const ORCHESTRATOR_AGENT = 'fe:frontend-orchestrator';
 const args = process.argv.slice(2);
 const command = args[0] || 'help';
 const AGENT_ORDER = ['codex', 'claude', 'cursor', 'github'];
@@ -306,8 +309,9 @@ function marketplaceRepo() {
 /**
  * Bật plugin `fe` cho repo dự án bằng cách merge vào .claude/settings.json.
  * Không ghi đè key khác; settings.json hỏng thì bỏ qua và báo.
+ * `orchestrator`: ghi thêm key `agent` để main thread chạy bằng agent điều phối.
  */
-function enableClaudePlugin(target) {
+function enableClaudePlugin(target, { orchestrator = false } = {}) {
   const file = path.join(target, '.claude', 'settings.json');
   let settings = {};
   if (fs.existsSync(file)) {
@@ -325,6 +329,8 @@ function enableClaudePlugin(target) {
   }
   settings.enabledPlugins ||= {};
   settings.enabledPlugins[PLUGIN_ID] = true;
+  // Opt-in: mọi phiên `claude` trong repo chạy main thread bằng agent điều phối (model Opus).
+  if (orchestrator) settings.agent = ORCHESTRATOR_AGENT;
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
   return true;
@@ -459,7 +465,12 @@ async function init() {
     // CLAUDE.md, rule theo path (plugin không ship được) và khai báo bật plugin.
     upsertManagedBlock(path.join(target, 'CLAUDE.md'), read(adapterPath('claude', 'CLAUDE.md')));
     copyDir(adapterPath('claude', '.claude', 'rules'), path.join(target, '.claude', 'rules'));
-    if (enableClaudePlugin(target)) console.log(`Đã bật plugin ${PLUGIN_ID} trong .claude/settings.json (commit file này để cả team cùng dùng).`);
+    const orchestrator = args.includes('--orchestrator');
+    if (enableClaudePlugin(target, { orchestrator })) {
+      console.log(`Đã bật plugin ${PLUGIN_ID} trong .claude/settings.json (commit file này để cả team cùng dùng).`);
+      if (orchestrator) console.log(`Main thread mặc định: agent ${ORCHESTRATOR_AGENT} (Opus). Gõ "claude" là vào agent điều phối.`);
+      else console.log(`Chạy team agent: claude --agent ${ORCHESTRATOR_AGENT} (hoặc init lại với --orchestrator để đặt làm mặc định).`);
+    }
     const legacy = legacyClaudeCopies(target);
     if (legacy.length) {
       console.warn('Phát hiện bản copy v1.x sẽ trùng với plugin, hãy xoá:');
@@ -600,7 +611,8 @@ function newTask() {
     console.error('Không tìm thấy thư mục templates (.frontend-delivery/templates). Chạy fe-kit init trước.');
     process.exit(1);
   }
-  const scaffold = scaffoldTask({ workspaceRoot: target, name: slug, templatesDir });
+  // --risk low: plan/checklist rút gọn (templates/lite), giống tham số risk_level của MCP fe_new_task.
+  const scaffold = scaffoldTask({ workspaceRoot: target, name: slug, templatesDir, variant: argValue('--risk', undefined) });
   if (!scaffold.ok) {
     console.error(scaffold.error);
     process.exit(1);
@@ -647,6 +659,40 @@ function status() {
   if (openChecklist.length) console.log(openChecklist.slice(0,10).join('\n'));
   const prompt = extractNextPrompt(workflow);
   console.log(`\nPrompt bước tiếp theo: ${prompt ? 'Có trong tracking/workflow-status.md' : 'Chưa có'}`);
+}
+
+/** `true`/`false` → boolean, số nguyên → số, còn lại giữ chuỗi. */
+function parseStatusValue(raw) {
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  if (/^-?d+$/.test(raw)) return Number(raw);
+  return raw;
+}
+
+/**
+ * `status set <task> key=value… [--next-prompt "…"]`: cùng logic với MCP `fe_update_status`
+ * (giữ comment của template, kiểm schema trước khi ghi). Dành cho Codex/Cursor/Copilot.
+ */
+function statusSet() {
+  const target = path.resolve(argValue('--target', process.cwd()));
+  const taskDir = resolveTask(args[2] || '', target);
+  if (!taskDir || !exists(taskDir)) { console.error('Task folder not found. Dùng: status set <task> key=value… [--next-prompt "…"]'); process.exit(1); }
+  const valueFlags = new Set(['--target', '--next-prompt']);
+  const fields = {};
+  for (let i = 3; i < args.length; i++) {
+    if (valueFlags.has(args[i])) { i++; continue; }
+    const m = args[i].match(/^([^=]+)=(.*)$/);
+    if (!m) { console.error(`Tham số không hợp lệ: "${args[i]}". Dùng key=value.`); process.exit(1); }
+    fields[m[1]] = parseStatusValue(m[2]);
+  }
+  const nextPrompt = argValue('--next-prompt', undefined);
+  const res = updateStatus(taskDir, { fields, nextPrompt });
+  if (!res.ok) {
+    console.error('Không cập nhật tracking/workflow-status.md (file giữ nguyên):');
+    for (const e of res.errors) console.error('- ' + e);
+    process.exit(1);
+  }
+  console.log(`Đã cập nhật tracking/workflow-status.md: ${res.changed.join(', ')}`);
 }
 
 function next() {
@@ -952,13 +998,14 @@ function retro() {
 }
 
 function help() {
-  console.log(`Frontend Delivery Agent Kit CLI v${readKitVersion()}\nRules folder + plan input ledger + blocking question input-sync gate + scope diff tính từ git + command evidence trước PR.\n\nCommands:\n  # Agent prompt mode: FE quick <task> is available for small, low-risk localized changes. FE figma-review <task> is available for UI/Figma visual review.\n  init [--target repo] [--agents all|codex,claude,cursor,github]\n                                      Install selected agent adapters into repo. In a TTY, prompts for agent selection.\n  doctor [--target repo] [--strict] [--agents ...]\n                                      Check kit installation for selected/installed agents\n  new-task <slug> [--target repo]       Create standard FE task folder\n  status <task> [--target repo]         Show current step, blockers, checklist summary\n  next <task> [--target repo]           Print Prompt bước tiếp theo from workflow-status.md\n  validate-task <task> [--target repo]  Validate standard task structure and workflow rules\n  validate-pr <task> [--target repo] [--base ref] [--no-scope]\n                                      Validate PR readiness; so git diff với bảng file trong plan\n  validate-pr --orphans [--target repo] [--base ref]\n                                      File source đã đổi mà không task nào khai trong plan\n                                      (mức: require_task_for_source trong .frontend-delivery/standard.yaml)\n  validate-workflow <task> [--target] [--base <ref>] [--scope|--no-scope]\n                                      Validate SRS/questions/plan/checklist/Figma gates\n                                      (review/test/pr-ready: scope from git by default)\n  mode begin <task> <mode> [--target] [--actor <tool>]\n                                      Gate lúc vào mode + rule của mode (cho Codex/Cursor/Copilot)\n  mode end <task> <mode> [--target] [--base <ref>] [--actor <tool>]\n                                      Gate kết thúc mode, giống hook của Claude Code\n  retro [--since YYYY-MM-DD] [--date YYYY-MM-DD] [--json] [--write]\n                                      Số liệu retro (run-log + bug theo nhóm/nguyên nhân gốc)\n  retro check <dir> | retro export <dir>\n                                      Kiểm thư mục retro / xuất đề xuất upstream đã duyệt\n  report [<task>] [--target] [--since YYYY-MM-DD] [--json]\n                                      Tổng hợp tracking/run-log.jsonl của các task\n                                      (validate-*/mode ghi run-log; tắt bằng --no-log, CI=true tự tắt)\n  check-srs-reference <task> [--target] Validate task.md SRS/API maps\n  check-questions-routing <task> [--target] Validate questions.md routing sections/owners\n  check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections\n  check-plan-checklist-sync <task> [--target] Validate checklist mirrors plan file/hook/store decisions\n  check-input-sync-report <task> [--target] Validate tracking/input-sync-report.md when input sync is active\n  check-figma-evidence <task> [--target] Validate Figma summary, screenshots, and MCP/API evidence\n  check-asset-gate <task> [--target]     Validate embedded Asset Extraction Log\n`);
+  console.log(`Frontend Delivery Agent Kit CLI v${readKitVersion()}\nRules folder + plan input ledger + blocking question input-sync gate + scope diff tính từ git + command evidence trước PR.\n\nCommands:\n  # Agent prompt mode: FE quick <task> is available for small, low-risk localized changes. FE figma-review <task> is available for UI/Figma visual review.\n  init [--target repo] [--agents all|codex,claude,cursor,github] [--orchestrator]\n                                      Install selected agent adapters into repo. In a TTY, prompts for agent selection.\n                                      --orchestrator: main thread của Claude Code mặc định là agent điều phối (Opus)\n  doctor [--target repo] [--strict] [--agents ...]\n                                      Check kit installation for selected/installed agents\n  new-task <slug> [--target repo] [--risk low]\n                                      Create standard FE task folder (--risk low: plan/checklist rút gọn)\n  status <task> [--target repo]         Show current step, blockers, checklist summary\n  status set <task> key=value… [--next-prompt "…"] [--target repo]\n                                      Đặt field của workflow-status.md (giữ comment, kiểm schema trước khi ghi)\n  next <task> [--target repo]           Print Prompt bước tiếp theo from workflow-status.md\n  validate-task <task> [--target repo]  Validate standard task structure and workflow rules\n  validate-pr <task> [--target repo] [--base ref] [--no-scope]\n                                      Validate PR readiness; so git diff với bảng file trong plan\n  validate-pr --orphans [--target repo] [--base ref]\n                                      File source đã đổi mà không task nào khai trong plan\n                                      (mức: require_task_for_source trong .frontend-delivery/standard.yaml)\n  validate-workflow <task> [--target] [--base <ref>] [--scope|--no-scope]\n                                      Validate SRS/questions/plan/checklist/Figma gates\n                                      (review/test/pr-ready: scope from git by default)\n  mode begin <task> <mode> [--target] [--actor <tool>]\n                                      Gate lúc vào mode + rule của mode (cho Codex/Cursor/Copilot)\n  mode end <task> <mode> [--target] [--base <ref>] [--actor <tool>]\n                                      Gate kết thúc mode, giống hook của Claude Code\n  retro [--since YYYY-MM-DD] [--date YYYY-MM-DD] [--json] [--write]\n                                      Số liệu retro (run-log + bug theo nhóm/nguyên nhân gốc)\n  retro check <dir> | retro export <dir>\n                                      Kiểm thư mục retro / xuất đề xuất upstream đã duyệt\n  report [<task>] [--target] [--since YYYY-MM-DD] [--json]\n                                      Tổng hợp tracking/run-log.jsonl của các task\n                                      (validate-*/mode ghi run-log; tắt bằng --no-log, CI=true tự tắt)\n  check-srs-reference <task> [--target] Validate task.md SRS/API maps\n  check-questions-routing <task> [--target] Validate questions.md routing sections/owners\n  check-plan-architecture <task> [--target] Validate frontend logic architecture plan sections\n  check-plan-checklist-sync <task> [--target] Validate checklist mirrors plan file/hook/store decisions\n  check-input-sync-report <task> [--target] Validate tracking/input-sync-report.md when input sync is active\n  check-figma-evidence <task> [--target] Validate Figma summary, screenshots, and MCP/API evidence\n  check-asset-gate <task> [--target]     Validate embedded Asset Extraction Log\n`);
 }
 
 
 if (command === 'init') await init();
 else if (command === 'doctor') doctor();
 else if (command === 'new-task') newTask();
+else if (command === 'status' && args[1] === 'set') statusSet();
 else if (command === 'status') status();
 else if (command === 'next') next();
 else if (command === 'validate-task') validateTaskLean();

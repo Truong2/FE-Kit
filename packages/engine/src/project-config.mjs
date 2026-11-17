@@ -13,9 +13,15 @@ export const PROJECT_CONFIG_DEFAULTS = Object.freeze({
   require_task_for_source: 'warn',
   /** Thư mục được coi là source khi kiểm PR không gắn task. */
   source_paths: ['src/', 'app/', 'apps/', 'packages/'],
+  /**
+   * Main thread tự chạy tiếp các mode của task tới khi xong hoặc gặp blocker cần
+   * người xác nhận. `false`: chạy một bước rồi in lệnh cho bước kế tiếp.
+   */
+  auto_advance: true,
 });
 
 const VALIDATORS = {
+  auto_advance: (v) => typeof v === 'boolean',
   require_task_for_source: (v) => ['off', 'warn', 'error'].includes(v),
   source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === 'string' && p.trim()),
 };

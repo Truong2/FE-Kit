@@ -1,6 +1,6 @@
 # Quickstart
 
-Version: 2.7.0
+Version: 2.8.0
 
 ## Cài Claude Code plugin
 
@@ -21,13 +21,15 @@ claude plugin marketplace add your-org/frontend-delivery-agent-kit --scope proje
 claude plugin install fe@frontend-delivery --scope project
 ```
 
-Cài xong là có 13 command namespace `fe`. Cách dùng đơn giản nhất — giao yêu cầu bằng ngôn ngữ tự nhiên, router tự phân loại, tạo task và chạy tiếp:
+Cài xong là có 14 command namespace `fe`. Cách dùng đơn giản nhất — giao yêu cầu bằng ngôn ngữ tự nhiên **một lần**; router phân loại, tạo task rồi tự điều phối qua các agent tới khi task sẵn sàng PR:
 
 ```text
 /fe:task Thêm nút export CSV vào bảng đơn hàng, API đã có sẵn
 ```
 
-Hoặc gọi từng mode trực tiếp:
+Kit chỉ dừng khi có blocker cần bạn xác nhận (câu hỏi blocking, input thiếu, file ngoài plan, bug Critical/High sau 2 vòng, gate lỗi, cần quyền chạy lệnh) và in khối `⛔ CẦN BẠN XỬ LÝ` nêu lý do, việc cần làm, file cần xem. Trả lời ngay trong chat, hoặc `/fe:next [task]`, để chạy tiếp. Muốn duyệt từng bước: `auto_advance: false` trong `.frontend-delivery/standard.yaml`.
+
+Vẫn gọi được từng mode trực tiếp (chỉ chạy đúng bước đó):
 
 ```text
 /fe:new-task FE-123-task-name
@@ -39,6 +41,14 @@ Hoặc gọi từng mode trực tiếp:
 ```
 
 Mỗi command được delegate cho subagent `fe:frontend-*` tương ứng; MCP tool `fe_begin_mode` kiểm tra gate trước khi làm. Hook mặc định ở mức `warn`; đặt `FE_KIT_HOOKS=enforce` để chặn thật.
+
+Team agent có model riêng theo vai: điều phối, kiến trúc, review dùng Opus; developer (quick, cook, bugfix) và input-sync dùng Sonnet; research, test, PR dùng Haiku. Mở phiên bằng agent điều phối:
+
+```bash
+claude --agent fe:frontend-orchestrator
+```
+
+Luồng chạy đầy đủ và bảng lệnh theo từng bước: mục "Team agent và luồng chạy" trong README của kit.
 
 Cập nhật: `/plugin marketplace update frontend-delivery` rồi `/plugin update fe@frontend-delivery`.
 

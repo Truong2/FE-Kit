@@ -52,6 +52,17 @@ describe('fe-kit init', () => {
     expect(settings.extraKnownMarketplaces['frontend-delivery'].source.source).toBe('github');
   });
 
+  it('--orchestrator: đặt agent điều phối làm main thread, mặc định thì không', () => {
+    const plain = kit('init', '--target', target, '--agents', 'claude', '--yes');
+    expect(JSON.parse(read('.claude/settings.json')).agent).toBeUndefined();
+    expect(plain.out).toMatch(/claude --agent fe:frontend-orchestrator/);
+
+    expect(kit('init', '--target', target, '--agents', 'claude', '--orchestrator', '--yes').status).toBe(0);
+    const settings = JSON.parse(read('.claude/settings.json'));
+    expect(settings.agent).toBe('fe:frontend-orchestrator');
+    expect(settings.enabledPlugins['fe@frontend-delivery']).toBe(true);
+  });
+
   it('giữ key sẵn có trong .claude/settings.json', () => {
     fs.mkdirSync(path.join(target, '.claude'), { recursive: true });
     fs.writeFileSync(path.join(target, '.claude', 'settings.json'), JSON.stringify({ permissions: { allow: ['Bash(npm test)'] }, enabledPlugins: { 'other@x': true } }));
@@ -133,6 +144,37 @@ describe('CLI bundle trong repo dự án (không có node_modules)', () => {
     expect(project('validate-workflow', 'docs/frontend-tasks/FE-1-demo').out).toMatch(/validate-workflow passed/);
     // path kiểu Windows cũng phải resolve được
     expect(project('next', 'docs\\frontend-tasks\\FE-1-demo').out).toMatch(/FE plan docs\/frontend-tasks\/FE-1-demo/);
+  });
+
+  it('status set: đặt field + prompt bước tiếp theo, giữ comment của template', () => {
+    project('new-task', 'FE-5-status');
+    const r = project('status', 'set', 'FE-5-status', 'task_type=bugfix', 'risk_level=low', 'build_ready=true', '--next-prompt', 'FE quick docs/frontend-tasks/FE-5-status');
+    expect(r.status).toBe(0);
+    expect(r.out).toMatch(/Đã cập nhật tracking\/workflow-status\.md: task_type, risk_level, build_ready, next_prompt, updated_at/);
+    const text = read('docs/frontend-tasks/FE-5-status/tracking/workflow-status.md');
+    expect(text).toMatch(/^risk_level: low {2}# low \| medium \| high \| unknown$/m);
+    expect(text).toMatch(/^build_ready: true/m);
+    expect(project('next', 'FE-5-status').out).toMatch(/^FE quick docs\/frontend-tasks\/FE-5-status/);
+  });
+
+  it('status set: giá trị sai schema hoặc human_override bị từ chối, file giữ nguyên', () => {
+    project('new-task', 'FE-6-status');
+    const before = read('docs/frontend-tasks/FE-6-status/tracking/workflow-status.md');
+    const bad = project('status', 'set', 'FE-6-status', 'risk_level=extreme');
+    expect(bad.status).toBe(1);
+    expect(bad.out).toMatch(/risk_level = "extreme" không hợp lệ/);
+    const override = project('status', 'set', 'FE-6-status', 'human_override=true');
+    expect(override.status).toBe(1);
+    expect(override.out).toMatch(/human_override/);
+    expect(read('docs/frontend-tasks/FE-6-status/tracking/workflow-status.md')).toBe(before);
+  });
+
+  it('new-task --risk low dùng plan/checklist rút gọn; mặc định dùng bản đầy đủ', () => {
+    expect(project('new-task', 'FE-7-lite', '--risk', 'low').status).toBe(0);
+    expect(read('docs/frontend-tasks/FE-7-lite/planning/implementation-plan.md')).toMatch(/rút gọn/);
+    expect(read('docs/frontend-tasks/FE-7-lite/planning/build-checklist.md')).toMatch(/rút gọn/);
+    project('new-task', 'FE-8-full');
+    expect(read('docs/frontend-tasks/FE-8-full/planning/implementation-plan.md')).toMatch(/Khung thiết kế trước triển khai/);
   });
 
   it('new-task từ chối tên có path traversal', () => {

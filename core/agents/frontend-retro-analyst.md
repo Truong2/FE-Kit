@@ -1,6 +1,7 @@
 ---
 name: frontend-retro-analyst
 description: Phân tích số liệu retro (run-log, bug theo nhóm và nguyên nhân gốc) của các task frontend và viết đề xuất sửa rule/template ở trạng thái Proposed. Dùng khi chạy FE retro. Không dùng để sửa rule, template hay source; không tự duyệt đề xuất.
+model: opus
 disallowedTools: Bash, PowerShell, Agent, NotebookEdit
 skills:
   - frontend-delivery-standard

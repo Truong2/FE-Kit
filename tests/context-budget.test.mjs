@@ -47,3 +47,36 @@ describe('ngân sách context rule theo mode', () => {
     });
   }
 });
+
+// Phần main thread và mọi subagent nạp cố định (đo trên output đã build, v2.8.0).
+// Command có subagent chỉ còn đoạn điều phối (~1,4k ký tự; trước đó tới 6,3k);
+// SKILL.md của plugin bỏ khối full-only (~2,5k; bản đầy đủ ~7,9k chỉ cho ChatGPT).
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const PLUGIN = path.join(ROOT, 'plugins', 'fe');
+const DELEGATED_COMMAND_MAX = 1600;
+const PLUGIN_SKILL_MAX = 2700;
+
+describe('ngân sách context cố định của plugin', () => {
+  const commands = fs.readdirSync(path.join(PLUGIN, 'commands'));
+
+  for (const file of commands) {
+    const text = fs.readFileSync(path.join(PLUGIN, 'commands', file), 'utf8');
+    if (!text.includes('## Điều phối (Claude Code)') || file === 'retro.md') continue;
+    it(`command ${file} chỉ còn đoạn điều phối (≤ ${DELEGATED_COMMAND_MAX} ký tự)`, () => {
+      expect(text).not.toMatch(/## Hướng dẫn mode/);
+      expect(text.length).toBeLessThanOrEqual(DELEGATED_COMMAND_MAX);
+    });
+  }
+
+  it(`SKILL.md của plugin gọn (≤ ${PLUGIN_SKILL_MAX} ký tự), bản ChatGPT vẫn đủ mục`, () => {
+    const plugin = fs.readFileSync(path.join(PLUGIN, 'skills', 'frontend-delivery-standard', 'SKILL.md'), 'utf8');
+    const chatgpt = fs.readFileSync(path.join(ROOT, 'chatgpt-skill', 'frontend-delivery-standard', 'SKILL.md'), 'utf8');
+    expect(plugin.length).toBeLessThanOrEqual(PLUGIN_SKILL_MAX);
+    expect(plugin).toMatch(/## Ai được sửa source/);
+    for (const heading of ['## Bắt đầu và kết thúc một mode', '## Rule loading theo mode', '## Mode output bắt buộc', '## Validation']) {
+      expect(plugin).not.toContain(heading);
+      expect(chatgpt).toContain(heading);
+    }
+    expect(plugin + chatgpt).not.toMatch(/full-only/);
+  });
+});

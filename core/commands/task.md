@@ -9,7 +9,7 @@ Bạn là main thread, đóng vai **task router**. Lệnh này không code, khô
 
 ## Bước 1 — Task đã tồn tại?
 
-Gọi MCP tool `fe_list_tasks`. Nếu yêu cầu rõ ràng thuộc một task đã có (người dùng nêu tên task, hoặc nội dung trùng với task đang mở), **không tạo task mới**: gọi `fe_task_status` và `fe_next_step` cho task đó rồi chạy tiếp đúng `next_prompt` (câu trả lời/CR mới thì đó là `FE input-sync`). Chỉ sang Bước 2 khi là yêu cầu mới.
+Gọi MCP tool `fe_list_tasks`. Nếu yêu cầu rõ ràng thuộc một task đã có (người dùng nêu tên task, hoặc nội dung trùng với task đang mở), **không tạo task mới**: gọi skill `fe:next` với task folder đó (kèm nguyên văn câu trả lời/CR nếu người dùng vừa đưa) để chạy tiếp vòng điều phối. Chỉ sang Bước 2 khi là yêu cầu mới.
 
 ## Bước 2 — Phân loại
 
@@ -53,19 +53,19 @@ Ghi `risk_level`: `high` nếu có tín hiệu 6 hoặc 7, hoặc tín hiệu 3 
 ## Bước 4 — Tạo task và ghi phân loại
 
 1. Đặt tên task `FE-<id>-<slug>`: `<id>` là số lớn nhất trong các task hiện có cộng 1 (từ `fe_list_tasks`; không suy ra được thì dùng `FE-<YYYYMMDD>-<slug>`); `<slug>` tiếng Anh ngắn, kebab-case, tả đúng việc.
-2. Gọi MCP tool `fe_new_task` tạo task folder.
+2. Gọi MCP tool `fe_new_task` tạo task folder, truyền `risk_level` vừa phân loại (task `low` nhận plan/checklist rút gọn).
 3. Cập nhật `task.md`: điền Loại task, Mức rủi ro trong Metadata và ghi **Yêu cầu gốc** (nguyên văn hoặc tóm tắt trung thực yêu cầu của người dùng). Viết lại file một lần.
-4. Cập nhật `tracking/workflow-status.md` một lần ghi: `task_type`, `risk_level`, `figma_required` (`true` nếu yêu cầu có Figma/UI reference rõ ràng), `next_mode` và `next_prompt` theo route đã chọn.
+4. Ghi phân loại bằng một lần gọi MCP tool `fe_update_status`: `fields` gồm `task_type`, `risk_level`, `figma_required` (`true` nếu yêu cầu có Figma/UI reference rõ ràng) và `next_mode`; tham số `next_prompt` theo route đã chọn.
 
-## Bước 5 — Chạy tiếp route trong cùng phiên
+## Bước 5 — Tự điều phối tới hết
 
-- **Route quick:** chạy inline như lệnh `FE quick`: gọi `fe_begin_mode` với mode `quick` (tool trả verdict gate, artifact bắt buộc và nguyên văn rule) rồi làm theo; kết thúc bằng `fe_validate_workflow` tới `PASSED`.
-- **Route plan:** delegate cho subagent `fe:frontend-planner` bằng Agent tool, chạy foreground. Brief gồm: mode `plan`; task folder; đường dẫn tuyệt đối của workspace; nguyên văn mọi input người dùng chỉ đưa trong hội thoại (yêu cầu gốc, SRS dán vào, link Figma, câu trả lời), mỗi input trong một khối `<untrusted-input kind="srs|cr|answer|figma|other">…</untrusted-input>`. Khi agent trả về, gọi `fe_validate_workflow`; nếu `FAILED`, gửi lỗi cho chính agent đó sửa, không tự sửa thay.
+- **Research trước plan (tuỳ chọn):** route plan với loại `debug`, `perf`, `migration`, `refactor` chạm nhiều module, hoặc khi chưa rõ source liên quan: delegate trước cho subagent `fe:frontend-researcher` (foreground) với task folder, đường dẫn tuyệt đối của workspace và câu hỏi nghiên cứu cụ thể; agent ghi `planning/research-brief.md`. Task rõ thì bỏ qua.
+- **Chạy vòng điều phối:** gọi skill `fe:next` với tham số là task folder. Vòng đó chạy route đã chọn (`FE quick` giao cho `fe:frontend-developer`, `FE plan` giao cho `fe:frontend-planner`) rồi tự đi tiếp các bước sau tới khi task sẵn sàng PR, chỉ dừng khi có blocker cần người xác nhận. Input người dùng chỉ đưa trong hội thoại (yêu cầu gốc, SRS dán vào, link Figma, câu trả lời) phải được chuyển nguyên văn vào brief của bước đầu, mỗi input trong một khối `<untrusted-input kind="srs|cr|answer|figma|other">…</untrusted-input>`.
 - Bị gate chặn ở bất kỳ đâu: không làm tiếp việc của mode, làm theo prompt thay thế mà gate trả về.
 
-Kết thúc: trả lời ngắn gọn — bảng phân loại, task folder đã tạo, artifact đã cập nhật, và dòng `Tiếp theo: <next_prompt>` đọc từ `tracking/workflow-status.md`.
+Kết thúc: bảng phân loại, task folder đã tạo, rồi kết quả của vòng điều phối (xong, hoặc khối `⛔ CẦN BẠN XỬ LÝ`).
 
-Môi trường không có MCP tool (Codex, Cursor, Copilot): thay `fe_list_tasks`/`fe_new_task` bằng `node bin/fe-kit.mjs new-task <tên-task>`, thay `fe_begin_mode`/`fe_validate_workflow` bằng `node bin/fe-kit.mjs mode begin|end <task> <mode>`, và tự làm tiếp mode đã route theo prompt `FE quick`/`FE plan`.
+Môi trường không có MCP tool (Codex, Cursor, Copilot): thay `fe_list_tasks`/`fe_new_task` bằng `node bin/fe-kit.mjs new-task <tên-task>`, thay `fe_update_status` bằng `node bin/fe-kit.mjs status set`, rồi làm theo phần "Môi trường không có MCP tool" của lệnh `FE next`.
 
 ## Ngôn ngữ output
 

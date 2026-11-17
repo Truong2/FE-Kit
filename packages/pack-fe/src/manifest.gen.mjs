@@ -56,7 +56,14 @@ export default {
       "output/test-summary.md",
       "output/pr-summary.md",
       "output/ui-figma-review-report.md"
-    ]
+    ],
+    "variants": {
+      "param": "risk_level",
+      "description": "Mức rủi ro đã phân loại (low | medium | high). low: plan/checklist rút gọn; bỏ trống hoặc khác: template đầy đủ.",
+      "dirs": {
+        "low": "lite"
+      }
+    }
   },
   "modes": {
     "plan": {
@@ -79,7 +86,7 @@ export default {
     },
     "quick": {
       "state": "quick-mode",
-      "agent": null,
+      "agent": "frontend-developer",
       "artifacts": [
         "planning/implementation-plan.md",
         "output/review-report.md",
@@ -97,6 +104,7 @@ export default {
     "input-sync": {
       "state": "input-sync-mode",
       "agent": "frontend-planner",
+      "model": "sonnet",
       "artifacts": [
         "tracking/input-sync-report.md",
         "planning/questions.md",
@@ -234,6 +242,7 @@ export default {
     "quick"
   ],
   "source_edit_agent": "frontend-developer",
+  "main_thread_agent": "frontend-orchestrator",
   "source_fix_route": "FE bugfix/cook",
   "plan_update_route": "input-sync",
   "read_inputs_hint": "Input cần đọc: mục \"Input ledger bắt buộc cho FE plan\" trong tracking/workflow-status.md.",
@@ -336,7 +345,15 @@ export default {
       "next_step": "Trả về prompt bước tiếp theo đọc trực tiếp từ tracking/workflow-status.md của task. Dùng khi không chắc mode kế tiếp là gì.",
       "task_status": "Đọc tóm tắt trạng thái task: mode hiện tại, các gate status chính, số câu hỏi blocking, số issue theo severity. Chỉ đọc, không sửa file.",
       "retro_data": "Dùng cho /fe:retro. Gộp run-log và bảng bug của mọi task thành số liệu (pass ngay lần đầu, lý do bị chặn, issue theo nhóm và nguyên nhân gốc), ghi docs/frontend-retro/<ngày>/retro-data.json và trả bản tóm tắt. Không sửa rule hay task.",
-      "validate_retro": "Kiểm một thư mục retro: đủ retro-data.json, retro-report.md, proposals.md; đề xuất đã duyệt phải có người duyệt. GỌI TRƯỚC KHI KẾT THÚC /fe:retro."
+      "validate_retro": "Kiểm một thư mục retro: đủ retro-data.json, retro-report.md, proposals.md; đề xuất đã duyệt phải có người duyệt. GỌI TRƯỚC KHI KẾT THÚC /fe:retro.",
+      "update_status": "Đặt field của tracking/workflow-status.md (current_mode, gate status, next_mode…) và prompt bước tiếp theo mà KHÔNG viết lại cả file: giữ comment và thứ tự của template, tự ghi updated_at, kiểm schema trước khi ghi (sai thì không ghi và trả lỗi kèm giá trị hợp lệ). Dùng thay cho Edit/Write file này. Không đặt được human_override."
+    },
+    "update_status": {
+      "protected_fields": [
+        "human_override"
+      ],
+      "timestamp_field": "updated_at",
+      "next_prompt_field": "next_prompt"
     }
   }
 };

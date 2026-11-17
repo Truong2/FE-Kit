@@ -57,6 +57,12 @@ task_files:
   # File rỗng tạo cùng task mới.
   empty:
     - output/figma-reference-screenshots/.gitkeep
+  # Task risk_level: low nhận plan/checklist rút gọn (templates/lite/); file không có bản rút gọn dùng bản đầy đủ.
+  variants:
+    param: risk_level
+    description: 'Mức rủi ro đã phân loại (low | medium | high). low: plan/checklist rút gọn; bỏ trống hoặc khác: template đầy đủ.'
+    dirs:
+      low: lite
   # File chỉ có khi mode tương ứng đã chạy.
   conditional:
     - tracking/input-sync-report.md
@@ -76,13 +82,16 @@ modes:
     next: [input-sync, figma, cook, plan, quick]
   quick:
     state: quick-mode
-    agent: null
-    # Quick tự review và ghi test evidence trong cùng lượt để đi thẳng tới PR (v2.6.0).
+    # Developer (Sonnet) làm trọn lượt quick: plan ngắn, code, tự review, test evidence, tới PR.
+    # Trước v2.8.0 quick chạy inline ở main thread.
+    agent: frontend-developer
     artifacts: [planning/implementation-plan.md, output/review-report.md, output/test-summary.md, tracking/workflow-status.md]
     next: [pr, review, test, plan, input-sync]
   input-sync:
     state: input-sync-mode
     agent: frontend-planner
+    # Đồng bộ câu trả lời/CR vào plan không cần model lớn như lập plan.
+    model: sonnet
     artifacts: [tracking/input-sync-report.md, planning/questions.md, tracking/workflow-status.md]
     next: [plan, input-sync, figma, cook, bugfix, review]
   figma:
@@ -133,6 +142,8 @@ always_allowed: [plan, input-sync]
 # Mode được sửa source; thứ tự xuất hiện trong thông báo ("FE cook/bugfix/quick").
 source_edit_modes: [cook, bugfix, quick]
 source_edit_agent: frontend-developer
+# Agent điều phối chạy làm main thread (`claude --agent fe:frontend-orchestrator`).
+main_thread_agent: frontend-orchestrator
 # Mode sửa lỗi source mà mode chỉ đọc phát hiện, và mode cập nhật plan khi phạm vi đổi.
 source_fix_route: FE bugfix/cook
 plan_update_route: input-sync
@@ -202,3 +213,8 @@ mcp:
     task_status: 'Đọc tóm tắt trạng thái task: mode hiện tại, các gate status chính, số câu hỏi blocking, số issue theo severity. Chỉ đọc, không sửa file.'
     retro_data: 'Dùng cho /fe:retro. Gộp run-log và bảng bug của mọi task thành số liệu (pass ngay lần đầu, lý do bị chặn, issue theo nhóm và nguyên nhân gốc), ghi docs/frontend-retro/<ngày>/retro-data.json và trả bản tóm tắt. Không sửa rule hay task.'
     validate_retro: 'Kiểm một thư mục retro: đủ retro-data.json, retro-report.md, proposals.md; đề xuất đã duyệt phải có người duyệt. GỌI TRƯỚC KHI KẾT THÚC /fe:retro.'
+    update_status: 'Đặt field của tracking/workflow-status.md (current_mode, gate status, next_mode…) và prompt bước tiếp theo mà KHÔNG viết lại cả file: giữ comment và thứ tự của template, tự ghi updated_at, kiểm schema trước khi ghi (sai thì không ghi và trả lỗi kèm giá trị hợp lệ). Dùng thay cho Edit/Write file này. Không đặt được human_override.'
+  update_status:
+    protected_fields: [human_override]
+    timestamp_field: updated_at
+    next_prompt_field: next_prompt

@@ -15,6 +15,8 @@ const ModeSchema = z.object({
   state: name,
   /** Subagent đảm nhận; `null` = main thread. */
   agent: name.nullable(),
+  /** Model truyền khi delegate mode này (thắng `model:` của agent); bỏ trống = model của agent. */
+  model: z.enum(['opus', 'sonnet', 'haiku', 'fable', 'inherit']).optional(),
   /** Artifact phải tồn tại khi mode kết thúc (tương đối task folder). */
   artifacts: list,
   /** `next_mode` hợp lý sau mode này; lệch chỉ cảnh báo. */
@@ -41,6 +43,17 @@ export const PackManifestSchema = z
       required_docs: list.min(1),
       empty: list.default([]),
       conditional: list.default([]),
+      /**
+       * Bản template thay thế khi tạo task (opt-in): tham số `param` của tool tạo task
+       * nhận một key trong `dirs`, file template lấy từ `<templates>/<dirs[key]>/` nếu có.
+       */
+      variants: z
+        .object({
+          param: z.string().regex(/^[a-z][a-z0-9_]*$/),
+          description: name,
+          dirs: z.record(name, name),
+        })
+        .optional(),
     }),
     modes: z.record(name, ModeSchema),
     aliases: z.record(name, name).default({}),
@@ -48,6 +61,12 @@ export const PackManifestSchema = z
     always_allowed: list,
     source_edit_modes: list,
     source_edit_agent: name,
+    /**
+     * Agent chạy làm main thread (`claude --agent <plugin>:<agent>`). Hook nhận
+     * `agent_type` của nó cho mọi lệnh của main thread nên phải coi nó như main
+     * thread, không phải agent chỉ đọc. Không khai báo = pack không có agent này.
+     */
+    main_thread_agent: name.optional(),
     source_fix_route: name,
     plan_update_route: name,
     read_inputs_hint: name,
@@ -90,7 +109,21 @@ export const PackManifestSchema = z
         task_status: name,
         retro_data: name.optional(),
         validate_retro: name.optional(),
+        update_status: name.optional(),
       }),
+      /**
+       * Tool cập nhật field của file trạng thái (opt-in). Field trong
+       * `protected_fields` không đặt được qua tool (cần người dùng xác nhận khi
+       * sửa file); `timestamp_field` được ghi tự động; `next_prompt_field` là
+       * field chứa lệnh cho bước kế tiếp (ghi cùng mục `next_prompt_heading`).
+       */
+      update_status: z
+        .object({
+          protected_fields: list.default([]),
+          timestamp_field: name,
+          next_prompt_field: name,
+        })
+        .optional(),
     }),
   })
   .superRefine((m, ctx) => {

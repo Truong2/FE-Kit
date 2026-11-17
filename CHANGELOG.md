@@ -5,7 +5,49 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
-## [2.7.0] — chưa phát hành
+## [2.8.0] — 2026-11-17
+
+Team agent theo vai và tự điều phối: giao task một lần, kit tự chạy qua các agent (mỗi agent một model) tới khi task sẵn sàng PR, chỉ dừng khi có blocker cần người xác nhận. Kèm các thay đổi giảm token: agent đặt trạng thái bằng tool thay vì viết lại file, command và skill nạp vào context gọn hơn, template rút gọn cho task rủi ro thấp.
+
+### Có thể ảnh hưởng repo dự án
+
+- **Tự điều phối tới PR (mặc định bật):** `/fe:task` không còn dừng sau bước đầu; vòng điều phối tự chạy qua các agent tới khi task sẵn sàng PR và chỉ dừng khi có blocker cần người xác nhận (câu hỏi blocking, input thiếu, file ngoài plan, bug Critical/High sau 2 vòng bugfix, validate vẫn lỗi sau 2 lần sửa, cần quyền chạy lệnh), kết thúc bằng khối `⛔ CẦN BẠN XỬ LÝ`. Team muốn duyệt từng bước thì đặt `auto_advance: false` trong `.frontend-delivery/standard.yaml`. Gọi thẳng `/fe:<mode>` vẫn chỉ chạy một bước.
+- **`FE quick` do `frontend-developer` (Sonnet) làm**, không còn chạy inline ở main thread. Hook đánh dấu delegate và chạy gate kết thúc quick ở `SubagentStop` của developer.
+- Agent đặt field của `workflow-status.md` bằng `fe_update_status` thay vì viết lại cả file. File vẫn sửa tay được; schema không đổi.
+
+### Thêm
+
+- Lệnh `FE next [task] [câu trả lời]` (`/fe:next`): vòng điều phối dùng chung cho `/fe:task` và cho việc chạy tiếp task ở phiên khác (không truyền task thì lấy task đang dở cập nhật gần nhất). Command, không phải mode; tối đa 12 bước mỗi lượt. Người dùng trả lời blocker bằng lời trong chat thì vòng chạy `input-sync` với câu trả lời rồi đi tiếp.
+- Key `auto_advance` (mặc định `true`) trong cấu hình repo dự án (`loadProjectConfig`).
+- MCP tool `fe_update_status` và CLI `fe-kit status set <task> key=value… [--next-prompt "…"]` (engine `createStatusUpdater`, opt-in qua `mcp.update_status` của pack): sửa đúng dòng field trong frontmatter, giữ comment và thứ tự của template, tự ghi `updated_at` và mục "Prompt bước tiếp theo", kiểm schema trước khi ghi (sai thì không ghi, trả lỗi kèm giá trị hợp lệ). Không đặt được `human_override` (hook "ask" chỉ bắt Edit/Write). Giảm token output (file ~2k token bị viết lại ở mọi mode) và vòng sửa `STATUS_SCHEMA_INVALID`, lý do bị chặn số 1 khi chạy thử 2.5.0.
+- Template rút gọn cho task `risk_level: low` (`templates/lite/planning/`): `fe_new_task` nhận tham số `risk_level`, CLI `new-task --risk low` (engine: `scaffoldTask` nhận `variantDir`; pack khai `task_files.variants`). File không có bản rút gọn dùng bản đầy đủ; repo có `.frontend-delivery/templates` cũ chưa có `lite/` thì vẫn nhận bản đầy đủ. `check-plan-architecture` với task low chỉ đòi ma trận trace, bảng file và rủi ro.
+- `modes.<mode>.model` trong schema pack: khối delegate truyền tham số `model` của Agent tool. `input-sync` chạy Sonnet.
+- Eval `quick-delegates-developer`, `task-quick-end-to-end`, `task-stops-on-blocking` (router và vòng điều phối; chưa chạy thật).
+- Team agent có model theo vai (frontmatter `model:`): `frontend-planner`, `frontend-reviewer`, `frontend-retro-analyst` dùng Opus; `frontend-developer`, `frontend-figma-specialist` dùng Sonnet; `frontend-tester`, `frontend-release-manager` dùng Haiku. Trước đây mọi subagent kế thừa model của phiên chính.
+- Agent `frontend-orchestrator` (Opus) cho main thread: mở bằng `claude --agent fe:frontend-orchestrator`, hoặc `fe-kit init --agents claude --orchestrator` ghi key `agent` vào `.claude/settings.json` (opt-in, mặc định không ghi). Agent này route qua `/fe:task` rồi chạy vòng điều phối `/fe:next`, giao mọi mode cho đúng agent và chỉ dừng ở blocker cần người; nó không phải subagent của mode nào.
+- Field optional `main_thread_agent` trong schema pack (`pack.yaml` của FE khai `frontend-orchestrator`). Claude Code gửi `agent_type` của agent `--agent` trong mọi hook của main thread; hook coi agent này như main thread: không bị luật "agent chỉ đọc" chặn sửa source, nhưng vẫn chịu gate của mode sửa source.
+- Agent `frontend-researcher` (Haiku, không Bash/PowerShell/Agent): dò codebase, SRS, tài liệu và ghi `planning/research-brief.md` có bằng chứng `path:line`. Không phải mode, không đổi `workflow-status.md`; `/fe:task` gọi nó trước `FE plan` cho task debug/perf/migration/refactor nhiều module hoặc khi chưa rõ source. `frontend-planner` đọc brief nếu có.
+- Generator chỉ nối `_protocol.md` cho agent xuất hiện trong `modes.*.agent` (thay cho danh sách loại trừ retro); output của các agent cũ không đổi.
+
+### Thay đổi
+
+- Command có subagent của plugin chỉ còn đoạn điều phối (vd `plan.md` 6,3k → ~1,4k ký tự): main thread không nạp lại hướng dẫn mode. Chỉ dẫn trước đây chỉ nằm trong command được chuyển vào prompt agent (planner: điền `task_type`/`risk_level`, chi tiết ba câu hỏi kiến trúc, ưu tiên core component, cập nhật bảng file khi input-sync đổi scope; developer: trạng thái sau bugfix, custom UI chỉ khi plan ghi lý do). Prompt Codex vẫn nhận nguyên body của command.
+- `SKILL.md` của plugin (preload vào mọi subagent) bỏ khối `full-only` (~6,7k → ~2,5k ký tự); bản ChatGPT giữ đủ. Sửa danh sách rule "Luôn" thiếu `untrusted-input-contract.md`.
+- Khối delegate: gửi lỗi `fe_validate_workflow` lại cho agent tối đa 2 lần rồi dừng và báo.
+- `fe_list_tasks` hiện thêm `next` và `updated` của từng task (để `/fe:next` chọn task).
+- `tests/context-budget.test.mjs` đặt trần cho command có subagent của plugin (≤ 1.600 ký tự) và `SKILL.md` của plugin (≤ 2.700 ký tự).
+
+### Sửa
+
+- `fe_list_tasks` đọc `current_mode` bằng regex dòng nên dính cả comment `# …` của template; giờ parse YAML.
+- Hook: mode mở bằng `fe_begin_mode` từ trong đúng subagent của mode (command gọi qua Skill, không có UserPromptSubmit) giờ được đánh dấu `delegated`, nên `Stop` của main thread không chạy lại gate kết thúc mode.
+
+### Golden chụp lại có chủ đích
+
+- `cli help`: thêm option `init --orchestrator`, `new-task --risk low`, lệnh `status set`.
+- `tools/list`: thêm `fe_update_status` và tham số `risk_level` của `fe_new_task`. `AGENT_FOR_COMMAND.quick` = `frontend-developer`. Câu "Việc phải làm" khi bị chặn và `finishHint` của `begin_mode` nhắc dùng tool cập nhật trạng thái. `list_tasks` hiện `next`/`updated`.
+
+## [2.7.0] — 2026-11-03
 
 Task-first: developer giao yêu cầu frontend bằng ngôn ngữ tự nhiên, kit tự phân loại và chọn mức quy trình. Thiết kế dựa trên khảo sát Spec Kit, OpenSpec, BMAD và các router trong hệ sinh thái Claude Code: mặc định nhẹ, nâng cấp khi có tín hiệu, phân loại giải thích được và luôn cho người dùng override; hệ quả của phân loại được gate cứng enforce.
 

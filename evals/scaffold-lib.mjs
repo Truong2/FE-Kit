@@ -157,3 +157,13 @@ export function setStatus(task, values) {
 }
 
 export { writeFile };
+
+/**
+ * Workspace chưa có task nào (case bắt đầu bằng `/fe:task`): chỉ có source của
+ * nút huỷ đơn, rồi `git init` + commit.
+ */
+export function scaffoldEmptyWorkspace() {
+  writeFile(ORDER_CANCEL_BUTTON, ORDER_CANCEL_BUTTON_SOURCE);
+  git('init', '-q');
+  commit('scaffold');
+}

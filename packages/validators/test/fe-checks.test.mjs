@@ -87,6 +87,27 @@ describe('validatePlanArchitecture', () => {
     expect(validatePlanArchitecture(task).errors).toEqual(['implementation-plan.md thiếu: Ba câu hỏi kiến trúc']);
   });
 
+  it('task risk_level: low với plan rút gọn (templates/lite) đạt', () => {
+    write('planning/implementation-plan.md', fs.readFileSync(path.join(TEMPLATES, 'lite', 'planning', 'implementation-plan.md'), 'utf8'));
+    status({ risk_level: 'low' });
+    expect(validatePlanArchitecture(task)).toEqual({ ok: true, errors: [] });
+  });
+
+  it('plan rút gọn thiếu bảng file thì không đạt, kể cả task low', () => {
+    write(
+      'planning/implementation-plan.md',
+      fs.readFileSync(path.join(TEMPLATES, 'lite', 'planning', 'implementation-plan.md'), 'utf8').replace('## 7. File sẽ tạo / cập nhật', '## 7. Ghi chú')
+    );
+    status({ risk_level: 'low' });
+    expect(validatePlanArchitecture(task).errors).toEqual(['implementation-plan.md thiếu: File sẽ tạo / cập nhật']);
+  });
+
+  it('plan rút gọn trên task chưa phân loại (risk unknown) vẫn phải đủ mục của plan đầy đủ', () => {
+    write('planning/implementation-plan.md', fs.readFileSync(path.join(TEMPLATES, 'lite', 'planning', 'implementation-plan.md'), 'utf8'));
+    status({ risk_level: 'unknown' });
+    expect(validatePlanArchitecture(task).errors).toContain('implementation-plan.md thiếu: Ba câu hỏi kiến trúc');
+  });
+
   it('plan theo template cũ đủ mục vẫn đạt (tương thích repo dự án cũ)', () => {
     write('planning/implementation-plan.md', PHRASES.map((p) => `## ${p}`).join('\n'));
     expect(validatePlanArchitecture(task)).toEqual({ ok: true, errors: [] });

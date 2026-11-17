@@ -3424,7 +3424,7 @@ var require_parse = __commonJS({
 var require_gray_matter = __commonJS({
   "node_modules/gray-matter/index.js"(exports2, module2) {
     "use strict";
-    var fs11 = __require("fs");
+    var fs12 = __require("fs");
     var sections = require_section_matter();
     var defaults = require_defaults();
     var stringify = require_stringify();
@@ -3508,7 +3508,7 @@ var require_gray_matter = __commonJS({
       return stringify(file2, data, options2);
     };
     matter4.read = function(filepath, options2) {
-      const str2 = fs11.readFileSync(filepath, "utf8");
+      const str2 = fs12.readFileSync(filepath, "utf8");
       const file2 = matter4(str2, options2);
       file2.path = filepath;
       return file2;
@@ -4464,10 +4464,10 @@ function mergeDefs(...defs) {
 function cloneDef(schema) {
   return mergeDefs(schema._zod.def);
 }
-function getElementAtPath(obj, path12) {
-  if (!path12)
+function getElementAtPath(obj, path13) {
+  if (!path13)
     return obj;
-  return path12.reduce((acc, key) => acc?.[key], obj);
+  return path13.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -4879,11 +4879,11 @@ function explicitlyAborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path12, issues) {
+function prefixIssues(path13, issues) {
   return issues.map((iss) => {
     var _a3;
     (_a3 = iss).path ?? (_a3.path = []);
-    iss.path.unshift(path12);
+    iss.path.unshift(path13);
     return iss;
   });
 }
@@ -5316,16 +5316,16 @@ function flattenError(error61, mapper = (issue2) => issue2.message) {
 }
 function formatError(error61, mapper = (issue2) => issue2.message) {
   const fieldErrors = { _errors: [] };
-  const processError = (error62, path12 = []) => {
+  const processError = (error62, path13 = []) => {
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path12, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path13, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path13, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path13, ...issue2.path]);
       } else {
-        const fullpath = [...path12, ...issue2.path];
+        const fullpath = [...path13, ...issue2.path];
         if (fullpath.length === 0) {
           fieldErrors._errors.push(mapper(issue2));
         } else {
@@ -5364,17 +5364,17 @@ function formatError(error61, mapper = (issue2) => issue2.message) {
 }
 function treeifyError(error61, mapper = (issue2) => issue2.message) {
   const result = { errors: [] };
-  const processError = (error62, path12 = []) => {
+  const processError = (error62, path13 = []) => {
     var _a3;
     for (const issue2 of error62.issues) {
       if (issue2.code === "invalid_union" && issue2.errors.length) {
-        issue2.errors.map((issues) => processError({ issues }, [...path12, ...issue2.path]));
+        issue2.errors.map((issues) => processError({ issues }, [...path13, ...issue2.path]));
       } else if (issue2.code === "invalid_key") {
-        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path13, ...issue2.path]);
       } else if (issue2.code === "invalid_element") {
-        processError({ issues: issue2.issues }, [...path12, ...issue2.path]);
+        processError({ issues: issue2.issues }, [...path13, ...issue2.path]);
       } else {
-        const fullpath = [...path12, ...issue2.path];
+        const fullpath = [...path13, ...issue2.path];
         if (fullpath.length === 0) {
           result.errors.push(mapper(issue2));
           continue;
@@ -5413,8 +5413,8 @@ function treeifyError(error61, mapper = (issue2) => issue2.message) {
 }
 function toDotPath(_path) {
   const segs = [];
-  const path12 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
-  for (const seg of path12) {
+  const path13 = _path.map((seg) => typeof seg === "object" ? seg.key : seg);
+  for (const seg of path13) {
     if (typeof seg === "number")
       segs.push(`[${seg}]`);
     else if (typeof seg === "symbol")
@@ -21924,13 +21924,13 @@ function resolveRef(ref, ctx) {
   if (!ref.startsWith("#")) {
     throw new Error("External $ref is not supported, only local refs (#/...) are allowed");
   }
-  const path12 = ref.slice(1).split("/").filter(Boolean);
-  if (path12.length === 0) {
+  const path13 = ref.slice(1).split("/").filter(Boolean);
+  if (path13.length === 0) {
     return ctx.rootSchema;
   }
   const defsKey = ctx.version === "draft-2020-12" ? "$defs" : "definitions";
-  if (path12[0] === defsKey) {
-    const key = path12[1] === void 0 ? void 0 : decodeJSONPointerSegment(path12[1]);
+  if (path13[0] === defsKey) {
+    const key = path13[1] === void 0 ? void 0 : decodeJSONPointerSegment(path13[1]);
     if (!key || !ctx.defs[key]) {
       throw new Error(`Reference not found: ${ref}`);
     }
@@ -22769,9 +22769,15 @@ var PROJECT_CONFIG_DEFAULTS = Object.freeze({
   /** PR sửa source mà không task nào khai file đó trong plan: `off` | `warn` | `error`. */
   require_task_for_source: "warn",
   /** Thư mục được coi là source khi kiểm PR không gắn task. */
-  source_paths: ["src/", "app/", "apps/", "packages/"]
+  source_paths: ["src/", "app/", "apps/", "packages/"],
+  /**
+   * Main thread tự chạy tiếp các mode của task tới khi xong hoặc gặp blocker cần
+   * người xác nhận. `false`: chạy một bước rồi in lệnh cho bước kế tiếp.
+   */
+  auto_advance: true
 });
 var VALIDATORS = {
+  auto_advance: (v) => typeof v === "boolean",
   require_task_for_source: (v) => ["off", "warn", "error"].includes(v),
   source_paths: (v) => Array.isArray(v) && v.length > 0 && v.every((p) => typeof p === "string" && p.trim())
 };
@@ -22810,7 +22816,7 @@ import path5 from "node:path";
 function isValidTaskName(name2) {
   return /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(String(name2 || ""));
 }
-function scaffoldTask({ workspaceRoot, name: name2, templatesDir, tasksRoot, templateFiles, emptyFiles = [], nameHint }) {
+function scaffoldTask({ workspaceRoot, name: name2, templatesDir, tasksRoot, templateFiles, emptyFiles = [], nameHint, variantDir }) {
   if (!isValidTaskName(name2)) {
     return { ok: false, error: `T\xEAn task kh\xF4ng h\u1EE3p l\u1EC7: "${name2}". D\xF9ng d\u1EA1ng ${nameHint}, ch\u1EC9 g\u1ED3m ch\u1EEF, s\u1ED1, d\u1EA5u ch\u1EA5m, g\u1EA1ch d\u01B0\u1EDBi, g\u1EA1ch ngang.` };
   }
@@ -22821,13 +22827,17 @@ function scaffoldTask({ workspaceRoot, name: name2, templatesDir, tasksRoot, tem
   const fill = (text) => text.replaceAll("<task-folder>", taskRef).replaceAll("<task-id>", name2).replaceAll("<TASK_ID>", name2);
   const created = [];
   const skipped = [];
+  const fromVariant = [];
   for (const rel of templateFiles) {
     const dest = path5.join(taskDir, rel);
     if (fs4.existsSync(dest)) {
       skipped.push(rel);
       continue;
     }
-    const src = path5.join(templatesDir, rel);
+    const variantSrc = variantDir ? path5.join(templatesDir, variantDir, rel) : "";
+    const useVariant = Boolean(variantSrc) && fs4.existsSync(variantSrc);
+    if (useVariant) fromVariant.push(rel);
+    const src = useVariant ? variantSrc : path5.join(templatesDir, rel);
     const template = fs4.existsSync(src) ? fs4.readFileSync(src, "utf8") : "";
     fs4.mkdirSync(path5.dirname(dest), { recursive: true });
     fs4.writeFileSync(dest, fill(template));
@@ -22840,7 +22850,7 @@ function scaffoldTask({ workspaceRoot, name: name2, templatesDir, tasksRoot, tem
     fs4.writeFileSync(file2, "");
     created.push(rel);
   }
-  return { ok: true, taskDir, taskRef, created, skipped };
+  return { ok: true, taskDir, taskRef, created, skipped, fromVariant };
 }
 
 // packages/engine/src/state-machine.mjs
@@ -23041,7 +23051,7 @@ function createModeBriefing(pack) {
     } else {
       lines.push(`GATE: B\u1ECA CH\u1EB6N \u2014 kh\xF4ng \u0111\u01B0\u1EE3c ch\u1EA1y ${pack.label(command)} cho ${taskRef}.`);
       for (const r of entry.reasons) lines.push(`- ${r}`);
-      lines.push(`Vi\u1EC7c ph\u1EA3i l\xE0m: c\u1EADp nh\u1EADt ${pack.statusFile} (next_mode, next_prompt) v\xE0 d\u1EEBng. Prompt \u0111\xFAng: ${entry.redirect}`);
+      lines.push(`Vi\u1EC7c ph\u1EA3i l\xE0m: \u0111\u1EB7t next_mode, next_prompt trong ${pack.statusFile} (d\xF9ng tool c\u1EADp nh\u1EADt tr\u1EA1ng th\xE1i n\u1EBFu c\xF3) v\xE0 d\u1EEBng. Prompt \u0111\xFAng: ${entry.redirect}`);
       lines.push("Kh\xF4ng s\u1EEDa source code trong l\u01B0\u1EE3t n\xE0y.");
     }
     for (const w of entry.warnings) lines.push(`C\u1EA3nh b\xE1o: ${w}`);
@@ -23134,6 +23144,7 @@ function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
   }
   function kitAgentName(agentType) {
     const name2 = String(agentType || "").replace(pluginAgentRe, "");
+    if (pack.mainThreadAgent && name2 === pack.mainThreadAgent) return "";
     return name2.startsWith(pack.agentPrefix) ? name2 : "";
   }
   function emit(obj) {
@@ -23244,7 +23255,13 @@ function createHookHandlers(pack, { version: version2 = "dev" } = {}) {
     if (!command || !input2.task_folder) return;
     const workspace = path8.resolve(input2.workspace_root || payload.cwd || process.cwd());
     const begun = beginMode(payload, { command, taskArg: input2.task_folder, workspace });
-    if (begun?.replaced) emit({ systemMessage: replacedMessage(begun.replaced) });
+    if (!begun) return;
+    const agent = kitAgentName(payload.agent_type);
+    if (agent && agent === pack.agentFor[command] && !begun.marker.delegated) {
+      begun.marker.delegated = true;
+      writeMarker(payload.session_id, begun.marker);
+    }
+    if (begun.replaced) emit({ systemMessage: replacedMessage(begun.replaced) });
   }
   function decide(payload, decision, reason) {
     emit({
@@ -23519,6 +23536,125 @@ function runHook(pack, opts = {}) {
   process.exit(0);
 }
 
+// packages/engine/src/status-update.mjs
+import fs8 from "node:fs";
+import path9 from "node:path";
+var KEY_RE = /^[a-z][a-z0-9_]*$/;
+var PLAIN_RE = /^[A-Za-z_][A-Za-z0-9_./-]*$/;
+var YAML_WORDS = /^(true|false|null|yes|no|on|off|y|n|~)$/i;
+function yamlScalar(value) {
+  if (typeof value === "boolean") return String(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new Error(`Gi\xE1 tr\u1ECB s\u1ED1 kh\xF4ng h\u1EE3p l\u1EC7: ${value}`);
+    return String(value);
+  }
+  if (typeof value !== "string") throw new Error(`Ch\u1EC9 nh\u1EADn chu\u1ED7i, s\u1ED1 ho\u1EB7c boolean (nh\u1EADn ${value === null ? "null" : typeof value}).`);
+  if (/[\r\n]/.test(value)) throw new Error("Gi\xE1 tr\u1ECB ph\u1EA3i n\u1EB1m tr\xEAn m\u1ED9t d\xF2ng.");
+  if (PLAIN_RE.test(value) && !YAML_WORDS.test(value)) return value;
+  return `'${value.replace(/'/g, "''")}'`;
+}
+function splitComment(rest) {
+  let quote = "";
+  for (let i = 0; i < rest.length; i++) {
+    const ch = rest[i];
+    if (quote) {
+      if (ch === "\\" && quote === '"') i++;
+      else if (ch === quote) {
+        if (quote === "'" && rest[i + 1] === "'") i++;
+        else quote = "";
+      }
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+    } else if (ch === "#" && i > 0 && /\s/.test(rest[i - 1])) {
+      const start = rest.slice(0, i).search(/\s+$/);
+      return rest.slice(start);
+    }
+  }
+  return "";
+}
+function setFrontMatterFields(raw, fields) {
+  const eol = raw.includes("\r\n") ? "\r\n" : "\n";
+  const lines = raw.split(/\r?\n/);
+  if (!/^﻿?---\s*$/.test(lines[0] || "")) throw new Error("File kh\xF4ng c\xF3 YAML frontmatter.");
+  const close = lines.findIndex((line, i) => i > 0 && /^---\s*$/.test(line));
+  if (close < 0) throw new Error("Frontmatter thi\u1EBFu d\xF2ng `---` \u0111\xF3ng.");
+  const added = [];
+  for (const [key, value] of Object.entries(fields)) {
+    if (!KEY_RE.test(key)) throw new Error(`T\xEAn field kh\xF4ng h\u1EE3p l\u1EC7: "${key}".`);
+    const scalar = yamlScalar(value);
+    const idx = lines.findIndex((line, i) => i > 0 && i < close && line.startsWith(`${key}:`));
+    if (idx >= 0) {
+      const rest = lines[idx].slice(key.length + 1);
+      lines[idx] = `${key}: ${scalar}${splitComment(rest)}`;
+    } else {
+      added.push(`${key}: ${scalar}`);
+    }
+  }
+  lines.splice(close, 0, ...added);
+  return lines.join(eol);
+}
+function setBodySection(raw, heading, text) {
+  const eol = raw.includes("\r\n") ? "\r\n" : "\n";
+  const lines = raw.split(/\r?\n/);
+  const isHeading = (line) => line.trim() === `## ${heading}`;
+  const start = lines.findIndex(isHeading);
+  if (start < 0) {
+    const trimmed = raw.replace(/\s+$/, "");
+    return `${trimmed}${eol}${eol}## ${heading}${eol}${eol}${text}${eol}`;
+  }
+  let end = lines.findIndex((line, i) => i > start && /^##\s/.test(line));
+  if (end < 0) end = lines.length;
+  let first = start + 1;
+  while (first < end && !lines[first].trim()) first++;
+  let last = first;
+  while (last < end && lines[last].trim() && !lines[last].trimStart().startsWith(">")) last++;
+  if (first >= end || lines[first].trimStart().startsWith(">")) {
+    lines.splice(start + 1, 0, "", text);
+  } else {
+    lines.splice(first, last - first, text);
+  }
+  return lines.join(eol);
+}
+function createStatusUpdater(pack) {
+  const cfg = pack.statusUpdate;
+  return function updateStatus2(taskDir, { fields = {}, nextPrompt, now = /* @__PURE__ */ new Date() } = {}) {
+    const file2 = path9.join(taskDir, pack.statusFile);
+    if (!fs8.existsSync(file2)) return { ok: false, errors: [`Thi\u1EBFu ${pack.statusFile}.`] };
+    if (fields === null || typeof fields !== "object" || Array.isArray(fields)) {
+      return { ok: false, errors: ["`fields` ph\u1EA3i l\xE0 object { field: gi\xE1 tr\u1ECB }."] };
+    }
+    const errors = [];
+    for (const key of Object.keys(fields)) {
+      if (!KEY_RE.test(key)) errors.push(`T\xEAn field kh\xF4ng h\u1EE3p l\u1EC7: "${key}".`);
+      if (cfg.protectedFields.includes(key)) {
+        errors.push(`Kh\xF4ng \u0111\u01B0\u1EE3c \u0111\u1EB7t "${key}" qua tool: field n\xE0y c\u1EA7n ng\u01B0\u1EDDi d\xF9ng x\xE1c nh\u1EADn khi s\u1EEDa tr\u1EF1c ti\u1EBFp file.`);
+      }
+      if (key === cfg.nextPromptField) errors.push(`\u0110\u1EB7t "${key}" b\u1EB1ng tham s\u1ED1 next_prompt, kh\xF4ng \u0111\u1EB7t trong fields.`);
+      if (key === cfg.timestampField) errors.push(`"${key}" \u0111\u01B0\u1EE3c ghi t\u1EF1 \u0111\u1ED9ng.`);
+    }
+    if (nextPrompt !== void 0 && (typeof nextPrompt !== "string" || !nextPrompt.trim())) {
+      errors.push("`next_prompt` ph\u1EA3i l\xE0 chu\u1ED7i kh\xE1c r\u1ED7ng.");
+    }
+    if (!Object.keys(fields).length && nextPrompt === void 0) errors.push("Kh\xF4ng c\xF3 field n\xE0o \u0111\u1EC3 c\u1EADp nh\u1EADt.");
+    if (errors.length) return { ok: false, errors };
+    const all = { ...fields };
+    const prompt = nextPrompt === void 0 ? void 0 : nextPrompt.trim().replace(/\\/g, "/");
+    if (prompt !== void 0) all[cfg.nextPromptField] = prompt;
+    all[cfg.timestampField] = now.toISOString();
+    let text = fs8.readFileSync(file2, "utf8");
+    try {
+      text = setFrontMatterFields(text, all);
+      if (prompt !== void 0) text = setBodySection(text, cfg.nextPromptHeading, prompt);
+    } catch (err) {
+      return { ok: false, errors: [err.message] };
+    }
+    const parsed = pack.parseStatus(text);
+    if (!parsed.ok) return { ok: false, errors: parsed.errors };
+    fs8.writeFileSync(file2, text);
+    return { ok: true, file: file2, changed: Object.keys(all) };
+  };
+}
+
 // packages/engine/src/pack.mjs
 var name = external_exports.string().min(1);
 var list = external_exports.array(name);
@@ -23527,6 +23663,8 @@ var ModeSchema = external_exports.object({
   state: name,
   /** Subagent đảm nhận; `null` = main thread. */
   agent: name.nullable(),
+  /** Model truyền khi delegate mode này (thắng `model:` của agent); bỏ trống = model của agent. */
+  model: external_exports.enum(["opus", "sonnet", "haiku", "fable", "inherit"]).optional(),
   /** Artifact phải tồn tại khi mode kết thúc (tương đối task folder). */
   artifacts: list,
   /** `next_mode` hợp lý sau mode này; lệch chỉ cảnh báo. */
@@ -23550,7 +23688,16 @@ var PackManifestSchema = external_exports.object({
   task_files: external_exports.object({
     required_docs: list.min(1),
     empty: list.default([]),
-    conditional: list.default([])
+    conditional: list.default([]),
+    /**
+     * Bản template thay thế khi tạo task (opt-in): tham số `param` của tool tạo task
+     * nhận một key trong `dirs`, file template lấy từ `<templates>/<dirs[key]>/` nếu có.
+     */
+    variants: external_exports.object({
+      param: external_exports.string().regex(/^[a-z][a-z0-9_]*$/),
+      description: name,
+      dirs: external_exports.record(name, name)
+    }).optional()
   }),
   modes: external_exports.record(name, ModeSchema),
   aliases: external_exports.record(name, name).default({}),
@@ -23558,6 +23705,12 @@ var PackManifestSchema = external_exports.object({
   always_allowed: list,
   source_edit_modes: list,
   source_edit_agent: name,
+  /**
+   * Agent chạy làm main thread (`claude --agent <plugin>:<agent>`). Hook nhận
+   * `agent_type` của nó cho mọi lệnh của main thread nên phải coi nó như main
+   * thread, không phải agent chỉ đọc. Không khai báo = pack không có agent này.
+   */
+  main_thread_agent: name.optional(),
   source_fix_route: name,
   plan_update_route: name,
   read_inputs_hint: name,
@@ -23595,8 +23748,20 @@ var PackManifestSchema = external_exports.object({
       next_step: name,
       task_status: name,
       retro_data: name.optional(),
-      validate_retro: name.optional()
-    })
+      validate_retro: name.optional(),
+      update_status: name.optional()
+    }),
+    /**
+     * Tool cập nhật field của file trạng thái (opt-in). Field trong
+     * `protected_fields` không đặt được qua tool (cần người dùng xác nhận khi
+     * sửa file); `timestamp_field` được ghi tự động; `next_prompt_field` là
+     * field chứa lệnh cho bước kế tiếp (ghi cùng mục `next_prompt_heading`).
+     */
+    update_status: external_exports.object({
+      protected_fields: list.default([]),
+      timestamp_field: name,
+      next_prompt_field: name
+    }).optional()
   })
 }).superRefine((m2, ctx) => {
   const commands = Object.keys(m2.modes);
@@ -23631,16 +23796,16 @@ function rulesForManifest(manifest, command, data = {}) {
 }
 
 // packages/engine/src/retro.mjs
-import fs8 from "node:fs";
-import path9 from "node:path";
+import fs9 from "node:fs";
+import path10 from "node:path";
 var bump2 = (obj, key, by = 1) => {
   obj[key] = (obj[key] || 0) + by;
 };
 var sortedEntries = (obj) => Object.entries(obj).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 function taskDirsIn(repoRoot, tasksRoot) {
-  const root = path9.join(repoRoot, tasksRoot);
-  if (!fs8.existsSync(root)) return [];
-  return fs8.readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => path9.join(root, d.name)).sort();
+  const root = path10.join(repoRoot, tasksRoot);
+  if (!fs9.existsSync(root)) return [];
+  return fs9.readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => path10.join(root, d.name)).sort();
 }
 function buildRetroData({ repoRoot, tasksRoot, runLogFile, listIssues: listIssues2, since, now = /* @__PURE__ */ new Date() }) {
   const allRecords = [];
@@ -23678,7 +23843,7 @@ function buildRetroData({ repoRoot, tasksRoot, runLogFile, listIssues: listIssue
     const summary2 = summarizeRunLog(inRange);
     const modes2 = Object.values(summary2.modes);
     perTask.push({
-      task: path9.basename(dir),
+      task: path10.basename(dir),
       events: summary2.events,
       completed: modes2.reduce((a, m2) => a + m2.completed, 0),
       first_pass: modes2.reduce((a, m2) => a + m2.firstPass, 0),
@@ -23990,7 +24155,14 @@ var manifest_gen_default = {
       "output/test-summary.md",
       "output/pr-summary.md",
       "output/ui-figma-review-report.md"
-    ]
+    ],
+    "variants": {
+      "param": "risk_level",
+      "description": "M\u1EE9c r\u1EE7i ro \u0111\xE3 ph\xE2n lo\u1EA1i (low | medium | high). low: plan/checklist r\xFAt g\u1ECDn; b\u1ECF tr\u1ED1ng ho\u1EB7c kh\xE1c: template \u0111\u1EA7y \u0111\u1EE7.",
+      "dirs": {
+        "low": "lite"
+      }
+    }
   },
   "modes": {
     "plan": {
@@ -24013,7 +24185,7 @@ var manifest_gen_default = {
     },
     "quick": {
       "state": "quick-mode",
-      "agent": null,
+      "agent": "frontend-developer",
       "artifacts": [
         "planning/implementation-plan.md",
         "output/review-report.md",
@@ -24031,6 +24203,7 @@ var manifest_gen_default = {
     "input-sync": {
       "state": "input-sync-mode",
       "agent": "frontend-planner",
+      "model": "sonnet",
       "artifacts": [
         "tracking/input-sync-report.md",
         "planning/questions.md",
@@ -24168,6 +24341,7 @@ var manifest_gen_default = {
     "quick"
   ],
   "source_edit_agent": "frontend-developer",
+  "main_thread_agent": "frontend-orchestrator",
   "source_fix_route": "FE bugfix/cook",
   "plan_update_route": "input-sync",
   "read_inputs_hint": 'Input c\u1EA7n \u0111\u1ECDc: m\u1EE5c "Input ledger b\u1EAFt bu\u1ED9c cho FE plan" trong tracking/workflow-status.md.',
@@ -24270,7 +24444,15 @@ var manifest_gen_default = {
       "next_step": "Tr\u1EA3 v\u1EC1 prompt b\u01B0\u1EDBc ti\u1EBFp theo \u0111\u1ECDc tr\u1EF1c ti\u1EBFp t\u1EEB tracking/workflow-status.md c\u1EE7a task. D\xF9ng khi kh\xF4ng ch\u1EAFc mode k\u1EBF ti\u1EBFp l\xE0 g\xEC.",
       "task_status": "\u0110\u1ECDc t\xF3m t\u1EAFt tr\u1EA1ng th\xE1i task: mode hi\u1EC7n t\u1EA1i, c\xE1c gate status ch\xEDnh, s\u1ED1 c\xE2u h\u1ECFi blocking, s\u1ED1 issue theo severity. Ch\u1EC9 \u0111\u1ECDc, kh\xF4ng s\u1EEDa file.",
       "retro_data": "D\xF9ng cho /fe:retro. G\u1ED9p run-log v\xE0 b\u1EA3ng bug c\u1EE7a m\u1ECDi task th\xE0nh s\u1ED1 li\u1EC7u (pass ngay l\u1EA7n \u0111\u1EA7u, l\xFD do b\u1ECB ch\u1EB7n, issue theo nh\xF3m v\xE0 nguy\xEAn nh\xE2n g\u1ED1c), ghi docs/frontend-retro/<ng\xE0y>/retro-data.json v\xE0 tr\u1EA3 b\u1EA3n t\xF3m t\u1EAFt. Kh\xF4ng s\u1EEDa rule hay task.",
-      "validate_retro": "Ki\u1EC3m m\u1ED9t th\u01B0 m\u1EE5c retro: \u0111\u1EE7 retro-data.json, retro-report.md, proposals.md; \u0111\u1EC1 xu\u1EA5t \u0111\xE3 duy\u1EC7t ph\u1EA3i c\xF3 ng\u01B0\u1EDDi duy\u1EC7t. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC /fe:retro."
+      "validate_retro": "Ki\u1EC3m m\u1ED9t th\u01B0 m\u1EE5c retro: \u0111\u1EE7 retro-data.json, retro-report.md, proposals.md; \u0111\u1EC1 xu\u1EA5t \u0111\xE3 duy\u1EC7t ph\u1EA3i c\xF3 ng\u01B0\u1EDDi duy\u1EC7t. G\u1ECCI TR\u01AF\u1EDAC KHI K\u1EBET TH\xDAC /fe:retro.",
+      "update_status": "\u0110\u1EB7t field c\u1EE7a tracking/workflow-status.md (current_mode, gate status, next_mode\u2026) v\xE0 prompt b\u01B0\u1EDBc ti\u1EBFp theo m\xE0 KH\xD4NG vi\u1EBFt l\u1EA1i c\u1EA3 file: gi\u1EEF comment v\xE0 th\u1EE9 t\u1EF1 c\u1EE7a template, t\u1EF1 ghi updated_at, ki\u1EC3m schema tr\u01B0\u1EDBc khi ghi (sai th\xEC kh\xF4ng ghi v\xE0 tr\u1EA3 l\u1ED7i k\xE8m gi\xE1 tr\u1ECB h\u1EE3p l\u1EC7). D\xF9ng thay cho Edit/Write file n\xE0y. Kh\xF4ng \u0111\u1EB7t \u0111\u01B0\u1EE3c human_override."
+    },
+    "update_status": {
+      "protected_fields": [
+        "human_override"
+      ],
+      "timestamp_field": "updated_at",
+      "next_prompt_field": "next_prompt"
     }
   }
 };
@@ -24813,8 +24995,8 @@ function computeScopeDiff2({ plannedFiles, changedFiles, ignore }) {
 }
 
 // packages/pack-fe/src/workflow.mjs
-import fs9 from "node:fs";
-import path10 from "node:path";
+import fs10 from "node:fs";
+import path11 from "node:path";
 
 // packages/pack-fe/src/resolve.mjs
 var TASKS_ROOT = manifest_gen_default.tasks_root;
@@ -24830,20 +25012,20 @@ function loadProjectConfig2(repoRoot) {
 
 // packages/pack-fe/src/workflow.mjs
 function taskIo(taskDir) {
-  const exists = (rel) => fs9.existsSync(path10.join(taskDir, rel));
+  const exists = (rel) => fs10.existsSync(path11.join(taskDir, rel));
   const read = (rel) => {
-    const p = path10.join(taskDir, rel);
-    return fs9.existsSync(p) ? fs9.readFileSync(p, "utf8") : "";
+    const p = path11.join(taskDir, rel);
+    return fs10.existsSync(p) ? fs10.readFileSync(p, "utf8") : "";
   };
   return { exists, read };
 }
 function loadWorkflow(taskDir) {
-  const workflowPath = path10.join(taskDir, "tracking", "workflow-status.md");
-  if (!fs9.existsSync(workflowPath)) {
+  const workflowPath = path11.join(taskDir, "tracking", "workflow-status.md");
+  if (!fs10.existsSync(workflowPath)) {
     const errors = ["Thi\u1EBFu tracking/workflow-status.md"];
     return { ok: false, errors, issues: [{ code: "STATUS_MISSING", message: errors[0] }] };
   }
-  const parsed = parseWorkflowStatus(fs9.readFileSync(workflowPath, "utf8"));
+  const parsed = parseWorkflowStatus(fs10.readFileSync(workflowPath, "utf8"));
   if (parsed.ok) return parsed;
   return { ...parsed, issues: parsed.errors.map((message) => ({ code: "STATUS_SCHEMA_INVALID", message })) };
 }
@@ -24869,17 +25051,17 @@ function scopeDiffForTask(taskDir, { repoRoot, base = "", changedFiles } = {}) {
   return { ...result, plannedFiles, base, onBase };
 }
 function plannedFilesOfTasksIn(tasksRoot, exclude = "") {
-  if (!fs9.existsSync(tasksRoot)) return [];
+  if (!fs10.existsSync(tasksRoot)) return [];
   const planned = [];
-  for (const ent of fs9.readdirSync(tasksRoot, { withFileTypes: true })) {
+  for (const ent of fs10.readdirSync(tasksRoot, { withFileTypes: true })) {
     if (!ent.isDirectory() || ent.name === exclude) continue;
-    const plan = path10.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
-    if (fs9.existsSync(plan)) planned.push(...parsePlannedFiles2(fs9.readFileSync(plan, "utf8")));
+    const plan = path11.join(tasksRoot, ent.name, "planning", "implementation-plan.md");
+    if (fs10.existsSync(plan)) planned.push(...parsePlannedFiles2(fs10.readFileSync(plan, "utf8")));
   }
   return planned;
 }
 function plannedFilesOfSiblingTasks(taskDir) {
-  return plannedFilesOfTasksIn(path10.dirname(taskDir), path10.basename(taskDir));
+  return plannedFilesOfTasksIn(path11.dirname(taskDir), path11.basename(taskDir));
 }
 function validateWorkflow(taskDir, { scope } = {}) {
   const parsed = loadWorkflow(taskDir);
@@ -24915,8 +25097,10 @@ function validateWorkflowAtGate(taskDir, { repoRoot, base } = {}) {
 
 // packages/pack-fe/src/scaffold.mjs
 var TASK_TEMPLATE_FILES = REQUIRED_TASK_DOCS;
-function scaffoldTask2({ workspaceRoot, name: name2, templatesDir }) {
+var TASK_VARIANTS = manifest_gen_default.task_files.variants;
+function scaffoldTask2({ workspaceRoot, name: name2, templatesDir, variant }) {
   return scaffoldTask({
+    variantDir: TASK_VARIANTS?.dirs?.[variant],
     workspaceRoot,
     name: name2,
     templatesDir,
@@ -24931,8 +25115,8 @@ function scaffoldTask2({ workspaceRoot, name: name2, templatesDir }) {
 var RUNLOG_FILE = runLogFileFor(manifest_gen_default.status_file);
 
 // packages/pack-fe/src/retro.mjs
-import fs10 from "node:fs";
-import path11 from "node:path";
+import fs11 from "node:fs";
+import path12 from "node:path";
 var RETRO_ROOT = manifest_gen_default.retro.root;
 var TEAM_RULES_FILE = manifest_gen_default.retro.team_rules_file;
 var TEAM_RULES_MAX_CHARS = manifest_gen_default.retro.team_rules_max_chars;
@@ -25009,8 +25193,8 @@ function validateProposals(markdown) {
   return { ok: errors.length === 0, errors, warnings, issues };
 }
 function validateRetroFolder(dir) {
-  const missing = RETRO_FILES.filter((f) => !fs10.existsSync(path11.join(dir, f)));
-  const proposals = fs10.existsSync(path11.join(dir, "proposals.md")) ? fs10.readFileSync(path11.join(dir, "proposals.md"), "utf8") : "";
+  const missing = RETRO_FILES.filter((f) => !fs11.existsSync(path12.join(dir, f)));
+  const proposals = fs11.existsSync(path12.join(dir, "proposals.md")) ? fs11.readFileSync(path12.join(dir, "proposals.md"), "utf8") : "";
   const res = missing.includes("proposals.md") ? { issues: [], warnings: [] } : validateProposals(proposals);
   const issues = [...missing.map((f) => ({ code: "RETRO_FILE_MISSING", message: `Thi\u1EBFu ${f}` })), ...res.issues];
   const errors = issues.map((i) => i.message);
@@ -25024,8 +25208,8 @@ function buildRetroData2(repoRoot, { since, now } = {}) {
     since,
     now,
     listIssues: (taskDir) => listIssuesInTask((rel) => {
-      const p = path11.join(taskDir, rel);
-      return fs10.existsSync(p) ? fs10.readFileSync(p, "utf8") : "";
+      const p = path12.join(taskDir, rel);
+      return fs11.existsSync(p) ? fs11.readFileSync(p, "utf8") : "";
     })
   });
 }
@@ -25033,9 +25217,9 @@ function renderRetroSummary2(data) {
   return renderRetroSummary(data, { title: "D\u1EEF li\u1EC7u retro FE-Kit" });
 }
 function teamRulesFor({ workspaceRoot, command }) {
-  const file2 = path11.join(workspaceRoot, TEAM_RULES_FILE);
-  if (!fs10.existsSync(file2)) return null;
-  const sections = fs10.readFileSync(file2, "utf8").replace(/\r\n/g, "\n").split(/^(?=## )/m);
+  const file2 = path12.join(workspaceRoot, TEAM_RULES_FILE);
+  if (!fs11.existsSync(file2)) return null;
+  const sections = fs11.readFileSync(file2, "utf8").replace(/\r\n/g, "\n").split(/^(?=## )/m);
   const picked = sections.filter((sec) => {
     const heading = sec.match(/^## (.+)$/m)?.[1]?.toLowerCase();
     if (!heading) return false;
@@ -25070,6 +25254,8 @@ var fePack = {
   commandToMode: COMMAND_TO_MODE,
   sourceEditCommands: SOURCE_EDIT_COMMANDS,
   sourceEditAgent: SOURCE_EDIT_AGENT,
+  /** Agent điều phối chạy làm main thread; hook coi nó như main thread. */
+  mainThreadAgent: m.main_thread_agent,
   requiredArtifacts: MODE_REQUIRED_ARTIFACTS,
   agentFor: AGENT_FOR_COMMAND,
   label: (command) => `${m.prompt_prefix} ${command}`,
@@ -25089,6 +25275,8 @@ var fePack = {
   scopeDiffForTask,
   loadProjectConfig: loadProjectConfig2,
   scaffoldTask: scaffoldTask2,
+  /** Tham số chọn bản template thay thế khi tạo task (MCP new_task). */
+  taskVariants: TASK_VARIANTS,
   requiredTaskFiles: REQUIRED_TASK_FILES,
   validateWorkflow,
   validateWorkflowAtGate,
@@ -25139,16 +25327,25 @@ var fePack = {
       nextStep: m.mcp.descriptions.next_step,
       taskStatus: m.mcp.descriptions.task_status,
       retroData: m.mcp.descriptions.retro_data,
-      validateRetro: m.mcp.descriptions.validate_retro
+      validateRetro: m.mcp.descriptions.validate_retro,
+      updateStatus: m.mcp.descriptions.update_status
     }
+  },
+  /** Cập nhật field của workflow-status.md (MCP `fe_update_status`, CLI `fe-kit status set`). */
+  statusUpdate: {
+    protectedFields: m.mcp.update_status.protected_fields,
+    timestampField: m.mcp.update_status.timestamp_field,
+    nextPromptField: m.mcp.update_status.next_prompt_field,
+    nextPromptHeading: m.mcp.next_prompt_heading
   }
 };
 var evaluateModeCompletion = createModeCompletion(fePack);
 fePack.evaluateModeCompletion = evaluateModeCompletion;
 var modeBriefing = createModeBriefing(fePack);
+var updateStatus = createStatusUpdater(fePack);
 
 // core/hooks/fe-hook.mjs
-var KIT_VERSION = true ? "2.7.0" : "dev";
+var KIT_VERSION = true ? "2.8.0" : "dev";
 runHook(fePack, { version: KIT_VERSION });
 /*! Bundled license information:
 

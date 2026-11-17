@@ -26,18 +26,29 @@ Tài liệu này mô tả cơ chế **đang chạy thật** từ v2.0.0. Mỗi n
            Hook: UserPromptExpansion / PreToolUse / SubagentStop / Stop
 ```
 
-`/fe:task` (router), `/fe:quick` và `/fe:new-task` chạy inline ở main thread.
+`/fe:task` (router), `/fe:next` (vòng điều phối) và `/fe:new-task` chạy ở main thread; mọi mode, kể cả `quick`, giao cho subagent.
 
 ## Smart Task Router (`/fe:task`, từ v2.7.0)
 
 Điểm vào task-first: developer đưa yêu cầu bằng ngôn ngữ tự nhiên, không cần biết mode. Router là **command, không phải mode** (không có state, không artifact riêng), chạy inline ở main thread:
 
-1. Kiểm tra yêu cầu có thuộc task đang mở không (`fe_list_tasks`); có thì đi tiếp theo `next_prompt`, không tạo task mới.
+1. Kiểm tra yêu cầu có thuộc task đang mở không (`fe_list_tasks`); có thì chạy `/fe:next` cho task đó, không tạo task mới.
 2. Phân loại `task_type` (14 loại) và đếm 7 tín hiệu phức tạp/rủi ro (≥ 3 file, kiến trúc mới, cross-module, requirement mờ, Figma, khó revert, security) — bảng trong `core/commands/task.md`. Luôn in phân loại và cho người dùng override.
-3. Tạo task folder (`fe_new_task`), ghi `task_type`/`risk_level` vào `workflow-status.md` (field optional, task cũ không cần) và Yêu cầu gốc vào `task.md`.
-4. Route: 0 tín hiệu → chạy tiếp `quick` inline; ≥ 1 → delegate `frontend-planner` như `/fe:plan`. Hook vẫn theo dõi vì marker được ghi ở `PostToolUse` `fe_begin_mode`.
+3. Tạo task folder (`fe_new_task`, truyền `risk_level`: task `low` nhận plan/checklist rút gọn từ `templates/lite/`), ghi `task_type`/`risk_level` bằng `fe_update_status` (field optional, task cũ không cần) và Yêu cầu gốc vào `task.md`.
+4. Route: 0 tín hiệu → `quick` (giao `frontend-developer`); ≥ 1 → `plan` (giao `frontend-planner`). Sau đó chạy vòng điều phối `/fe:next` (xem mục dưới). Hook vẫn theo dõi vì marker được ghi ở `PostToolUse` `fe_begin_mode`; tool này gọi từ đúng subagent của mode thì marker được đánh dấu `delegated`.
 
 Phân loại là việc của model (prompt, mềm); **hệ quả** của phân loại được enforce cứng: `evaluateModeEntry` chặn `quick` khi `figma_required=true` (`ENTRY_QUICK_FIGMA_REQUIRED`) hoặc `risk_level=high` (`ENTRY_QUICK_HIGH_RISK`), redirect sang `FE plan`. Phân loại nhẹ bị sai không đắt: quick vượt scope thì chuyển `FE plan`/`FE input-sync` trên cùng task folder (escalation hai chiều, không cần phân loại đúng 100% từ đầu).
+
+## Vòng điều phối (`/fe:next`, từ v2.8.0)
+
+Người dùng giao task một lần; main thread tự đi tiếp tới khi task sẵn sàng PR và chỉ dừng khi cần người xác nhận. Vòng nằm trong `core/commands/next.md` (command, không phải mode), dùng chung cho `/fe:task` và `/fe:next`:
+
+1. `fe_next_step` → gọi skill `fe:<mode>` của prompt đó (command delegate cho agent, chạy `fe_validate_workflow`, gửi lỗi lại cho agent tối đa 2 lần).
+2. `fe_task_status` → xét điều kiện dừng; không dừng thì lặp lại, tối đa 12 bước mỗi lượt.
+
+Dừng khi: còn câu hỏi blocking chưa có câu trả lời; gate chặn mà vòng không tự gỡ được (thiếu Figma/SRS/API, CR mâu thuẫn); file ngoài plan hoặc hook hỏi xác nhận; bug Critical/High còn sau 2 vòng bugfix; validate vẫn lỗi sau 2 lần sửa; không có quyền chạy lệnh; không tiến triển hai bước liền; hoặc xong (next terminal sau `pr`). Khi dừng, câu trả lời kết thúc bằng khối `⛔ CẦN BẠN XỬ LÝ` (lý do, việc cần làm, file cần xem, cách chạy tiếp). Người dùng trả lời trong chat thì vòng chạy `input-sync` với câu trả lời rồi đi tiếp.
+
+`auto_advance` trong `.frontend-delivery/standard.yaml` (mặc định `true`) tắt được vòng: `false` thì mỗi lượt chạy một bước rồi in `Tiếp theo:`. Gọi thẳng `/fe:<mode>` luôn chỉ chạy một bước. Subagent vẫn không tự nhảy mode (`_protocol` mục 7): chỉ main thread nối các bước, và mọi bước vẫn qua gate như khi người dùng gõ tay.
 
 ## Engine và domain pack
 
@@ -60,8 +71,8 @@ Kit chỉ dùng cho domain frontend. Từ v2.4.0 code tách làm hai tầng đ�
 | Lớp | Thành phần | Nguồn | Thực thi bởi |
 |---|---|---|---|
 | Hướng dẫn | Skill `frontend-delivery-standard`, rule, template | `core/SKILL.md`, `core/rules/`, `core/templates/` | Prompt (mềm) |
-| Điều phối | 12 slash command | `core/commands/` + đoạn delegation do generator chèn | Prompt (mềm) |
-| Vai trò | 7 subagent | `core/agents/` + `_protocol.md` | `disallowedTools` (cứng) + prompt |
+| Điều phối | 14 slash command | `core/commands/` + đoạn delegation do generator chèn | Prompt (mềm) |
+| Vai trò | 9 agent: orchestrator (main thread) + 8 subagent, mỗi agent có `model:` riêng | `core/agents/` + `_protocol.md` (chỉ agent của mode) | `disallowedTools` (cứng) + prompt |
 | Gate khi bắt đầu mode | `fe_begin_mode`, `fe-kit mode begin` | `createModeBriefing` (engine) → `evaluateModeEntry` (luật FE trong `pack-fe/src/transitions.mjs`) | MCP tool / CLI trả verdict + nguyên văn rule |
 | Gate khi chạy | Hook | `runHook` (engine), gắn pack ở `core/hooks/fe-hook.mjs` | Claude Code hook (cứng ở mức `enforce`) |
 | Gate khi kết thúc mode | `evaluateModeCompletion` | `createModeCompletion` (engine) | Hook `SubagentStop`/`Stop`, CLI `fe-kit mode end` |
@@ -70,7 +81,7 @@ Kit chỉ dùng cho domain frontend. Từ v2.4.0 code tách làm hai tầng đ�
 
 ## Nguyên tắc thiết kế
 
-1. **Main thread là orchestrator, không có "orchestrator agent" riêng.** Subagent trong Claude Code không spawn được subagent khác. Mọi command theo mode được generator chèn đoạn "Điều phối (Claude Code)": main thread delegate cho đúng subagent (bảng `AGENT_FOR_COMMAND` trong `packages/validators/src/modes.mjs`), chuyển nguyên văn input chỉ có trong chat, rồi gọi `fe_validate_workflow`. Đoạn này chỉ có trong command của plugin, không có trong `SKILL.md` (subagent preload skill sẽ tự delegate vòng lặp) và không có trong prompt Codex.
+1. **Main thread là orchestrator.** Điều phối luôn chạy ở main thread, không bao giờ là subagent được delegate. Agent `frontend-orchestrator` (model Opus) chỉ là system prompt + model cho main thread khi mở bằng `claude --agent fe:frontend-orchestrator` (hoặc key `agent` trong `.claude/settings.json`, `fe-kit init --orchestrator`); không mở bằng nó thì main thread thường làm đúng vai này. Claude Code gửi `agent_type` của agent đó trong mọi hook của main thread, nên pack khai `main_thread_agent` và hook coi agent này như main thread (chịu gate theo mode, không chịu luật agent chỉ đọc). Mọi command theo mode được generator chèn đoạn "Điều phối (Claude Code)": main thread delegate cho đúng subagent (bảng `AGENT_FOR_COMMAND` trong `packages/validators/src/modes.mjs`), chuyển nguyên văn input chỉ có trong chat, rồi gọi `fe_validate_workflow`. Đoạn này chỉ có trong command của plugin, không có trong `SKILL.md` (subagent preload skill sẽ tự delegate vòng lặp) và không có trong prompt Codex.
    - Không dùng `context: fork` vì fork không thấy lịch sử chat, trong khi SRS/câu trả lời thường được dán thẳng vào chat.
 
 2. **State file là giao thức giao tiếp giữa các agent.** Subagent có context riêng. Mọi thứ agent sau cần biết phải nằm trong task folder. Hook `SubagentStop`/`Stop` không cho mode kết thúc nếu `workflow-status.md` chưa được sửa trong lượt, sai `current_mode`, thiếu artifact bắt buộc của mode, hoặc không qua `validateWorkflow`.
@@ -83,13 +94,18 @@ Kit chỉ dùng cho domain frontend. Từ v2.4.0 code tách làm hai tầng đ�
    | frontend-figma-specialist | Bash, PowerShell, Agent, NotebookEdit | như trên |
    | frontend-reviewer / tester / release-manager | Agent | như trên |
    | frontend-developer | Agent | Sửa source khi gate của task chưa mở |
+   | frontend-researcher | Bash, PowerShell, Agent, NotebookEdit | Sửa ngoài `docs/frontend-tasks/`, `docs/frontend-context/` |
+   | frontend-retro-analyst | Bash, PowerShell, Agent, NotebookEdit | như trên; đổi trạng thái đề xuất cần người dùng xác nhận |
+   | frontend-orchestrator (main thread) | — | Như main thread: chịu gate theo mode; việc sửa code (kể cả `FE quick`) giao cho developer |
 
    Dùng `disallowedTools` thay cho whitelist `tools:` để agent thừa hưởng Skill, MCP của kit và Figma MCP của từng máy (tên server Figma khác nhau nên không whitelist được).
    - **Ghi qua shell:** reviewer/tester/release-manager có Bash. Hook cảnh báo lệnh shell trông như ghi file (`FE_KIT_BASH_GUARD=off` để tắt), và không cho mode chỉ đọc kết thúc khi file source (theo `source_paths`) bị đổi so với lúc mở mode (`END_SOURCE_TOUCHED_IN_READONLY_MODE`). Lưới chặn cuối vẫn là scope diff ở `fe_scope_diff` và `validate-pr`.
 
 4. **Description là hợp đồng delegate.** Mỗi description ghi rõ khi nào dùng và khi nào không. Plugin agent có tên `fe:<name>`.
 
-5. **Handoff luôn qua `next_prompt`.** Mode kết thúc ghi `next_mode` + `next_prompt`. Không agent nào tự nhảy mode. `fe_begin_mode` so mode được yêu cầu với gate thật (câu hỏi blocking đếm từ `questions.md`, `build_ready`, Figma gate, review/bug) và với `next_mode` đã ghi.
+   **Model theo vai.** Frontmatter `model:` của từng agent: Opus cho điều phối, kiến trúc (planner), review và retro; Sonnet cho developer và figma-specialist; Haiku cho researcher, tester và release-manager. `model:` của agent thắng `CLAUDE_CODE_SUBAGENT_MODEL`; ép một model cho mọi subagent cần thêm `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`. `tests/agents-team.test.mjs` khoá bảng này. `frontend-researcher` không có mode: router delegate nó trước `FE plan` khi cần dò codebase rộng, nó chỉ ghi `planning/research-brief.md` và không nhận `_protocol.md` (generator chỉ nối giao thức cho agent xuất hiện trong `modes.*.agent`).
+
+5. **Handoff luôn qua `next_prompt`.** Mode kết thúc đặt `next_mode` + `next_prompt` bằng `fe_update_status` (CLI `fe-kit status set`): tool sửa đúng dòng field, giữ comment của template, tự ghi `updated_at` và mục "Prompt bước tiếp theo", kiểm schema trước khi ghi và không đặt được `human_override`. Không agent nào tự nhảy mode; chỉ vòng điều phối ở main thread đọc `next_prompt` để chạy bước kế. `fe_begin_mode` so mode được yêu cầu với gate thật (câu hỏi blocking đếm từ `questions.md`, `build_ready`, Figma gate, review/bug) và với `next_mode` đã ghi.
 
 6. **Sự thật tính được thắng field tự khai.** Scope diff tính từ `git diff` so với bảng "File sẽ tạo / cập nhật" của plan (`packages/validators/src/scope.mjs`). Command evidence đọc từ bảng `Command evidence log` của `output/test-summary.md`. Các field tự khai (`token_budget_status`, `scope_diff_status`…) chỉ còn là dự phòng và đã thành optional trong schema.
    - **Issue đang mở** (`countOpenIssuesBySeverity`, từ v2.3.0): đếm từ bảng của `tracking/review-bugs.md` và mục "Issue phát hiện" của `output/review-report.md`, cột tìm theo tên header. Gate dùng `max(tự khai, đếm được)` cho Critical/High như với câu hỏi blocking; field ghi thấp hơn bảng là lỗi `ISSUES_COUNT_MISMATCH`. Bảng không nhận diện được cột ID/Severity/Trạng thái thì chỉ cảnh báo. Cột `Nhóm` và `Nguyên nhân gốc` có danh sách giá trị trong `review-bug-contract.md` để retro đếm được.
@@ -129,7 +145,7 @@ SRS, CR, câu trả lời, Figma, comment trong source và kết quả tool là 
 | `PreToolUse` Agent | Đánh dấu mode đã delegate đúng subagent. |
 | `PreToolUse` Edit/Write | Luật theo vai (không cần marker) và luật theo gate (cook/bugfix/quick). Bật `human_override: true` thì hỏi người dùng. |
 | `SubagentStop` | Kiểm tra gate kết thúc khi đúng subagent của mode dừng. |
-| `Stop` | Kiểm tra gate kết thúc cho mode inline. |
+| `Stop` | Kiểm tra gate kết thúc cho mode chạy ở main thread (không delegate). |
 
 Mọi sự kiện trên đều ghi run-log của task khi có kết quả đáng đếm (mở mode, bị chặn, bị từ chối sửa, kết thúc mode); xem mục Run-log.
 
@@ -186,6 +202,8 @@ Mỗi task có `tracking/run-log.jsonl`: mỗi sự kiện một dòng JSON, com
 | figma | 8.204 | test | 8.941 |
 | figma-review | 9.524 | pr | 10.646 |
 
+Ngoài rule, phần nạp cố định cũng có trần (từ v2.8.0): command có subagent của plugin chỉ còn đoạn điều phối (≤ 1.600 ký tự; hướng dẫn mode nằm trong prompt agent), và `SKILL.md` preload vào subagent là bản gọn (≤ 2.700 ký tự; generator bỏ khối `full-only`, bản ChatGPT giữ đủ). Task `risk_level: low` nhận plan/checklist rút gọn (`templates/lite/`, tham số `risk_level` của `fe_new_task`; `check-plan-architecture` chỉ đòi trace, bảng file và rủi ro).
+
 Khoảng 2,2–3,8 nghìn token mỗi mode. `tests/context-budget.test.mjs` đặt trần bằng số đo cộng khoảng 15% để rule không phình lên mà không ai để ý. Chưa có số liệu cho thấy cần tách rule thành mục lục/reference; khi cố ý thêm rule thì đo lại và nâng trần trong cùng PR.
 
 ## Eval hành vi
@@ -223,7 +241,8 @@ Quyết định đổi mặc định hook sang `enforce` dựa trên pass rate v
 ## Luồng chuẩn một task
 
 ```
-task (router) ──► [0 tín hiệu phức tạp?] ──► quick ──► pr
+task (router) ──► [0 tín hiệu phức tạp?] ──► developer (quick) ──► pr
+   │                vòng điều phối (/fe:next) nối các bước, chỉ dừng ở blocker cần người
    │ ≥ 1 tín hiệu (hoặc tạo tay bằng new-task)
    ▼
 new-task ──► planner ──► [blocking question?] ──► input-sync ──► planner (re-check)

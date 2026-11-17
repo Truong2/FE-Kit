@@ -85,9 +85,14 @@ export function createHookHandlers(pack, { version = 'dev' } = {}) {
     fs.writeFileSync(markerPath(sessionId), JSON.stringify(marker, null, 2));
   }
 
-  /** `<plugin>:<agent>` → `<agent>`; agent không thuộc pack → ''. */
+  /**
+   * `<plugin>:<agent>` → `<agent>`; agent không thuộc pack → ''. Agent main thread
+   * của pack (phiên `claude --agent`) cũng → '': nó là main thread, chịu gate theo
+   * mode như main thread thường, không chịu luật của agent chỉ đọc.
+   */
   function kitAgentName(agentType) {
     const name = String(agentType || '').replace(pluginAgentRe, '');
+    if (pack.mainThreadAgent && name === pack.mainThreadAgent) return '';
     return name.startsWith(pack.agentPrefix) ? name : '';
   }
 
@@ -233,7 +238,16 @@ export function createHookHandlers(pack, { version = 'dev' } = {}) {
     if (!command || !input.task_folder) return;
     const workspace = path.resolve(input.workspace_root || payload.cwd || process.cwd());
     const begun = beginMode(payload, { command, taskArg: input.task_folder, workspace });
-    if (begun?.replaced) emit({ systemMessage: replacedMessage(begun.replaced) });
+    if (!begun) return;
+    // Mode được mở từ trong subagent của chính nó (vd main thread gọi command qua Skill,
+    // không có UserPromptSubmit): PreToolUse Agent đã chạy trước khi có marker nên
+    // chưa đánh dấu được. Đánh dấu ở đây để Stop của main thread không chạy lại gate.
+    const agent = kitAgentName(payload.agent_type);
+    if (agent && agent === pack.agentFor[command] && !begun.marker.delegated) {
+      begun.marker.delegated = true;
+      writeMarker(payload.session_id, begun.marker);
+    }
+    if (begun.replaced) emit({ systemMessage: replacedMessage(begun.replaced) });
   }
 
   // -------------------------------------------------------------------------

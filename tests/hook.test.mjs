@@ -129,6 +129,19 @@ describe('PreToolUse: luật theo vai', () => {
     ).toBeNull();
   });
 
+  it('chặn researcher sửa source: agent hỗ trợ chỉ ghi brief trong task folder', () => {
+    const out = edit('src/App.tsx', { agent_type: 'fe:frontend-researcher' });
+    expect(out.hookSpecificOutput.permissionDecision).toBe('deny');
+    expect(out.hookSpecificOutput.permissionDecisionReason).toMatch(/frontend-researcher/);
+    expect(edit('docs/frontend-tasks/FE-1/planning/research-brief.md', { agent_type: 'fe:frontend-researcher' })).toBeNull();
+  });
+
+  it('agent điều phối (claude --agent) được coi như main thread, không phải agent chỉ đọc', () => {
+    expect(edit('src/App.tsx', { agent_type: 'fe:frontend-orchestrator' })).toBeNull();
+    const shell = runHook({ hook_event_name: 'PreToolUse', tool_name: 'Bash', tool_input: { command: 'rm src/App.tsx' }, agent_type: 'fe:frontend-orchestrator' });
+    expect(shell).toBeNull();
+  });
+
   it('mức warn chỉ cảnh báo, mức off im lặng', () => {
     const warned = edit('src/App.tsx', { agent_type: 'fe:frontend-tester' }, { level: 'warn' });
     expect(warned.systemMessage).toMatch(/FE-Kit cảnh báo/);
@@ -163,6 +176,20 @@ describe('PreToolUse: luật theo gate của task', () => {
   it('cho developer sửa source khi task sẵn sàng cook', () => {
     const task = addTask('task-ready-to-cook');
     begin(`/fe:cook ${task}`);
+    expect(edit('src/App.tsx', { agent_type: 'fe:frontend-developer' })).toBeNull();
+  });
+
+  it('agent điều phối vẫn chịu gate của mode sửa source như main thread', () => {
+    const blocked = addTask('task-blocked-question');
+    begin(`/fe:quick ${blocked}`);
+    const out = edit('src/App.tsx', { agent_type: 'fe:frontend-orchestrator' });
+    expect(out.hookSpecificOutput.permissionDecision).toBe('deny');
+    expect(out.hookSpecificOutput.permissionDecisionReason).toMatch(/FE quick chưa được sửa source/);
+  });
+
+  it('quick giao cho developer: developer sửa được source khi gate quick mở', () => {
+    const task = addTask('task-ready-to-cook');
+    begin(`/fe:quick ${task}`);
     expect(edit('src/App.tsx', { agent_type: 'fe:frontend-developer' })).toBeNull();
   });
 
@@ -228,6 +255,37 @@ describe('Stop / SubagentStop', () => {
     const out = runHook({ hook_event_name: 'SubagentStop', agent_type: 'fe:frontend-reviewer', stop_hook_active: false });
     expect(out.decision).toBe('block');
     expect(out.reason).toMatch(/output\/review-report\.md/);
+  });
+
+  it('mode mở từ trong subagent (vòng điều phối gọi qua Skill): đánh dấu delegated, Stop của main thread bỏ qua', () => {
+    const task = addTask('task-ready-to-cook');
+    const beginTool = (agent_type) =>
+      runHook({
+        hook_event_name: 'PostToolUse',
+        tool_name: 'mcp__plugin_fe_frontend-delivery__fe_begin_mode',
+        tool_input: { workspace_root: workspace, task_folder: task, mode: 'review' },
+        agent_type,
+      });
+
+    // (fail) tool mở mode gọi từ agent khác agent của mode: không đánh dấu, Stop vẫn kiểm.
+    beginTool('fe:frontend-tester');
+    expect(marker().delegated).toBe(false);
+
+    beginTool('fe:frontend-reviewer');
+    expect(marker()).toMatchObject({ command: 'review', delegated: true });
+    expect(runHook({ hook_event_name: 'Stop', stop_hook_active: false })).toBeNull();
+    const out = runHook({ hook_event_name: 'SubagentStop', agent_type: 'fe:frontend-reviewer', stop_hook_active: false });
+    expect(out.decision).toBe('block');
+  });
+
+  it('quick giao cho developer: SubagentStop của developer chạy gate kết thúc quick', () => {
+    const task = addTask('task-ready-to-cook');
+    begin(`/fe:quick ${task}`);
+    runHook({ hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_input: { subagent_type: 'fe:frontend-developer', prompt: 'quick' } });
+    expect(marker().delegated).toBe(true);
+    const out = runHook({ hook_event_name: 'SubagentStop', agent_type: 'fe:frontend-developer', stop_hook_active: false });
+    expect(out.decision).toBe('block');
+    expect(out.reason).toMatch(/review-report\.md|test-summary\.md|chưa được cập nhật/);
   });
 
   it('mode bị gate từ chối: status đã route đúng thì không đòi artifact hay sửa file', () => {

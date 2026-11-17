@@ -10,6 +10,8 @@ import { relativePosix, toPosix } from './paths.mjs';
 import { detectBaseRef, onBaseWarning } from './scope.mjs';
 import { appendRunLog, codesOf } from './runlog.mjs';
 import { createModeBriefing } from './briefing.mjs';
+import { createStatusUpdater } from './status-update.mjs';
+import { parseFrontMatterLoose } from './frontmatter.mjs';
 
 function textResult(text, isError = false) {
   return { content: [{ type: 'text', text }], isError };
@@ -75,6 +77,7 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
         properties: {
           workspace_root: workspaceProp,
           task_name: { type: 'string', description: m.taskNameDescription },
+          ...(pack.taskVariants ? { [pack.taskVariants.param]: { type: 'string', description: pack.taskVariants.description } } : {}),
         },
         required: ['task_name'],
       },
@@ -173,7 +176,37 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
     );
   }
 
+  const updateStatus = pack.statusUpdate ? createStatusUpdater(pack) : null;
+  if (updateStatus) {
+    tools.push({
+      name: tool('update_status'),
+      description: m.descriptions.updateStatus,
+      inputSchema: {
+        type: 'object',
+        properties: {
+          workspace_root: workspaceProp,
+          task_folder: taskProp,
+          fields: {
+            type: 'object',
+            description: `Field cần đặt trong ${statusName}, dạng { "tên_field": giá trị }. Giá trị là chuỗi, số hoặc boolean.`,
+            additionalProperties: { type: ['string', 'number', 'boolean'] },
+          },
+          next_prompt: { type: 'string', description: `Lệnh cho bước kế tiếp; ghi cả field lẫn mục "${m.nextPromptHeading}" trong body.` },
+        },
+        required: ['task_folder'],
+      },
+    });
+  }
+
   const handlers = {
+    update_status({ workspace_root, task_folder, fields, next_prompt }) {
+      if (!updateStatus) return textResult('Pack không hỗ trợ cập nhật trạng thái.', true);
+      const taskDir = pack.resolveTaskDir(workspace_root, task_folder);
+      const res = updateStatus(taskDir, { fields: fields ?? {}, nextPrompt: next_prompt });
+      if (!res.ok) return textResult(`Không cập nhật ${statusName} (file giữ nguyên):\n- ${res.errors.join('\n- ')}`, true);
+      return textResult(`Đã cập nhật ${statusName}: ${res.changed.join(', ')}.\nTiếp theo: gọi ${tool('validate_workflow')} cho task.`);
+    },
+
     begin_mode({ workspace_root, task_folder, mode }) {
       const command = pack.normalizeCommand(mode);
       if (!command) {
@@ -191,20 +224,24 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
         rulesDir: rules.dir,
         rulesLabel: rules.source === 'project' ? `${m.configDir}/rules của repo` : 'plugin',
         newTaskHint: `Gọi MCP tool ${tool('new_task')} (hoặc /${pack.pluginName}:new-task ${path.basename(taskDir)}) để tạo task từ template, rồi chạy lại ${pack.label(command)} ${taskRef}.`,
-        finishHint: `Trước khi kết thúc: cập nhật ${pack.statusFile} rồi gọi ${tool('validate_workflow')}.`,
+        finishHint: pack.statusUpdate
+          ? `Trước khi kết thúc: đặt field của ${pack.statusFile} bằng ${tool('update_status')} (không viết lại cả file) rồi gọi ${tool('validate_workflow')}.`
+          : `Trước khi kết thúc: cập nhật ${pack.statusFile} rồi gọi ${tool('validate_workflow')}.`,
         workspaceRoot: workspace_root,
       });
       return textResult(briefing.text, !briefing.ok);
     },
 
-    new_task({ workspace_root, task_name }) {
+    new_task(input) {
+      const { workspace_root, task_name } = input;
       const templates = kitDir(workspace_root, 'templates');
-      const res = pack.scaffoldTask({ workspaceRoot: workspace_root, name: task_name, templatesDir: templates.dir });
+      const variant = pack.taskVariants ? input[pack.taskVariants.param] : undefined;
+      const res = pack.scaffoldTask({ workspaceRoot: workspace_root, name: task_name, templatesDir: templates.dir, variant });
       if (!res.ok) return textResult(res.error, true);
       const lines = [
         `Task folder: ${res.taskRef}`,
         `Template nguồn: ${templates.source === 'project' ? `${m.configDir}/templates của repo` : 'plugin'}`,
-        ...res.created.map((f) => `TẠO ${f}`),
+        ...res.created.map((f) => (res.fromVariant?.includes(f) ? `TẠO ${f} (bản rút gọn)` : `TẠO ${f}`)),
         ...res.skipped.map((f) => `GIỮ NGUYÊN (đã có) ${f}`),
       ];
       if (!res.created.length) lines.push('', 'Task đã tồn tại đầy đủ, không ghi đè gì.');
@@ -306,12 +343,13 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
         .filter((e) => e.isDirectory())
         .map((e) => {
           const statusPath = path.join(root, e.name, pack.statusFile);
-          let mode = `chưa có ${path.posix.basename(pack.statusFile, '.md')}`;
-          if (fs.existsSync(statusPath)) {
-            const match = fs.readFileSync(statusPath, 'utf8').match(/^current_mode:\s*(.+)$/m);
-            if (match) mode = match[1].trim();
-          }
-          return `- ${e.name} (${mode})`;
+          if (!fs.existsSync(statusPath)) return `- ${e.name} (chưa có ${path.posix.basename(pack.statusFile, '.md')})`;
+          // Parse YAML thật: regex dòng cũ dính cả comment `# …` của template.
+          const { data } = parseFrontMatterLoose(fs.readFileSync(statusPath, 'utf8'));
+          const parts = [data.current_mode ?? '?'];
+          if (data.next_mode !== undefined) parts.push(`next: ${data.next_mode}`);
+          if (data.updated_at) parts.push(`updated: ${data.updated_at instanceof Date ? data.updated_at.toISOString() : data.updated_at}`);
+          return `- ${e.name} (${parts.join(', ')})`;
         });
       return textResult(entries.length ? entries.join('\n') : `Chưa có task nào trong ${pack.tasksRoot}.`);
     },

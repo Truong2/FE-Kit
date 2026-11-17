@@ -40,7 +40,8 @@ Mặc định đổi được khi review từng phase:
 | 3 | 2.4.0 | Tách `packages/engine` + `packages/pack-fe` theo kiểu strangler, có golden test; pack mẫu thứ hai chỉ dùng trong test | Xong (xem bên dưới) |
 | 4 | 2.5.0 | `retro`: tổng hợp run-log + bug thành đề xuất sửa rule, có người duyệt | Code xong; eval `retro-proposes-not-applies` chờ chạy thật; cần vài tuần run-log thật để retro có ý nghĩa |
 | 5 | — | Pack thật thứ hai (BE hoặc QA), mỗi pack một plugin | Không làm: kit chỉ dùng cho FE |
-| 6 | 2.7.0 | Task-first: router `FE task` (phân loại `task_type`/`risk_level`, route quick/plan), gate cứng cho quick (`ENTRY_QUICK_FIGMA_REQUIRED`, `ENTRY_QUICK_HIGH_RISK`), sửa enum `ui_match_severity_status` | Code xong; eval hành vi cho router (route đúng quick/plan) chưa viết — thêm case khi chạy bộ eval thật |
+| 6 | 2.7.0 | Task-first: router `FE task` (phân loại `task_type`/`risk_level`, route quick/plan), gate cứng cho quick (`ENTRY_QUICK_FIGMA_REQUIRED`, `ENTRY_QUICK_HIGH_RISK`), sửa enum `ui_match_severity_status` | Đã phát hành; case eval cho router thêm ở 2.8.0 |
+| 7 | 2.8.0 | Team agent theo vai (model riêng, orchestrator main thread, researcher), vòng điều phối `/fe:next` tự chạy tới PR và dừng ở blocker, `fe_update_status`/`status set`, quick giao developer, template rút gọn cho risk low, giảm context cố định (command, SKILL.md) | Code xong; eval `quick-delegates-developer`, `task-quick-end-to-end`, `task-stops-on-blocking` mới qua tự kiểm, chưa chạy thật (`npm run eval:smoke`) |
 
 ### Luật bật `enforce` mặc định
 

@@ -11,7 +11,7 @@ Review không sửa source: issue được ghi thành bug để xử lý ở `FE
 
 Đối chiếu diff thật với plan/checklist/SRS; gọi MCP tool `fe_scope_diff` để lấy danh sách file sửa ngoài plan thay vì tự khai `scope_diff_status`.
 
-Sau review phải cập nhật `workflow-status.md` với `review_status`, số issue theo severity, `bugfix_required`, `next_mode` và `next_prompt`.
+Sau review phải đặt trong `workflow-status.md` (bằng `fe_update_status`, hoặc `fe-kit status set` khi không có MCP): `review_status`, số issue theo severity, `bugfix_required`, `next_mode` và `next_prompt`.
 
 Nếu còn Critical/High issue thì route sang `FE bugfix`, `FE input-sync` hoặc `FE figma-review`; không được route thẳng sang PR/test khi còn blocker. Nếu không có issue, next thường là `FE test <task-folder>`.
 

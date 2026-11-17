@@ -33,7 +33,7 @@ export {
   RUNLOG_EVENTS,
 } from './runlog.mjs';
 export { summarizeRunLog, buildReport, renderReport } from './report.mjs';
-export { modeBriefing } from './pack.mjs';
+export { modeBriefing, updateStatus } from './pack.mjs';
 export { loadProjectConfig, PROJECT_CONFIG_DEFAULTS, PROJECT_CONFIG_FILE } from './project-config.mjs';
 export {
   validateSrsReference,

@@ -111,6 +111,57 @@ describe('fe_begin_mode: artifact và current_mode', () => {
   });
 });
 
+describe('fe_update_status', () => {
+  const statusPath = () => path.join(repo, 'docs', 'frontend-tasks', 'FE-1', 'tracking', 'workflow-status.md');
+
+  it('(pass) đặt field và prompt bước tiếp theo, file vẫn qua schema', async () => {
+    const res = await callTool('fe_update_status', {
+      workspace_root: repo,
+      task_folder: 'FE-1',
+      fields: { review_status: 'passed', critical_issues_open: 0 },
+      next_prompt: 'FE test docs/frontend-tasks/FE-1',
+    });
+    expect(res.isError).toBe(false);
+    expect(res.content[0].text).toMatch(/Đã cập nhật workflow-status\.md: review_status, critical_issues_open, next_prompt, updated_at/);
+    const text = fs.readFileSync(statusPath(), 'utf8');
+    expect(text).toMatch(/^review_status: passed/m);
+    expect(text).toMatch(/^next_prompt: 'FE test docs\/frontend-tasks\/FE-1'/m);
+    const next = await callTool('fe_next_step', { workspace_root: repo, task_folder: 'FE-1' });
+    expect(next.content[0].text).toMatch(/^FE test docs\/frontend-tasks\/FE-1/);
+  });
+
+  it('(fail) giá trị sai enum: báo giá trị hợp lệ, file giữ nguyên', async () => {
+    const before = fs.readFileSync(statusPath(), 'utf8');
+    const res = await callTool('fe_update_status', { workspace_root: repo, task_folder: 'FE-1', fields: { review_status: 'okay' } });
+    expect(res.isError).toBe(true);
+    expect(res.content[0].text).toMatch(/review_status = "okay" không hợp lệ\. Giá trị hợp lệ: .*passed/);
+    expect(fs.readFileSync(statusPath(), 'utf8')).toBe(before);
+  });
+
+  it('(fail) không bật được human_override qua tool', async () => {
+    const res = await callTool('fe_update_status', { workspace_root: repo, task_folder: 'FE-1', fields: { human_override: true } });
+    expect(res.isError).toBe(true);
+    expect(res.content[0].text).toMatch(/human_override/);
+  });
+});
+
+describe('fe_new_task theo mức rủi ro', () => {
+  it('risk_level: low → plan/checklist rút gọn, vẫn có bảng file cho scope diff', async () => {
+    const res = await callTool('fe_new_task', { workspace_root: repo, task_name: 'FE-2-label', risk_level: 'low' });
+    expect(res.isError).toBe(false);
+    expect(res.content[0].text).toMatch(/TẠO planning\/implementation-plan\.md \(bản rút gọn\)/);
+    const plan = fs.readFileSync(path.join(repo, 'docs', 'frontend-tasks', 'FE-2-label', 'planning', 'implementation-plan.md'), 'utf8');
+    expect(plan).toMatch(/^## 7\. File sẽ tạo \/ cập nhật/m);
+    expect(plan).not.toMatch(/Khung thiết kế trước triển khai/);
+  });
+
+  it('không truyền risk_level → template đầy đủ', async () => {
+    await callTool('fe_new_task', { workspace_root: repo, task_name: 'FE-3-feature' });
+    const plan = fs.readFileSync(path.join(repo, 'docs', 'frontend-tasks', 'FE-3-feature', 'planning', 'implementation-plan.md'), 'utf8');
+    expect(plan).toMatch(/Khung thiết kế trước triển khai/);
+  });
+});
+
 describe('fe_validate_workflow', () => {
   it('task ở review-mode có file sửa ngoài plan thì FAILED và nêu tên file', async () => {
     fs.mkdirSync(path.join(repo, 'src', 'store'), { recursive: true });

@@ -52,9 +52,9 @@ claude plugin install fe@frontend-delivery --scope project
 
 Cài xong mỗi người có ngay, không cần thêm bước nào:
 
-- **12 slash command** — `/fe:new-task`, `/fe:plan`, `/fe:quick`, `/fe:input-sync`, `/fe:figma`, `/fe:figma-review`, `/fe:cook`, `/fe:review`, `/fe:bugfix`, `/fe:test`, `/fe:pr`, `/fe:retro`
+- **14 slash command** — `/fe:task`, `/fe:next`, `/fe:new-task`, `/fe:plan`, `/fe:quick`, `/fe:input-sync`, `/fe:figma`, `/fe:figma-review`, `/fe:cook`, `/fe:review`, `/fe:bugfix`, `/fe:test`, `/fe:pr`, `/fe:retro`
 - **1 skill** — `frontend-delivery-standard` (rules, templates, standards)
-- **7 subagent** — planner, developer, reviewer, tester, figma-specialist, release-manager, retro-analyst
+- **9 agent** — orchestrator (main thread, `claude --agent fe:frontend-orchestrator`), planner, researcher, developer, reviewer, tester, figma-specialist, release-manager, retro-analyst; mỗi agent có `model:` riêng
 - **10 MCP tool** — `fe_begin_mode`, `fe_new_task`, `fe_validate_task`, `fe_validate_workflow`, `fe_scope_diff`, `fe_next_step`, `fe_task_status`, `fe_list_tasks`, `fe_retro_data`, `fe_validate_retro`
 
 MCP server nằm sẵn trong plugin dưới dạng file bundle standalone, khai báo ở `.mcp.json`. Không cần cài node_modules, không cần clone repo kit.

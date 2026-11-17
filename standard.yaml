@@ -1,5 +1,5 @@
 name: frontend-delivery-standard
-version: 2.7.0
+version: 2.8.0
 status: stable
 owner: frontend-platform-team
 description: >
@@ -97,6 +97,9 @@ rules:
 rules_folder: .frontend-delivery/rules
 
 # Cấu hình repo dự án (fe-kit đọc các key dưới đây; key khác chỉ để tham khảo).
+# Giao task một lần, kit tự điều phối qua các agent tới khi sẵn sàng PR; chỉ dừng khi có
+# blocker cần người xác nhận. false: chạy từng bước, mỗi bước in "Tiếp theo: …" để người duyệt.
+auto_advance: true
 # PR sửa source mà không task nào khai file đó trong plan: off | warn | error.
 require_task_for_source: warn
 # Thư mục được coi là source khi kiểm require_task_for_source.
