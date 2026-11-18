@@ -17224,6 +17224,25 @@
        "risk_level": {
         "type": "string",
         "description": "Mức rủi ro đã phân loại (low | medium | high). low: plan/checklist rút gọn; bỏ trống hoặc khác: template đầy đủ."
+       },
+       "request": {
+        "type": "string",
+        "description": "Nguyên văn (hoặc tóm tắt trung thực) yêu cầu của người dùng; ghi vào mục \"Yêu cầu gốc\" của task.md."
+       },
+       "fields": {
+        "type": "object",
+        "description": "Field đặt luôn vào workflow-status.md sau khi tạo (cùng luật với fe_update_status).",
+        "additionalProperties": {
+         "type": [
+          "string",
+          "number",
+          "boolean"
+         ]
+        }
+       },
+       "next_prompt": {
+        "type": "string",
+        "description": "Lệnh cho bước kế tiếp, ghi luôn sau khi tạo."
        }
       },
       "required": [
@@ -17499,7 +17518,7 @@
    "content": [
     {
      "type": "text",
-     "text": "current_mode: implementation-mode\nnext_mode: review\nbuild_ready: true\nquestions_resolution_gate_status: passed\nblocking_questions_open: 0\nfigma_required: false\nfigma_gate_status: not_required\nreview_status: not_started\ncritical_issues_open: 0\nhigh_issues_open: 0\npr_status: not_started\nhuman_override: false\nblocking_questions_open (đếm từ questions.md): 0"
+     "text": "current_mode: implementation-mode\nnext_mode: review\nnext_prompt: FE review docs/frontend-tasks/FE-998-demo-ready\nbuild_ready: true\nquestions_resolution_gate_status: passed\nblocking_questions_open: 0\nfigma_required: false\nfigma_gate_status: not_required\nreview_status: not_started\ncritical_issues_open: 0\nhigh_issues_open: 0\npr_status: not_started\nhuman_override: false\nblocking_questions_open (đếm từ questions.md): 0\nauto_advance: true"
     }
    ],
    "isError": false

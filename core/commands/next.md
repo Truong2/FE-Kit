@@ -15,15 +15,21 @@ Bạn là main thread, đóng vai **điều phối**. Lệnh này không phải 
 
 ## Bước 2 — Chế độ chạy
 
-Đọc `.frontend-delivery/standard.yaml` của repo. `auto_advance: false` thì chỉ chạy **một** bước của vòng dưới đây rồi kết thúc bằng dòng `Tiếp theo: <next_prompt>`. Không có file hoặc không có key thì mặc định `auto_advance: true`.
+Dòng `auto_advance` trong kết quả `fe_task_status` (đọc từ `.frontend-delivery/standard.yaml`, không cần mở file): `false` thì chỉ chạy **một** bước của vòng dưới đây rồi kết thúc bằng dòng `Tiếp theo: <next_prompt>`.
 
 ## Bước 3 — Vòng điều phối
 
 Lặp lại, tối đa **12 bước** mỗi lượt:
 
-1. Gọi `fe_next_step` cho task. Prompt là terminal (`none`/`done`/`completed`/`merged`) thì sang **Kết thúc — xong**.
-2. Prompt có dạng `FE <mode> <task> [args]`: gọi skill `fe:<mode>` với tham số `<task> [args]`. Lệnh mode tự delegate cho agent, chạy `fe_validate_workflow` và gửi lỗi lại cho agent sửa.
-3. Gọi `fe_task_status` và xét **điều kiện dừng** bên dưới. Không dừng thì in một dòng tiến độ (`✓ <mode> xong → <next_mode>`) và quay lại bước 1.
+1. Gọi `fe_task_status` cho task: một lần gọi cho đủ `next_prompt`, các field của **điều kiện dừng** bên dưới và `auto_advance`. Gặp điều kiện dừng thì sang **Kết thúc — dừng vì blocker**; `next_prompt` là terminal (`none`/`done`/`completed`/`merged`) thì sang **Kết thúc — xong**.
+2. `next_prompt` có dạng `FE <mode> <task> [args]`: gọi skill `fe:<mode>` với tham số `<task> [args]`. Lệnh mode tự delegate cho agent, chạy `fe_validate_workflow` và gửi lỗi lại cho agent sửa.
+3. In một dòng tiến độ (`✓ <mode> xong`) rồi quay lại bước 1.
+
+**Giữ main thread rẻ** (mỗi lượt gọi tool ở main thread nạp lại toàn bộ hội thoại):
+
+- Tool MCP của kit chưa nạp thì nạp **tất cả trong một lần** (vd ToolSearch `select:` liệt kê đủ các tool `fe_*` cần dùng), không nạp từng tool.
+- Không đọc lại artifact agent vừa ghi (plan, review-report, test-summary…); trạng thái lấy từ `fe_task_status`. Chỉ mở `planning/questions.md` hay `tracking/review-bugs.md` khi cần liệt kê blocker cho người dùng.
+- Không gọi `fe_next_step` riêng: `next_prompt` đã có trong `fe_task_status`.
 
 **Tự xử lý, không hỏi người dùng:** chuyển giữa plan → figma → cook → review → test → figma-review → pr; review có bug thì bugfix rồi review lại (tối đa **2 vòng**); `fe_validate_workflow` FAILED thì gửi lỗi cho chính agent sửa (tối đa **2 lần** mỗi bước).
 
@@ -43,7 +49,7 @@ Không bao giờ tự bật `human_override` và không bỏ qua gate để ch�
 
 ## Kết thúc — dừng vì blocker
 
-Câu trả lời cuối có tóm tắt các bước đã chạy (mỗi bước một dòng) rồi đúng khối sau:
+Câu trả lời cuối ngắn: tóm tắt các bước đã chạy (mỗi bước một dòng, không chép lại báo cáo của agent) rồi đúng khối sau:
 
 ```text
 ⛔ CẦN BẠN XỬ LÝ — <task>
@@ -57,7 +63,7 @@ Người dùng trả lời ở tin nhắn sau (bằng lời, không cần lệnh
 
 ## Kết thúc — xong
 
-Next là terminal sau `FE pr`: báo task sẵn sàng PR, trỏ `output/pr-summary.md` và `output/test-summary.md`, liệt kê lệnh test đã chạy thật. **Không** tự push, tạo nhánh hay mở PR. Gợi ý `/clear` (hoặc mở phiên mới) trước task kế tiếp; quay lại task này bất cứ lúc nào bằng `/fe:next <task>`.
+Next là terminal sau `FE pr`: báo ngắn (khoảng 10 dòng) task sẵn sàng PR, trỏ `output/pr-summary.md` và `output/test-summary.md`, liệt kê lệnh test đã chạy thật; chi tiết để trong các file đó, không chép lại. **Không** tự push, tạo nhánh hay mở PR. Gợi ý `/clear` (hoặc mở phiên mới) trước task kế tiếp; quay lại task này bất cứ lúc nào bằng `/fe:next <task>`.
 
 ## Môi trường không có MCP tool / subagent (Codex, Cursor, Copilot)
 

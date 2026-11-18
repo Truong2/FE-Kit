@@ -10,13 +10,25 @@ import { z } from 'zod';
 const name = z.string().min(1);
 const list = z.array(name);
 
+const ModelName = z.enum(['opus', 'sonnet', 'haiku', 'fable', 'inherit']);
+
 const ModeSchema = z.object({
   /** Giá trị `current_mode` trong file trạng thái. */
   state: name,
   /** Subagent đảm nhận; `null` = main thread. */
   agent: name.nullable(),
   /** Model truyền khi delegate mode này (thắng `model:` của agent); bỏ trống = model của agent. */
-  model: z.enum(['opus', 'sonnet', 'haiku', 'fable', 'inherit']).optional(),
+  model: ModelName.optional(),
+  /**
+   * Model chọn theo một field của file trạng thái (vd mức rủi ro): giá trị có trong `map`
+   * thì truyền model đó, giá trị khác hoặc chưa có thì dùng `model`/model của agent.
+   */
+  model_by: z
+    .object({
+      field: z.string().regex(/^[a-z][a-z0-9_]*$/),
+      map: z.record(name, ModelName),
+    })
+    .optional(),
   /** Artifact phải tồn tại khi mode kết thúc (tương đối task folder). */
   artifacts: list,
   /** `next_mode` hợp lý sau mode này; lệch chỉ cảnh báo. */
@@ -52,6 +64,18 @@ export const PackManifestSchema = z
           param: z.string().regex(/^[a-z][a-z0-9_]*$/),
           description: name,
           dirs: z.record(name, name),
+        })
+        .optional(),
+      /**
+       * Mục ghi yêu cầu gốc của người dùng trong file tổng quan task (opt-in): tool tạo task
+       * nhận tham số `request` và ghi vào mục `heading` (cấp `level`) của `file`.
+       */
+      request: z
+        .object({
+          file: name,
+          heading: name,
+          level: z.number().int().min(1).max(6).default(2),
+          description: name,
         })
         .optional(),
     }),
@@ -99,6 +123,8 @@ export const PackManifestSchema = z
       scope_unavailable: name,
       planned_files_missing: name,
       status_fields: list,
+      /** Key cấu hình repo (file cấu hình dự án) in thêm trong task_status (opt-in). */
+      status_config: list.default([]),
       descriptions: z.object({
         begin_mode: name,
         new_task: name,

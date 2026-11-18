@@ -1,6 +1,6 @@
 # Quickstart
 
-Version: 2.8.1
+Version: 2.8.2
 
 ## Cài Claude Code plugin
 

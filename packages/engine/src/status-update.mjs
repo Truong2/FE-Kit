@@ -80,28 +80,34 @@ export function setFrontMatterFields(raw, fields) {
 }
 
 /**
- * Thay đoạn nội dung đầu tiên của mục `## <heading>` (giữ các dòng ghi chú `>` phía sau).
- * Mục chưa có thì thêm vào cuối file.
+ * Thay đoạn nội dung đầu tiên của mục `<#…#> <heading>` (giữ các dòng ghi chú `>`).
+ * Mục kết thúc ở heading kế tiếp cùng cấp hoặc cấp cao hơn. Mục chưa có thì thêm vào cuối file.
+ * @param {{ level?: number }} [opts] cấp heading, mặc định 2 (`##`)
  */
-export function setBodySection(raw, heading, text) {
+export function setBodySection(raw, heading, text, { level = 2 } = {}) {
   const eol = raw.includes('\r\n') ? '\r\n' : '\n';
   const lines = raw.split(/\r?\n/);
-  const isHeading = (line) => line.trim() === `## ${heading}`;
+  const hashes = '#'.repeat(level);
+  const isHeading = (line) => line.trim() === `${hashes} ${heading}`;
   const start = lines.findIndex(isHeading);
   if (start < 0) {
     const trimmed = raw.replace(/\s+$/, '');
-    return `${trimmed}${eol}${eol}## ${heading}${eol}${eol}${text}${eol}`;
+    return `${trimmed}${eol}${eol}${hashes} ${heading}${eol}${eol}${text}${eol}`;
   }
-  let end = lines.findIndex((line, i) => i > start && /^##\s/.test(line));
+  const endRe = new RegExp(`^#{1,${level}}\\s`);
+  let end = lines.findIndex((line, i) => i > start && endRe.test(line));
   if (end < 0) end = lines.length;
 
-  // Đoạn prompt cũ: các dòng không rỗng liền nhau đầu tiên, trừ dòng ghi chú `>`.
+  // Đoạn nội dung cũ: các dòng không rỗng liền nhau đầu tiên, bỏ qua dòng trống và ghi chú `>`
+  // đứng trước (template hay đặt ghi chú ngay dưới heading rồi mới tới chỗ điền).
+  const isNote = (line) => line.trimStart().startsWith('>');
   let first = start + 1;
-  while (first < end && !lines[first].trim()) first++;
+  while (first < end && (!lines[first].trim() || isNote(lines[first]))) first++;
   let last = first;
-  while (last < end && lines[last].trim() && !lines[last].trimStart().startsWith('>')) last++;
+  while (last < end && lines[last].trim() && !isNote(lines[last])) last++;
 
-  if (first >= end || lines[first].trimStart().startsWith('>')) {
+  if (first >= end) {
+    // Mục chỉ có ghi chú hoặc trống: chèn ngay dưới heading.
     lines.splice(start + 1, 0, '', text);
   } else {
     lines.splice(first, last - first, text);

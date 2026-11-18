@@ -7,8 +7,8 @@
 | Task ID |  |
 | Tên task |  |
 | Owner |  |
-| Loại task | unknown |
-| Mức rủi ro | unknown |
+| Loại task | xem `task_type` trong `tracking/workflow-status.md` |
+| Mức rủi ro | xem `risk_level` trong `tracking/workflow-status.md` |
 | Trạng thái | Created |
 | Plan version | v1 |
 

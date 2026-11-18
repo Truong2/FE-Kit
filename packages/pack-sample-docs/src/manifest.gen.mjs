@@ -120,6 +120,7 @@ export default {
       "next_mode",
       "approved"
     ],
+    "status_config": [],
     "descriptions": {
       "begin_mode": "Start a docs mode.",
       "new_task": "Create a docs task.",

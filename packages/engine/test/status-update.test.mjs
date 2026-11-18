@@ -74,6 +74,14 @@ describe('setBodySection', () => {
   it('mục chưa có thì thêm vào cuối file', () => {
     expect(setBodySection('---\na: 1\n---\n# x\n', 'Bước tiếp theo', 'P')).toMatch(/# x\n\n## Bước tiếp theo\n\nP\n$/);
   });
+
+  it('level 3: thay đoạn trong mục ###, giữ ghi chú, dừng ở heading cùng/cao cấp hơn', () => {
+    const raw = '# T\n\n## 1. Meta\n\n### Yêu cầu gốc\n\n> Ghi chú.\n\n-\n\n## 2. Phạm vi\n\n- a\n';
+    const out = setBodySection(raw, 'Yêu cầu gốc', 'Đổi nhãn nút', { level: 3 });
+    expect(out).toBe('# T\n\n## 1. Meta\n\n### Yêu cầu gốc\n\n> Ghi chú.\n\nĐổi nhãn nút\n\n## 2. Phạm vi\n\n- a\n');
+    // không nhầm `## Yêu cầu gốc` (cấp 2) với mục cấp 3
+    expect(setBodySection('## Yêu cầu gốc\n\nx\n', 'Yêu cầu gốc', 'y', { level: 3 })).toMatch(/## Yêu cầu gốc\n\nx\n\n### Yêu cầu gốc\n\ny\n$/);
+  });
 });
 
 describe('createStatusUpdater', () => {

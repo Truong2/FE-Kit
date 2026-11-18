@@ -1,7 +1,7 @@
 {
   "name": "fe",
   "description": "Quy trình frontend delivery chuẩn, task-first: FE task (router nhận yêu cầu tự nhiên, phân loại, rồi tự điều phối qua team agent tới khi sẵn sàng PR, chỉ dừng ở blocker cần người xác nhận), FE next cùng FE new-task/plan/quick/input-sync/figma/cook/review/bugfix/test/figma-review/pr với SRS-API contract, Figma UI contract, input ledger, blocking question gate và evidence/scope gates. Mọi artifact viết bằng tiếng Việt có dấu.",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "author": {
     "name": "Frontend Platform Team"
   },

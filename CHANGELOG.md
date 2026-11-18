@@ -5,6 +5,36 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.8.2] — 2026-11-18
+
+Giảm token theo số liệu thật từ dự án lab Angular (`fe-kit-lab`, bộ core 7 kịch bản, 2026-11-17). Kết quả: Opus chiếm ~84% chi phí. Orchestrator chiếm 41% (chủ yếu do số lượt gọi tool, mỗi lượt nạp lại ~60k token context) và planner chiếm 34%, kể cả task nhỏ.
+
+### Thay đổi
+
+- Planner chạy Sonnet khi plan task `risk_level` `low`/`medium`. Task `high`, `unknown` hoặc chưa phân loại vẫn dùng Opus. Cơ chế:
+  - `pack.yaml` có thêm `modes.<mode>.model_by` (chọn model theo một field trạng thái).
+  - Generator viết luật này vào khối điều phối của `/fe:plan`.
+  - Main thread đọc `risk_level` qua `fe_task_status`.
+- `fe_new_task` nhận thêm các tham số `request`, `fields` và `next_prompt`. Router `/fe:task` tạo task, ghi yêu cầu gốc, ghi phân loại và lệnh bước kế tiếp trong **một** lần gọi. Trước đây cần thêm 3 lượt: đọc `task.md`, sửa `task.md`, rồi gọi `fe_update_status`.
+- `fe_task_status` trả thêm `next_prompt` và `auto_advance`, nhờ khai báo mới `mcp.status_config` (opt-in theo pack). Vòng `/fe:next` chỉ gọi một tool mỗi bước, không còn gọi `fe_next_step` hay đọc `standard.yaml` riêng.
+- Orchestrator và vòng `/fe:next` được dặn tiết kiệm lượt gọi tool ở main thread:
+  - nạp tool MCP một lần;
+  - không đọc lại artifact agent vừa ghi;
+  - brief cho subagent trỏ đường dẫn file thay vì chép lại nội dung;
+  - báo cáo cuối ngắn gọn.
+- Router `/fe:task` hỏi SRS nằm ở đâu trước khi tạo task. Yêu cầu chỉ ghi số mục (vd "theo SRS mục 4.2") mà không kèm file, link hay nội dung: router tìm trong `docs/srs/`; không thấy hoặc nhiều file khớp thì dừng với `⛔ CẦN BẠN XỬ LÝ`, chưa tạo task, chưa tốn token lập plan. README thêm mục "Đưa SRS và Figma cho kit" (file trong repo, dán nội dung, link đọc được; Figma link có `node-id`) và sửa ví dụ ở Bắt đầu nhanh.
+- Template `task.md`: dòng "Loại task"/"Mức rủi ro" trỏ tới `task_type`/`risk_level` trong `workflow-status.md`, không chép giá trị hai nơi.
+
+### Sửa lỗi
+
+- `fe-kit status set` ghi field số (vd `blocking_questions_open=0`) thành chuỗi nên bị schema từ chối. Nguyên nhân: regex nhận số nguyên mất dấu `\`. Thêm test.
+- `setBodySection` gặp mục bắt đầu bằng ghi chú `>` thì chèn nội dung lên trên ghi chú và để nguyên chỗ điền cũ. Giờ hàm bỏ qua ghi chú rồi thay đoạn nội dung đầu tiên. Hàm cũng nhận thêm `level` để ghi vào mục `###`.
+
+### Golden
+
+- `tools/list`: thêm param `request`, `fields`, `next_prompt` cho `fe_new_task`.
+- `task_status ready`: thêm dòng `next_prompt`.
+
 ## [2.8.1] — 2026-11-17
 
 Kit chỉ chạy khi người dùng gọi: skill và agent không còn tự kích hoạt với yêu cầu frontend thông thường.

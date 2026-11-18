@@ -63,6 +63,12 @@ task_files:
     description: 'Mức rủi ro đã phân loại (low | medium | high). low: plan/checklist rút gọn; bỏ trống hoặc khác: template đầy đủ.'
     dirs:
       low: lite
+  # Yêu cầu gốc ghi ngay khi tạo task (tham số request của fe_new_task), khỏi đọc + sửa task.md riêng.
+  request:
+    file: task.md
+    heading: Yêu cầu gốc
+    level: 3
+    description: Nguyên văn (hoặc tóm tắt trung thực) yêu cầu của người dùng; ghi vào mục "Yêu cầu gốc" của task.md.
   # File chỉ có khi mode tương ứng đã chạy.
   conditional:
     - tracking/input-sync-report.md
@@ -78,6 +84,11 @@ modes:
   plan:
     state: planning-mode
     agent: frontend-planner
+    # Lab 2026-11-17: planner Opus chiếm ~34% chi phí, kể cả task nhỏ. Rủi ro low/medium dùng
+    # Sonnet; high, unknown hoặc chưa phân loại giữ model của agent (Opus).
+    model_by:
+      field: risk_level
+      map: { low: sonnet, medium: sonnet }
     artifacts: [task.md, planning/implementation-plan.md, planning/build-checklist.md, planning/questions.md, tracking/workflow-status.md]
     next: [input-sync, figma, cook, plan, quick]
   quick:
@@ -191,6 +202,7 @@ mcp:
   status_fields:
     - current_mode
     - next_mode
+    - next_prompt
     - task_type
     - risk_level
     - build_ready
@@ -203,6 +215,9 @@ mcp:
     - high_issues_open
     - pr_status
     - human_override
+  # Cấu hình repo vòng điều phối cần, in cùng task_status (khỏi đọc .frontend-delivery/standard.yaml).
+  status_config:
+    - auto_advance
   descriptions:
     begin_mode: 'GỌI ĐẦU TIÊN khi bắt đầu bất kỳ mode FE nào (plan/quick/input-sync/figma/cook/bugfix/review/test/figma-review/pr). Trả về: mode có được chạy không (gate câu hỏi blocking, build_ready, Figma, review), prompt phải chạy thay thế nếu bị chặn, artifact bắt buộc của mode và nguyên văn các rule áp dụng cho mode (không cần đọc file rule riêng).'
     new_task: 'Tạo task folder chuẩn trong docs/frontend-tasks/<tên> từ template của kit (task.md, implementation-plan, build-checklist, questions, workflow-status, thư mục figma screenshot). Không ghi đè file đã có. Dùng cho /fe:new-task thay vì tự copy template.'

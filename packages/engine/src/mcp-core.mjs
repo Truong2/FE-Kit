@@ -10,7 +10,7 @@ import { relativePosix, toPosix } from './paths.mjs';
 import { detectBaseRef, onBaseWarning } from './scope.mjs';
 import { appendRunLog, codesOf } from './runlog.mjs';
 import { createModeBriefing } from './briefing.mjs';
-import { createStatusUpdater } from './status-update.mjs';
+import { createStatusUpdater, setBodySection } from './status-update.mjs';
 import { parseFrontMatterLoose } from './frontmatter.mjs';
 
 function textResult(text, isError = false) {
@@ -78,6 +78,18 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
           workspace_root: workspaceProp,
           task_name: { type: 'string', description: m.taskNameDescription },
           ...(pack.taskVariants ? { [pack.taskVariants.param]: { type: 'string', description: pack.taskVariants.description } } : {}),
+          ...(pack.taskRequest ? { request: { type: 'string', description: pack.taskRequest.description } } : {}),
+          // Ghi phân loại ngay khi tạo task: bớt một lượt gọi tool cập nhật trạng thái riêng.
+          ...(pack.statusUpdate
+            ? {
+                fields: {
+                  type: 'object',
+                  description: `Field đặt luôn vào ${statusName} sau khi tạo (cùng luật với ${tool('update_status')}).`,
+                  additionalProperties: { type: ['string', 'number', 'boolean'] },
+                },
+                next_prompt: { type: 'string', description: 'Lệnh cho bước kế tiếp, ghi luôn sau khi tạo.' },
+              }
+            : {}),
         },
         required: ['task_name'],
       },
@@ -245,6 +257,28 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
         ...res.skipped.map((f) => `GIỮ NGUYÊN (đã có) ${f}`),
       ];
       if (!res.created.length) lines.push('', 'Task đã tồn tại đầy đủ, không ghi đè gì.');
+
+      const errors = [];
+      const { request, fields, next_prompt } = input;
+      if (request !== undefined && pack.taskRequest) {
+        const file = path.join(res.taskDir, pack.taskRequest.file);
+        if (typeof request !== 'string' || !request.trim()) errors.push('`request` phải là chuỗi khác rỗng.');
+        else if (fs.existsSync(file)) {
+          const { level, heading } = pack.taskRequest;
+          fs.writeFileSync(file, setBodySection(fs.readFileSync(file, 'utf8'), heading, request.trim(), { level }));
+          lines.push(`GHI "${heading}" vào ${pack.taskRequest.file}`);
+        }
+      }
+      if ((fields && Object.keys(fields).length) || next_prompt !== undefined) {
+        if (!updateStatus) errors.push('Pack không hỗ trợ cập nhật trạng thái.');
+        else {
+          const upd = updateStatus(res.taskDir, { fields: fields ?? {}, nextPrompt: next_prompt });
+          if (upd.ok) lines.push(`GHI ${statusName}: ${upd.changed.join(', ')}`);
+          else errors.push(`Không cập nhật ${statusName} (file giữ nguyên):`, ...upd.errors.map((e) => `- ${e}`));
+        }
+      }
+      if (errors.length) return textResult([...lines, '', 'LỖI:', ...errors].join('\n'), true);
+
       lines.push('', 'Tiếp theo: ' + (nextPrompt(res.taskDir) || pack.label(`${m.firstCommand} ${res.taskRef}`)));
       lines.push(...m.afterNewTask(res.taskRef));
       return textResult(lines.join('\n'));
@@ -331,6 +365,11 @@ export function createMcpTools(pack, { version = 'dev', pluginRoot }) {
       const d = parsed.data;
       const lines = m.statusFields.filter((k) => d[k] !== undefined).map((k) => `${k}: ${d[k]}`);
       lines.push(...m.statusExtras((rel) => readIfExists(path.join(taskDir, rel))));
+      // Cấu hình repo mà vòng điều phối cần: khỏi đọc riêng file cấu hình (thêm một lượt gọi tool).
+      if (pack.loadProjectConfig && m.statusConfig?.length) {
+        const { config } = pack.loadProjectConfig(path.resolve(workspace_root ?? process.cwd()));
+        for (const k of m.statusConfig) if (config[k] !== undefined) lines.push(`${k}: ${config[k]}`);
+      }
       return textResult(lines.join('\n'));
     },
 

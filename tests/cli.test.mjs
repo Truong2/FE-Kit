@@ -157,6 +157,15 @@ describe('CLI bundle trong repo dự án (không có node_modules)', () => {
     expect(project('next', 'FE-5-status').out).toMatch(/^FE quick docs\/frontend-tasks\/FE-5-status/);
   });
 
+  it('status set: số nguyên ghi thành number (field kiểu number qua được schema)', () => {
+    project('new-task', 'FE-9-count');
+    const r = project('status', 'set', 'FE-9-count', 'blocking_questions_open=0', 'critical_issues_open=2');
+    expect(r.status).toBe(0);
+    const text = read('docs/frontend-tasks/FE-9-count/tracking/workflow-status.md');
+    expect(text).toMatch(/^blocking_questions_open: 0\b/m);
+    expect(text).toMatch(/^critical_issues_open: 2\b/m);
+  });
+
   it('status set: giá trị sai schema hoặc human_override bị từ chối, file giữ nguyên', () => {
     project('new-task', 'FE-6-status');
     const before = read('docs/frontend-tasks/FE-6-status/tracking/workflow-status.md');

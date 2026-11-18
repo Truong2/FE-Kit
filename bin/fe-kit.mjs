@@ -665,7 +665,7 @@ function status() {
 function parseStatusValue(raw) {
   if (raw === 'true') return true;
   if (raw === 'false') return false;
-  if (/^-?d+$/.test(raw)) return Number(raw);
+  if (/^-?\d+$/.test(raw)) return Number(raw);
   return raw;
 }
 

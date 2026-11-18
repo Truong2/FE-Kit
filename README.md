@@ -4,7 +4,7 @@ Bộ quy trình để AI làm task frontend theo chuẩn của team, artifact vi
 
 **Ý tưởng chính:** bạn giao task một lần, kit tự chia việc cho một team agent (lập plan → code → review → test → chuẩn bị PR). Mỗi bước đều có gate kiểm bằng code. Kit chỉ dừng lại khi có việc **cần bạn quyết định**, và nói rõ bạn cần làm gì.
 
-Version: 2.8.1
+Version: 2.8.2
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 
@@ -43,8 +43,10 @@ claude --agent fe:frontend-orchestrator
 **Bước 3 — Giao task:**
 
 ```text
-/fe:task Thêm màn hình đổi mật khẩu theo SRS mục 4.2, Figma: <link>
+/fe:task Thêm màn hình đổi mật khẩu theo docs/srs/SRS-account.md mục 4.2, Figma: https://www.figma.com/design/<fileKey>/<tên>?node-id=12-345
 ```
+
+Ghi rõ **SRS nằm ở đâu**, không chỉ số mục: "theo SRS mục 4.2" không đủ để agent đọc. Cách đưa input xem [Đưa SRS và Figma cho kit](#đưa-srs-và-figma-cho-kit).
 
 Xong. Kit tự chạy tới khi task sẵn sàng PR, hoặc dừng lại khi cần bạn (xem [Khi kit dừng và gọi bạn](#3-khi-kit-dừng-và-gọi-bạn)).
 
@@ -216,10 +218,24 @@ Mở bằng agent điều phối thì phiên chính chạy Opus và tự điều
 ### 2. Giao task
 
 ```text
-/fe:task <mô tả yêu cầu, kèm link SRS/Figma nếu có>
+/fe:task <mô tả yêu cầu> theo <đường dẫn hoặc link SRS> mục <số mục>, Figma: <link Figma có node-id>
 ```
 
 Kit in bảng phân loại (loại task, mức rủi ro, đường đi), tạo task folder rồi tự chạy. Mỗi bước in một dòng tiến độ.
+
+#### Đưa SRS và Figma cho kit
+
+Agent chỉ đọc được thứ nó mở được. Số mục ("SRS mục 4.2") chỉ cho biết đọc **đoạn nào**; luôn kèm thêm **tài liệu nào** theo một trong các cách sau:
+
+| Cách đưa SRS | Ví dụ | Ghi chú |
+|---|---|---|
+| File trong repo (khuyên dùng) | `docs/srs/SRS-account.md mục 4.2` | Cách chắc chắn nhất: mọi agent (planner, developer, reviewer) đều đọc lại được ở các bước sau. File Word/PDF nên xuất sang Markdown, hoặc để nguyên `.pdf` trong repo. |
+| Dán nội dung vào chat | `/fe:task Thêm màn đổi mật khẩu theo SRS sau: <dán mục 4.2>` | Hợp với SRS ngắn. Kit chép nguyên văn vào brief của bước đầu; nên lưu thành file nếu SRS dài hoặc còn dùng lại. |
+| Link | Google Docs, Confluence, Notion… | Chỉ đọc được khi Claude Code có connector/MCP truy cập được link đó (vd connector Google Drive). Không có thì tải về thành file trong repo. |
+
+Figma: dán link có `node-id` của đúng frame (chuột phải frame → *Copy link to selection*) và bật Figma MCP. Task không có Figma thì ghi "không có Figma".
+
+Thiếu chỗ đọc SRS, router tìm trong `docs/srs/` trước. Không thấy hoặc có nhiều file khớp, kit dừng ngay với khối `⛔ CẦN BẠN XỬ LÝ` để hỏi đường dẫn, chưa tốn token lập plan.
 
 ### 3. Khi kit dừng và gọi bạn
 
@@ -268,7 +284,7 @@ Mỗi agent có model riêng theo độ khó của việc:
 | Agent | Model | Làm gì |
 |---|---|---|
 | `frontend-orchestrator` | Opus | Phiên chính: nhận yêu cầu, điều phối, giữ gate, báo khi cần bạn |
-| `frontend-planner` | Opus (input-sync: Sonnet) | Lập plan; cập nhật plan khi có câu trả lời hoặc CR |
+| `frontend-planner` | Opus; plan risk `low`/`medium` và input-sync chạy Sonnet | Lập plan; cập nhật plan khi có câu trả lời hoặc CR |
 | `frontend-researcher` | Haiku | Dò codebase trước khi lập plan (task debug, perf, migration…) |
 | `frontend-developer` | Sonnet | Viết code (`quick`, `cook`, `bugfix`). Agent duy nhất được sửa code |
 | `frontend-reviewer` | Opus | Review code, ghi bug theo mức độ |

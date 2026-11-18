@@ -1,6 +1,6 @@
 ---
 description: Nhận yêu cầu frontend bằng ngôn ngữ tự nhiên — phân loại loại task, độ phức tạp, rủi ro, tạo task folder và route sang FE quick hoặc FE plan. Điểm vào mặc định khi developer chưa biết nên dùng mode nào.
-argument-hint: <yêu cầu frontend bằng ngôn ngữ tự nhiên, kèm link SRS/Figma nếu có>
+argument-hint: '<yêu cầu frontend> theo <đường dẫn/link SRS> mục <số mục>, Figma: <link có node-id>'
 ---
 
 Nhận và route yêu cầu frontend: $ARGUMENTS
@@ -9,7 +9,17 @@ Bạn là main thread, đóng vai **task router**. Lệnh này không code, khô
 
 ## Bước 1 — Task đã tồn tại?
 
-Gọi MCP tool `fe_list_tasks`. Nếu yêu cầu rõ ràng thuộc một task đã có (người dùng nêu tên task, hoặc nội dung trùng với task đang mở), **không tạo task mới**: gọi skill `fe:next` với task folder đó (kèm nguyên văn câu trả lời/CR nếu người dùng vừa đưa) để chạy tiếp vòng điều phối. Chỉ sang Bước 2 khi là yêu cầu mới.
+Gọi MCP tool `fe_list_tasks`. Nếu yêu cầu rõ ràng thuộc một task đã có (người dùng nêu tên task, hoặc nội dung trùng với task đang mở), **không tạo task mới**: gọi skill `fe:next` với task folder đó (kèm nguyên văn câu trả lời/CR nếu người dùng vừa đưa) để chạy tiếp vòng điều phối. Chỉ sang Bước 1b khi là yêu cầu mới.
+
+## Bước 1b — SRS đọc ở đâu?
+
+Yêu cầu nhắc tới SRS/spec/requirement (vd "theo SRS mục 4.2") thì phải biết **tài liệu nào** để đọc, không chỉ số mục:
+
+- Có đường dẫn file trong repo, hoặc nội dung SRS dán ngay trong tin nhắn: dùng luôn.
+- Có link (Google Docs, Confluence…): dùng nếu phiên có tool đọc được link đó; không đọc được thì dừng như dưới, đề nghị lưu thành file trong repo.
+- Chỉ có số mục, không có file/link/nội dung: Glob `docs/srs/**` (và file tên chứa `srs`/`spec` trong `docs/`). Đúng một file khớp thì dùng và ghi rõ trong bảng phân loại; không có hoặc nhiều file khớp thì **dừng trước khi tạo task**, không đoán.
+
+Khi dừng: in khối `⛔ CẦN BẠN XỬ LÝ` (mẫu của lệnh `fe:next`) với Lý do "Chưa biết SRS nằm ở đâu", Cần làm "gửi đường dẫn file SRS trong repo (khuyên dùng, vd `docs/srs/<tên>.md`), dán nội dung mục cần làm, hoặc link mà phiên đọc được", liệt kê các file ứng viên nếu có. Không tạo task folder, không delegate planner: lập plan khi chưa có SRS chỉ tốn token rồi cũng dừng.
 
 ## Bước 2 — Phân loại
 
@@ -53,9 +63,7 @@ Ghi `risk_level`: `high` nếu có tín hiệu 6 hoặc 7, hoặc tín hiệu 3 
 ## Bước 4 — Tạo task và ghi phân loại
 
 1. Đặt tên task `FE-<id>-<slug>`: `<id>` là số lớn nhất trong các task hiện có cộng 1 (từ `fe_list_tasks`; không suy ra được thì dùng `FE-<YYYYMMDD>-<slug>`); `<slug>` tiếng Anh ngắn, kebab-case, tả đúng việc.
-2. Gọi MCP tool `fe_new_task` tạo task folder, truyền `risk_level` vừa phân loại (task `low` nhận plan/checklist rút gọn).
-3. Cập nhật `task.md`: điền Loại task, Mức rủi ro trong Metadata và ghi **Yêu cầu gốc** (nguyên văn hoặc tóm tắt trung thực yêu cầu của người dùng). Viết lại file một lần.
-4. Ghi phân loại bằng một lần gọi MCP tool `fe_update_status`: `fields` gồm `task_type`, `risk_level`, `figma_required` (`true` nếu yêu cầu có Figma/UI reference rõ ràng) và `next_mode`; tham số `next_prompt` theo route đã chọn.
+2. Gọi MCP tool `fe_new_task` **một lần** với: `task_name`; `risk_level` (task `low` nhận plan/checklist rút gọn); `request` là **Yêu cầu gốc** (nguyên văn hoặc tóm tắt trung thực yêu cầu của người dùng); `fields` gồm `task_type`, `risk_level`, `figma_required` (`true` nếu yêu cầu có Figma/UI reference rõ ràng) và `next_mode`; `next_prompt` theo route đã chọn. Tool ghi luôn `task.md` và `tracking/workflow-status.md`: không đọc hay sửa hai file này riêng.
 
 ## Bước 5 — Tự điều phối tới hết
 

@@ -23082,22 +23082,25 @@ function setFrontMatterFields(raw, fields) {
   lines.splice(close, 0, ...added);
   return lines.join(eol);
 }
-function setBodySection(raw, heading, text) {
+function setBodySection(raw, heading, text, { level = 2 } = {}) {
   const eol = raw.includes("\r\n") ? "\r\n" : "\n";
   const lines = raw.split(/\r?\n/);
-  const isHeading = (line) => line.trim() === `## ${heading}`;
+  const hashes = "#".repeat(level);
+  const isHeading = (line) => line.trim() === `${hashes} ${heading}`;
   const start = lines.findIndex(isHeading);
   if (start < 0) {
     const trimmed = raw.replace(/\s+$/, "");
-    return `${trimmed}${eol}${eol}## ${heading}${eol}${eol}${text}${eol}`;
+    return `${trimmed}${eol}${eol}${hashes} ${heading}${eol}${eol}${text}${eol}`;
   }
-  let end = lines.findIndex((line, i) => i > start && /^##\s/.test(line));
+  const endRe = new RegExp(`^#{1,${level}}\\s`);
+  let end = lines.findIndex((line, i) => i > start && endRe.test(line));
   if (end < 0) end = lines.length;
+  const isNote = (line) => line.trimStart().startsWith(">");
   let first = start + 1;
-  while (first < end && !lines[first].trim()) first++;
+  while (first < end && (!lines[first].trim() || isNote(lines[first]))) first++;
   let last = first;
-  while (last < end && lines[last].trim() && !lines[last].trimStart().startsWith(">")) last++;
-  if (first >= end || lines[first].trimStart().startsWith(">")) {
+  while (last < end && lines[last].trim() && !isNote(lines[last])) last++;
+  if (first >= end) {
     lines.splice(start + 1, 0, "", text);
   } else {
     lines.splice(first, last - first, text);
@@ -23147,13 +23150,22 @@ function createStatusUpdater(pack) {
 // packages/engine/src/pack.mjs
 var name = external_exports.string().min(1);
 var list = external_exports.array(name);
+var ModelName = external_exports.enum(["opus", "sonnet", "haiku", "fable", "inherit"]);
 var ModeSchema = external_exports.object({
   /** Giá trị `current_mode` trong file trạng thái. */
   state: name,
   /** Subagent đảm nhận; `null` = main thread. */
   agent: name.nullable(),
   /** Model truyền khi delegate mode này (thắng `model:` của agent); bỏ trống = model của agent. */
-  model: external_exports.enum(["opus", "sonnet", "haiku", "fable", "inherit"]).optional(),
+  model: ModelName.optional(),
+  /**
+   * Model chọn theo một field của file trạng thái (vd mức rủi ro): giá trị có trong `map`
+   * thì truyền model đó, giá trị khác hoặc chưa có thì dùng `model`/model của agent.
+   */
+  model_by: external_exports.object({
+    field: external_exports.string().regex(/^[a-z][a-z0-9_]*$/),
+    map: external_exports.record(name, ModelName)
+  }).optional(),
   /** Artifact phải tồn tại khi mode kết thúc (tương đối task folder). */
   artifacts: list,
   /** `next_mode` hợp lý sau mode này; lệch chỉ cảnh báo. */
@@ -23186,6 +23198,16 @@ var PackManifestSchema = external_exports.object({
       param: external_exports.string().regex(/^[a-z][a-z0-9_]*$/),
       description: name,
       dirs: external_exports.record(name, name)
+    }).optional(),
+    /**
+     * Mục ghi yêu cầu gốc của người dùng trong file tổng quan task (opt-in): tool tạo task
+     * nhận tham số `request` và ghi vào mục `heading` (cấp `level`) của `file`.
+     */
+    request: external_exports.object({
+      file: name,
+      heading: name,
+      level: external_exports.number().int().min(1).max(6).default(2),
+      description: name
     }).optional()
   }),
   modes: external_exports.record(name, ModeSchema),
@@ -23228,6 +23250,8 @@ var PackManifestSchema = external_exports.object({
     scope_unavailable: name,
     planned_files_missing: name,
     status_fields: list,
+    /** Key cấu hình repo (file cấu hình dự án) in thêm trong task_status (opt-in). */
+    status_config: list.default([]),
     descriptions: external_exports.object({
       begin_mode: name,
       new_task: name,
@@ -23455,12 +23479,25 @@ var manifest_gen_default = {
       "dirs": {
         "low": "lite"
       }
+    },
+    "request": {
+      "file": "task.md",
+      "heading": "Y\xEAu c\u1EA7u g\u1ED1c",
+      "level": 3,
+      "description": 'Nguy\xEAn v\u0103n (ho\u1EB7c t\xF3m t\u1EAFt trung th\u1EF1c) y\xEAu c\u1EA7u c\u1EE7a ng\u01B0\u1EDDi d\xF9ng; ghi v\xE0o m\u1EE5c "Y\xEAu c\u1EA7u g\u1ED1c" c\u1EE7a task.md.'
     }
   },
   "modes": {
     "plan": {
       "state": "planning-mode",
       "agent": "frontend-planner",
+      "model_by": {
+        "field": "risk_level",
+        "map": {
+          "low": "sonnet",
+          "medium": "sonnet"
+        }
+      },
       "artifacts": [
         "task.md",
         "planning/implementation-plan.md",
@@ -23715,6 +23752,7 @@ var manifest_gen_default = {
     "status_fields": [
       "current_mode",
       "next_mode",
+      "next_prompt",
       "task_type",
       "risk_level",
       "build_ready",
@@ -23727,6 +23765,9 @@ var manifest_gen_default = {
       "high_issues_open",
       "pr_status",
       "human_override"
+    ],
+    "status_config": [
+      "auto_advance"
     ],
     "descriptions": {
       "begin_mode": "G\u1ECCI \u0110\u1EA6U TI\xCAN khi b\u1EAFt \u0111\u1EA7u b\u1EA5t k\u1EF3 mode FE n\xE0o (plan/quick/input-sync/figma/cook/bugfix/review/test/figma-review/pr). Tr\u1EA3 v\u1EC1: mode c\xF3 \u0111\u01B0\u1EE3c ch\u1EA1y kh\xF4ng (gate c\xE2u h\u1ECFi blocking, build_ready, Figma, review), prompt ph\u1EA3i ch\u1EA1y thay th\u1EBF n\u1EBFu b\u1ECB ch\u1EB7n, artifact b\u1EAFt bu\u1ED9c c\u1EE7a mode v\xE0 nguy\xEAn v\u0103n c\xE1c rule \xE1p d\u1EE5ng cho mode (kh\xF4ng c\u1EA7n \u0111\u1ECDc file rule ri\xEAng).",
@@ -24841,6 +24882,8 @@ var fePack = {
   scaffoldTask: scaffoldTask2,
   /** Tham số chọn bản template thay thế khi tạo task (MCP new_task). */
   taskVariants: TASK_VARIANTS,
+  /** Mục ghi yêu cầu gốc khi tạo task (MCP new_task, tham số `request`). */
+  taskRequest: manifest_gen_default.task_files.request,
   requiredTaskFiles: REQUIRED_TASK_FILES,
   validateWorkflow,
   validateWorkflowAtGate,
@@ -24881,6 +24924,7 @@ var fePack = {
     scopeUnavailable: m.mcp.scope_unavailable,
     plannedFilesMissing: m.mcp.planned_files_missing,
     statusFields: m.mcp.status_fields,
+    statusConfig: m.mcp.status_config,
     statusExtras: (read) => [`blocking_questions_open (\u0111\u1EBFm t\u1EEB questions.md): ${countOpenBlockingQuestions(read("planning/questions.md"))}`],
     descriptions: {
       beginMode: m.mcp.descriptions.begin_mode,

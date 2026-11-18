@@ -155,6 +155,34 @@ describe('fe_new_task theo mức rủi ro', () => {
     expect(plan).not.toMatch(/Khung thiết kế trước triển khai/);
   });
 
+  it('(pass) một lần gọi: tạo task + ghi yêu cầu gốc + phân loại + next_prompt; task_status trả next_prompt và auto_advance', async () => {
+    const res = await callTool('fe_new_task', {
+      workspace_root: repo,
+      task_name: 'FE-4-label',
+      risk_level: 'low',
+      request: 'Đổi nhãn nút "Huỷ" thành "Huỷ đơn"',
+      fields: { task_type: 'chore', risk_level: 'low', figma_required: false, next_mode: 'quick' },
+      next_prompt: 'FE quick docs/frontend-tasks/FE-4-label',
+    });
+    expect(res.isError).toBe(false);
+    expect(res.content[0].text).toMatch(/GHI "Yêu cầu gốc" vào task\.md/);
+    expect(res.content[0].text).toMatch(/Tiếp theo: FE quick docs\/frontend-tasks\/FE-4-label/);
+    const dir = path.join(repo, 'docs', 'frontend-tasks', 'FE-4-label');
+    expect(fs.readFileSync(path.join(dir, 'task.md'), 'utf8')).toMatch(/### Yêu cầu gốc\n\n> [^\n]*\n\nĐổi nhãn nút "Huỷ" thành "Huỷ đơn"\n/);
+    const status = (await callTool('fe_task_status', { workspace_root: repo, task_folder: 'FE-4-label' })).content[0].text;
+    expect(status).toMatch(/^task_type: chore$/m);
+    expect(status).toMatch(/^next_prompt: FE quick docs\/frontend-tasks\/FE-4-label$/m);
+    expect(status).toMatch(/^auto_advance: true$/m);
+  });
+
+  it('(fail) field sai schema: task vẫn tạo nhưng trả lỗi, workflow-status giữ nguyên template', async () => {
+    const res = await callTool('fe_new_task', { workspace_root: repo, task_name: 'FE-5-bad', fields: { risk_level: 'extreme' } });
+    expect(res.isError).toBe(true);
+    expect(res.content[0].text).toMatch(/LỖI:[\s\S]*risk_level/);
+    const status = fs.readFileSync(path.join(repo, 'docs', 'frontend-tasks', 'FE-5-bad', 'tracking', 'workflow-status.md'), 'utf8');
+    expect(status).not.toMatch(/extreme/);
+  });
+
   it('không truyền risk_level → template đầy đủ', async () => {
     await callTool('fe_new_task', { workspace_root: repo, task_name: 'FE-3-feature' });
     const plan = fs.readFileSync(path.join(repo, 'docs', 'frontend-tasks', 'FE-3-feature', 'planning', 'implementation-plan.md'), 'utf8');

@@ -63,12 +63,25 @@ export default {
       "dirs": {
         "low": "lite"
       }
+    },
+    "request": {
+      "file": "task.md",
+      "heading": "Yêu cầu gốc",
+      "level": 3,
+      "description": "Nguyên văn (hoặc tóm tắt trung thực) yêu cầu của người dùng; ghi vào mục \"Yêu cầu gốc\" của task.md."
     }
   },
   "modes": {
     "plan": {
       "state": "planning-mode",
       "agent": "frontend-planner",
+      "model_by": {
+        "field": "risk_level",
+        "map": {
+          "low": "sonnet",
+          "medium": "sonnet"
+        }
+      },
       "artifacts": [
         "task.md",
         "planning/implementation-plan.md",
@@ -323,6 +336,7 @@ export default {
     "status_fields": [
       "current_mode",
       "next_mode",
+      "next_prompt",
       "task_type",
       "risk_level",
       "build_ready",
@@ -335,6 +349,9 @@ export default {
       "high_issues_open",
       "pr_status",
       "human_override"
+    ],
+    "status_config": [
+      "auto_advance"
     ],
     "descriptions": {
       "begin_mode": "GỌI ĐẦU TIÊN khi bắt đầu bất kỳ mode FE nào (plan/quick/input-sync/figma/cook/bugfix/review/test/figma-review/pr). Trả về: mode có được chạy không (gate câu hỏi blocking, build_ready, Figma, review), prompt phải chạy thay thế nếu bị chặn, artifact bắt buộc của mode và nguyên văn các rule áp dụng cho mode (không cần đọc file rule riêng).",

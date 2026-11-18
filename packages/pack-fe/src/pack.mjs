@@ -76,6 +76,8 @@ export const fePack = {
   scaffoldTask,
   /** Tham số chọn bản template thay thế khi tạo task (MCP new_task). */
   taskVariants: TASK_VARIANTS,
+  /** Mục ghi yêu cầu gốc khi tạo task (MCP new_task, tham số `request`). */
+  taskRequest: manifest.task_files.request,
   requiredTaskFiles: REQUIRED_TASK_FILES,
   validateWorkflow,
   validateWorkflowAtGate,
@@ -117,6 +119,7 @@ export const fePack = {
     scopeUnavailable: m.mcp.scope_unavailable,
     plannedFilesMissing: m.mcp.planned_files_missing,
     statusFields: m.mcp.status_fields,
+    statusConfig: m.mcp.status_config,
     statusExtras: (read) => [`blocking_questions_open (đếm từ questions.md): ${countOpenBlockingQuestions(read('planning/questions.md'))}`],
     descriptions: {
       beginMode: m.mcp.descriptions.begin_mode,
