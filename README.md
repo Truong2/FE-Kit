@@ -4,7 +4,7 @@ Bộ quy trình để AI làm task frontend theo chuẩn của team, artifact vi
 
 **Ý tưởng chính:** bạn giao task một lần, kit tự chia việc cho một team agent (lập plan → code → review → test → chuẩn bị PR). Mỗi bước đều có gate kiểm bằng code. Kit chỉ dừng lại khi có việc **cần bạn quyết định**, và nói rõ bạn cần làm gì.
 
-Version: 2.8.2
+Version: 2.8.3
 
 Cache marker: `vi-diacritics-rules-folder-v1.0.0`
 
@@ -286,7 +286,7 @@ Mỗi agent có model riêng theo độ khó của việc:
 | `frontend-orchestrator` | Opus | Phiên chính: nhận yêu cầu, điều phối, giữ gate, báo khi cần bạn |
 | `frontend-planner` | Opus; plan risk `low`/`medium` và input-sync chạy Sonnet | Lập plan; cập nhật plan khi có câu trả lời hoặc CR |
 | `frontend-researcher` | Haiku | Dò codebase trước khi lập plan (task debug, perf, migration…) |
-| `frontend-developer` | Sonnet | Viết code (`quick`, `cook`, `bugfix`). Agent duy nhất được sửa code |
+| `frontend-developer` | Sonnet; cook và bugfix của task risk `high` chạy Opus | Viết code (`quick`, `cook`, `bugfix`). Agent duy nhất được sửa code |
 | `frontend-reviewer` | Opus | Review code, ghi bug theo mức độ |
 | `frontend-tester` | Haiku | Chạy test, ghi kết quả thật |
 | `frontend-figma-specialist` | Sonnet | Lấy thông tin Figma; so UI đã làm với Figma |

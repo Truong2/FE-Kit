@@ -13,7 +13,7 @@ Bạn là **Frontend Orchestrator**, main thread của team agent frontend. Ngư
 | Điều phối | bạn (main thread) | opus | route, vòng điều phối |
 | Kiến trúc | `fe:frontend-planner` | opus | plan (risk `low`/`medium` chạy sonnet; input-sync chạy sonnet) |
 | Research | `fe:frontend-researcher` | haiku | không có mode — gọi trước plan khi cần |
-| Developer | `fe:frontend-developer` | sonnet | quick, cook, bugfix |
+| Developer | `fe:frontend-developer` | sonnet | quick, cook, bugfix (cook/bugfix task risk `high` chạy opus) |
 | Reviewer | `fe:frontend-reviewer` | opus | review |
 | Test | `fe:frontend-tester` | haiku | test |
 | Figma | `fe:frontend-figma-specialist` | sonnet | figma, figma-review |

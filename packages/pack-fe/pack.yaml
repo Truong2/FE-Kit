@@ -118,11 +118,18 @@ modes:
   cook:
     state: implementation-mode
     agent: frontend-developer
+    # Task risk high: developer chạy Opus như planner; low/medium giữ Sonnet của agent.
+    model_by:
+      field: risk_level
+      map: { high: opus }
     artifacts: [planning/build-checklist.md, tracking/workflow-status.md]
     next: [review, cook, input-sync, plan]
   bugfix:
     state: bugfix-mode
     agent: frontend-developer
+    model_by:
+      field: risk_level
+      map: { high: opus }
     artifacts: [tracking/review-bugs.md, tracking/workflow-status.md]
     next: [review, bugfix, input-sync, test, figma-review]
   review:

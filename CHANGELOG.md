@@ -5,6 +5,17 @@ Mọi thay đổi đáng chú ý của Frontend Delivery Agent Kit được ghi 
 
 Nhật ký phát triển nội bộ trước bản phát hành đầu tiên được lưu ở `CHANGELOG-dev-history.md`.
 
+## [2.8.3] — 2026-11-19
+
+Task rủi ro cao không còn giao phần code cho model nhỏ hơn model đã lập plan.
+
+### Thay đổi
+
+- `FE cook` và `FE bugfix` của task `risk_level: high` delegate developer với `model: "opus"`. Task `low`/`medium`, chưa phân loại và `FE quick` vẫn dùng Sonnet của developer. Cơ chế là `modes.<mode>.model_by` có từ v2.8.2, main thread đọc `risk_level` qua `fe_task_status`.
+- Lý do: task high đã có plan do planner chạy Opus, nhưng developer Sonnet vẫn có thể hiểu lệch plan nhiều state hoặc lặp vòng bugfix. Trước đây kit chỉ dừng hỏi người sau 2 vòng bugfix, không có bước nâng model.
+- Đây là thay đổi phòng ngừa, chưa có số đo. Lab `fe-kit-lab` chạy kịch bản S12 (task high) 4 lần (2026-11-19, khoảng $10.5). Cả 4 lần planner Opus dừng ở plan với câu hỏi blocking hợp lệ: SRS thiếu thông tin, sau đó mâu thuẫn với core component `app-form-item`. Chưa lần nào đi tới cook, nên chưa so được developer Sonnet với Opus. SRS của S12 đã được bổ sung trong repo lab cho lần đo sau.
+- README, ARCHITECTURE, `CLAUDE.md` của dự án và bảng team trong agent điều phối ghi luật mới. `tests/agents-team.test.mjs` khoá luật cho cook và bugfix, đồng thời kiểm quick không truyền `model`.
+
 ## [2.8.2] — 2026-11-18
 
 Giảm token theo số liệu thật từ dự án lab Angular (`fe-kit-lab`, bộ core 7 kịch bản, 2026-11-17). Kết quả: Opus chiếm ~84% chi phí. Orchestrator chiếm 41% (chủ yếu do số lượt gọi tool, mỗi lượt nạp lại ~60k token context) và planner chiếm 34%, kể cả task nhỏ.

@@ -76,7 +76,12 @@ describe('team agent của plugin fe', () => {
     // plan: model theo risk_level (lab 2026-11-17: planner Opus ~34% chi phí kể cả task nhỏ).
     expect(manifest.modes.plan.model_by).toEqual({ field: 'risk_level', map: { low: 'sonnet', medium: 'sonnet' } });
     expect(read('plan.md')).toMatch(/`risk_level` lấy từ `fe_task_status`: `low`\/`medium` → `model: "sonnet"`; giá trị khác hoặc chưa có thì không truyền `model`/);
-    expect(read('cook.md')).not.toMatch(/model: "/);
+    // cook/bugfix: task risk high chạy Opus; low/medium giữ Sonnet của developer, quick không đổi model.
+    for (const cmd of ['cook', 'bugfix']) {
+      expect(manifest.modes[cmd].model_by, cmd).toEqual({ field: 'risk_level', map: { high: 'opus' } });
+      expect(read(`${cmd}.md`)).toMatch(/`risk_level` lấy từ `fe_task_status`: `high` → `model: "opus"`; giá trị khác hoặc chưa có thì không truyền `model`/);
+    }
+    expect(read('quick.md')).not.toMatch(/model: "/);
     for (const [cmd, mode] of Object.entries(manifest.modes)) {
       if (mode.model) expect(['opus', 'sonnet', 'haiku', 'fable', 'inherit'], cmd).toContain(mode.model);
     }

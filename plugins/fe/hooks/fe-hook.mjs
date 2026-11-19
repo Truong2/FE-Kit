@@ -24287,6 +24287,12 @@ var manifest_gen_default = {
     "cook": {
       "state": "implementation-mode",
       "agent": "frontend-developer",
+      "model_by": {
+        "field": "risk_level",
+        "map": {
+          "high": "opus"
+        }
+      },
       "artifacts": [
         "planning/build-checklist.md",
         "tracking/workflow-status.md"
@@ -24301,6 +24307,12 @@ var manifest_gen_default = {
     "bugfix": {
       "state": "bugfix-mode",
       "agent": "frontend-developer",
+      "model_by": {
+        "field": "risk_level",
+        "map": {
+          "high": "opus"
+        }
+      },
       "artifacts": [
         "tracking/review-bugs.md",
         "tracking/workflow-status.md"
@@ -25389,7 +25401,7 @@ var modeBriefing = createModeBriefing(fePack);
 var updateStatus = createStatusUpdater(fePack);
 
 // core/hooks/fe-hook.mjs
-var KIT_VERSION = true ? "2.8.2" : "dev";
+var KIT_VERSION = true ? "2.8.3" : "dev";
 runHook(fePack, { version: KIT_VERSION });
 /*! Bundled license information:
 
